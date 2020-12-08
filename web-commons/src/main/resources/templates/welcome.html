@@ -1,0 +1,261 @@
+<!DOCTYPE HTML>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" th:href="@{webjars/bootstrap/4.2.1/css/bootstrap.min.css}"/>
+    <link href="/css/welcome.css" rel="stylesheet">
+    <script type="text/javascript" th:src="@{webjars/jquery/2.2.4/jquery.min.js}"></script>
+    <script type="text/javascript" th:src="@{webjars/bootstrap/4.2.1/js/bootstrap.min.js}"></script>
+    <script src="https://www.gstatic.com/charts/loader.js"></script>
+</head>
+
+<body>
+<div class="container-fluid">
+
+    <div class="row">
+        <nav class="col-md-2 d-none d-md-block bg-light sidebar">
+            <div class="sidebar-sticky">
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="show-all nav-link" href="#">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-home">
+                                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                                <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                            </svg>
+                            Show all
+                        </a>
+                    </li>
+
+                    <li class="nav-item" th:each="page, pagesStatus: ${welcomePage.pages}" th:inline="text">
+                        <a th:class="'show-page-' + ${pagesStatus.index} + ' nav-link'" href="#">
+                            <svg th:if="${page.icon.name() == 'STATS'}" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-file-text">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                                <line x1="16" y1="13" x2="8" y2="13"></line>
+                                <line x1="16" y1="17" x2="8" y2="17"></line>
+                                <polyline points="10 9 9 9 8 9"></polyline>
+                            </svg>
+                            <svg th:if="${page.icon.name() == 'CHART'}" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-bar-chart-2">
+                                <line x1="18" y1="20" x2="18" y2="10"></line>
+                                <line x1="12" y1="20" x2="12" y2="4"></line>
+                                <line x1="6" y1="20" x2="6" y2="14"></line>
+                            </svg>
+                            <svg th:if="${page.icon.name() == 'HOME'}" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-home">
+                                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                                <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                            </svg>
+                            [[${page.menuName}]]
+                        </a>
+                    </li>
+
+                </ul>
+            </div>
+        </nav>
+        <main role="main" class="col-md-9 ml-sm-auto col-lg-10 pt-3 px-4">
+            <div class="starter-template">
+                <div th:each="page, pagesStatus: ${welcomePage.pages}" th:class="'subpage page-' + ${pagesStatus.index}" th:inline="text">
+                    <h2>[[${page.fullName}]]</h2>
+                    <span th:if="${page.info != null}">
+                        [[${page.info}]]
+                    </span>
+                    <div th:each="content, contentStatus: ${page.pageContents}" th:inline="text">
+                        <h3 th:if="${content.title != null}">[[${content.title}]]</h3>
+                        <span th:if="${content.info != null}">
+                            [[${content.info}]]
+                        </span>
+                        <div th:if="${content.type.name() == 'CHART'}">
+                            <div style="width: 100%; height: 100%;" th:id="'content' + ${pagesStatus.index} +  '-' + ${contentStatus.index}"></div>
+                            <script th:if="${content.chartType.name() == 'PIE'}" type="text/javascript" th:inline="javascript">
+                                google.charts.load('current', {'packages': ['corechart']});
+                                google.charts.setOnLoadCallback(drawChart);
+
+                                // Draw the chart and set the chart values
+                                function drawChart() {
+                                    var table = /*[[${content.data}]]*/;
+                                    var id = /*[[${pagesStatus.index}]]*/;
+                                    var contentId = /*[[${contentStatus.index}]]*/;
+                                    var data = google.visualization.arrayToDataTable(table);
+
+                                    // Optional; add a title and set the width and height of the chart
+                                    var options = {
+                                        'titlePosition': 'none',
+                                        'pieSliceText': 'none',
+                                        width: $(window).width() * 0.75,
+                                        height: $(window).height() * 0.75,
+                                        'sliceVisibilityThreshold': 0,
+                                        'fontSize': 22
+                                    };
+
+                                    var chart = new google.visualization.PieChart(document.getElementById('content' + id + '-' + contentId));
+                                    chart.draw(data, options);
+                                }
+                            </script>
+                            <script th:if="${content.chartType.name() == 'LINE' || content.chartType.name() == 'POINTS_OR_LINE'}" type="text/javascript" th:inline="javascript">
+                                google.charts.load('current', {'packages': ['corechart', 'line']});
+                                google.charts.setOnLoadCallback(drawChart);
+
+                                // Draw the chart and set the chart values
+                                function drawChart() {
+                                    var table = /*[[${content.data}]]*/;
+                                    var id = /*[[${pagesStatus.index}]]*/;
+                                    var contentId = /*[[${contentStatus.index}]]*/;
+                                    var data = google.visualization.arrayToDataTable(table);
+
+                                    // Optional; add a title and set the width and height of the chart
+                                    var options = {
+                                        chartArea: {'width': '90%', 'height': '90%'},
+                                        width: $(window).width() * 0.75,
+                                        height: $(window).height() * 0.75,
+                                        fontSize: 22,
+                                        legend: {position: 'bottom'},
+                                    };
+
+                                    var chart = new google.visualization.LineChart(document.getElementById('content' + id + '-' + contentId));
+                                    chart.draw(data, options);
+                                }
+                            </script>
+                            <script th:if="${content.chartType.name() == 'POINTS'}" type="text/javascript" th:inline="javascript">
+                                google.charts.load('current', {'packages': ['corechart', 'line']});
+                                google.charts.setOnLoadCallback(drawChart);
+
+                                // Draw the chart and set the chart values
+                                function drawChart() {
+                                    var table = /*[[${content.data}]]*/;
+                                    var id = /*[[${pagesStatus.index}]]*/;
+                                    var contentId = /*[[${contentStatus.index}]]*/;
+                                    var data = google.visualization.arrayToDataTable(table);
+
+                                    // Optional; add a title and set the width and height of the chart
+                                    var options = {
+                                        chartArea: {'width': '90%', 'height': '90%'},
+                                        width: $(window).width() * 0.75,
+                                        height: $(window).height() * 0.75,
+                                        fontSize: 22,
+                                        pointSize: 3,
+                                        lineWidth: 0,
+                                        legend: {position: 'bottom'},
+                                    };
+
+                                    var chart = new google.visualization.LineChart(document.getElementById('content' + id + '-' + contentId));
+                                    chart.draw(data, options);
+                                }
+                            </script>
+                        </div>
+                        <div th:if="${content.type.name() == 'TABLE'}">
+                            <table class="table table-striped table-bordered table-sm big-font" th:style="'width: ' + ${content.screenWidth} + ';'">
+                                <thead th:if="${content.header != null}">
+                                <tr>
+                                    <th th:each="column, columnStatus: ${content.header}" th:inline="text">
+                                        [[${column}]]
+                                    </th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr th:each="row, rowStatus: ${content.table}">
+                                    <td th:each="column, columnStatus: ${row}" th:inline="text">
+                                        [[${column}]]
+                                    </td>
+                                </tr>
+                                </tbody>
+                                <tfoot th:if="${content.footer != null}">
+                                <tr>
+                                    <td th:each="column, columnStatus: ${content.footer}" th:inline="text">
+                                        [[${column}]]
+                                    </td>
+                                </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                        <div th:if="${content.type.name() == 'IMAGE'}">
+                            <img th:if="${!content.linkOnly}" th:src="'image/' + ${content.name}"/>
+                            <br th:if="${!content.linkOnly}"/>
+                            <a class="img-link" th:href="'image/' + ${content.name}" target="_blank">Open image in new window</a>
+                        </div>
+                        <div th:if="${content.type.name() == 'TABLE_WITH_LINKS'}">
+                            <input th:if="${content.filteredColumn != null}" type="text" class="search-input"
+                                   th:data-table-id="${'table-' + pagesStatus.index}"
+                                   th:data-column="${content.filteredColumn}"
+                                   onkeyup="filterTable(this)" placeholder="Search ..."/>
+
+                            <table th:id="${'table-' + pagesStatus.index}" class="table table-striped table-bordered table-sm big-font" th:style="'width: ' + ${content.screenWidth} + ';'">
+                                <thead th:if="${content.header != null}">
+                                <tr>
+                                    <th th:each="column, columnStatus: ${content.header}" th:inline="text">
+                                        [[${column}]]
+                                    </th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr th:each="row, rowStatus: ${content.table}">
+                                    <td th:each="column, columnStatus: ${row}" th:inline="text">
+                                        <span th:class="${column.linkColor == null ? '' :
+                                        (column.linkColor.name() == 'GREEN' ? 'table-with-link-green' : (
+                                        (column.linkColor.name() == 'RED' ? 'table-with-link-red' : '')))}">
+                                            <span th:if="${column.href != null}">
+                                                <a target="_blank" th:href="${column.href}">[[${column.description}]]</a>
+                                            </span>
+                                            <span th:if="${column.href == null}">
+                                                [[${column.description}]]
+                                            </span>
+                                        </span>
+                                    </td>
+                                </tr>
+                                </tbody>
+                                <tfoot th:if="${content.footer != null}">
+                                <tr>
+                                    <td th:each="column, columnStatus: ${content.footer}" th:inline="text">
+                                        [[${column}]]
+                                    </td>
+                                </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                        <br>
+                    </div>
+                    <script type="text/javascript" th:inline="javascript">
+                        $(document).ready(function () {
+                            let id = /*[[${pagesStatus.index}]]*/;
+                            $('.show-page-' + id).click(function () {
+                                    $(".subpage").hide();
+                                    $(".page-" + id).show();
+                                }
+                            );
+                        });
+                    </script>
+                </div>
+
+            </div>
+        </main>
+    </div>
+</div>
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        $('.show-all').click(function () {
+            $(".subpage").show();
+        });
+    });
+
+    function filterTable(input) {
+        let column = $(input).data("column");
+        let tableId = $(input).data("tableId");
+        let value = input.value;
+        let rows = $('#' + tableId).find("tr");
+        for (let i = 0; i < rows.length; i++) {
+            let columnToFilter = $(rows[i]).find("td")[column];
+            if (columnToFilter !== undefined) {
+                if (columnToFilter.innerHTML.indexOf(value) > -1) {
+                    $(rows[i]).show();
+                } else {
+                    $(rows[i]).hide();
+                }
+            }
+        }
+    }
+</script>
+</body>
+</html>

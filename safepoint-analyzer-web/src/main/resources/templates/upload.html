@@ -1,0 +1,140 @@
+<!DOCTYPE HTML>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" th:href="@{webjars/bootstrap/4.2.1/css/bootstrap.min.css}"/>
+    <link href="/css/upload.css" rel="stylesheet">
+</head>
+
+<body class="text-center">
+
+<div class="cover-container d-flex h-100 p-3 mx-auto flex-column">
+    <main role="main" class="inner cover">
+        <span style="font-size: 5em; font-weight: bold;">JDK 11</span>
+        <h1>Safepoints and Garbage Collector log file analyzer</h1>
+        <div class="lead text-left">
+            Whole page is under heavy development, it is tested mostly on G1/Parallel GC on JDK 11. If you have any issues with your log file send me
+            message to <a href="mailto:ks@gclogs.com">ks@gclogs.com</a>.
+        </div>
+
+        <div class="lead text-left">
+            Current limitations:
+            <ul>
+                <li>Logs from <span class="must-read">JDK 11, 12, 13</span> - <span class="must-read">works with flags below</span>, tested on Parallel, CMS and G1.</li>
+                <li>Logs from JDK 9, 10 - should work.</li>
+                <li>Logs from <span class="must-read">JDK 8</span> and below - experimental (<span class="must-read">no GC log support</span>,
+                    only safepoint, charts and stas are not accurate, because log file style sucks).
+                </li>
+                <li><span class="must-read">Max 10MB file (after compression).</span></li>
+                <li><span class="must-read">For JDK 11+ decorators: level,tags,time,uptime are needed, check sample Xlog configuration below.</span></li>
+                <li>Max 1 file in compressed archive (will analyze first if there are many).</li>
+                <li>UI is ugly.</li>
+                <li>UI is optimized for Full HD resolution.</li>
+                <li>There is no exception handling at all :)</li>
+            </ul>
+        </div>
+
+        <button class="show-upload">I have read at least red text from that site</button>
+        <br>
+        <br>
+        <div class="real-import">
+            <h2>Import from file ...</h2>
+            <form method="POST" enctype="multipart/form-data" action="/upload" target="_blank">
+                <p class="lead">File to upload: <input type="file" name="file"/><input type="submit" value="Submit"/></p>
+            </form>
+            <p class="lead">
+                Compress logs <span class="font-weight-bold">(*.zip, *.gz, *.xz, *.7z)</span> for fast uploads.
+            </p>
+            <h2>... or paste log here</h2>
+            <form method="POST" enctype="multipart/form-data" action="/upload-plain-text" target="_blank">
+                <p class="lead">Log to upload: <textarea name="text"></textarea><input type="submit" value="Submit"/></p>
+            </form>
+        </div>
+        <div>
+            <h2>Unified logger, changing logs at runtime example:</h2>
+            sudo -u JVM_USER jcmd `pgrep -x java` VM.log <br>
+                output="file=/PATH/TO/gc.log" <br>
+                output_options="filesize=104857600,filecount=5" <br>
+                what="codecache+sweep*=trace,class+unload,class+load,os+thread,safepoint,gc*,gc+stringdedup=debug,gc+ergo=trace,gc+age=trace,gc+phases=trace,gc+humongous=trace,jit+compilation=debug" <br>
+                decorators="level,tags,time,uptime,pid <br>
+        </div>
+        <table>
+            <tr>
+                <td>
+                    <p class="lead">
+                        <span class="font-weight-bold">
+                            VM Args that I use <br>
+                        </span>
+                        -Xlog:codecache+sweep*=trace, <br>
+                        class+unload, <br>
+                        class+load, <br>
+                        os+thread, <br>
+                        safepoint, <br>
+                        gc*, <br>
+                        gc+stringdedup=debug, <br>
+                        gc+ergo=trace, <br>
+                        gc+age=trace, <br>
+                        gc+phases=trace, <br>
+                        gc+humongous=trace, <br>
+                        jit+compilation=debug <br>
+                        :file=/tmp/app.log <br>
+                        :level,tags,time,uptime <br>
+                        :filesize=104857600,filecount=5 <br>
+                    </p>
+                </td>
+                <td>
+                    <p class="lead">
+                        <span class="font-weight-bold">
+                        Simplest VM Args to add JDK > 8 <br>
+                        </span>
+                            -Xlog:safepoint, <br>
+                            gc*, <br>
+                            gc+heap=trace, <br>
+                            gc+age=trace, <br>
+                            gc+phases=trace, <br>
+                            gc+humongous=trace <br>
+                            :file=/tmp/app.log <br>
+                            :level,tags,time,uptime
+                    </p>
+                </td>
+                <td>
+                    <p class="lead">
+                        <span class="font-weight-bold">
+                        Simplest VM Args to add JDK <= 8 <br>
+                        </span>
+                            -XX:+PrintSafepointStatistics <br>
+                            -XX:PrintSafepointStatisticsCount=1 <br>
+                            -XX:LogFile=/tmp/app.log <br>
+                            -XX:+LogVMOutput
+                    </p>
+                </td>
+            </tr>
+        </table>
+        <br>
+        <div class="lead text-left">
+            Terms of service: Files you are going to upload will be stored on author server, and can be used by author for his purposes.
+            This page is created for author purposes, use it at your own risk.
+        </div>
+        <div class="lead text-left">
+            Author: Krzysztof Ślusarski
+            Email: ks@gclogs.com
+        </div>
+
+    </main>
+</div>
+
+<script type="text/javascript" th:src="@{webjars/jquery/2.2.4/jquery.min.js}"></script>
+<script type="text/javascript" th:src="@{webjars/bootstrap/4.2.1/js/bootstrap.min.js}"></script>
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        $('.show-upload').click(function () {
+            $(".show-upload").hide();
+            $(".real-import").show();
+        });
+    });
+
+</script>
+</body>
+</html>
