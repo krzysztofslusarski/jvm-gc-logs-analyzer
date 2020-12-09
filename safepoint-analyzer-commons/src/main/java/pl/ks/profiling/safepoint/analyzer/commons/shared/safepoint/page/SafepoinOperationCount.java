@@ -15,13 +15,13 @@ public class SafepoinOperationCount implements PageCreator {
     public Page create(JvmLogFile jvmLogFile, DecimalFormat decimalFormat) {
         SafepointOperationStats soStats = jvmLogFile.getSafepointLogFile().getSafepointOperationStats();
         return Page.builder()
-                .menuName("SO count")
+                .menuName("Safepoint operation count")
                 .fullName("Safepoint operation count")
                 .icon(Page.Icon.CHART)
                 .pageContents(List.of(
                         Chart.builder()
                                 .title("Safepoint operation count")
-                                .info("Count of Safepoint operation that caused the Stop The World phase.")
+                                .info("Count of Safepoint operation that caused the Stop-the-world phase.")
                                 .chartType(Chart.ChartType.PIE)
                                 .data(getChart(soStats))
                                 .build()

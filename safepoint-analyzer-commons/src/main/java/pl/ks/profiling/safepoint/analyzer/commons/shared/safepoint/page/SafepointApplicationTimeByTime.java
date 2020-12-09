@@ -22,16 +22,19 @@ public class SafepointApplicationTimeByTime implements PageCreator {
                         List.of(
                                 Chart.builder()
                                         .chartType(Chart.ChartType.LINE)
+                                        .forceZeroMinValue(true)
                                         .title("2 second window")
                                         .data(getChart(soStats.getTimesInTimes2sec()))
                                         .build(),
                                 Chart.builder()
                                         .chartType(Chart.ChartType.LINE)
+                                        .forceZeroMinValue(true)
                                         .title("5 second window")
                                         .data(getChart(soStats.getTimesInTimes5sec()))
                                         .build(),
                                 Chart.builder()
                                         .chartType(Chart.ChartType.LINE)
+                                        .forceZeroMinValue(true)
                                         .title("15 second window")
                                         .data(getChart(soStats.getTimesInTimes15sec()))
                                         .build()

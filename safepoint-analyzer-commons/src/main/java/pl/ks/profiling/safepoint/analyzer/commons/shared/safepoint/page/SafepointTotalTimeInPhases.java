@@ -22,7 +22,7 @@ public class SafepointTotalTimeInPhases implements PageCreator {
                         Chart.builder()
                                 .chartType(Chart.ChartType.PIE)
                                 .title("Total time in phases")
-                                .info("Application time - time that your application is really running, Safepoint operation time - this is the time of Stop The World phase, Time to safepoint time - wasted time between JVM ordered Stop The World phase and real start of following phase.")
+                                .info("Application time - time that your application is really running, Safepoint operation time - this is the time of Stop-the-world phase, Time to safepoint time - wasted time between JVM ordered Stop-the-world phase and real start of following phase.")
                                 .data(getChart(soStats))
                                 .build()
                 ))

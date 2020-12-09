@@ -19,12 +19,12 @@ public class SafepointOperationTimeCharts implements PageCreator {
     @Override
     public Page create(JvmLogFile jvmLogFile, DecimalFormat decimalFormat) {
         return Page.builder()
-                .menuName("SO time")
+                .menuName("Safepoint operation (in time)")
                 .fullName("Safepoint operation time with TTS")
                 .icon(Page.Icon.CHART)
                 .pageContents(List.of(
                         Chart.builder()
-                                .info("Total time that your JVM wasted on Stop The World phases on chart.")
+                                .info("Time that your JVM wasted on Stop-the-world phases on chart.")
                                 .title("Time in STW phases with TTS")
                                 .chartType(Chart.ChartType.POINTS)
                                 .data(getChart(jvmLogFile))

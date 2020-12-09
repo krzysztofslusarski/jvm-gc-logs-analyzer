@@ -57,7 +57,7 @@ public class GCTableStats implements PageCreator {
             pageContents.add(Table.builder()
                     .header(List.of("Phase name", "Count", "Per. 50", "Per. 75", "Per. 90", "Per. 95", "Per. 99", "Per. 99.9", "Per. 100", "Average", "Total"))
                     .title("Phase stats (aggregated) - times in ms")
-                    .info("Table presents statistics about each Stop The World Garbage Collector phase. Phases are aggregated to major type of collection.")
+                    .info("Table presents statistics about each Stop-the-world Garbage Collector phase. Phases are aggregated to major type of collection.")
                     .table(gcStats.getGcAggregatedPhaseStats().stream()
                             .map(stat -> List.of(
                                     stat.getName(),
@@ -79,7 +79,7 @@ public class GCTableStats implements PageCreator {
         pageContents.add(Table.builder()
                 .header(List.of("Phase name", "Count", "Per. 50", "Per. 75", "Per. 90", "Per. 95", "Per. 99", "Per. 99.9", "Per. 100", "Average", "Total"))
                 .title("Phase stats - times in ms")
-                .info("Table presents statistics about each Stop The World Garbage Collector phase without aggregation.")
+                .info("Table presents statistics about each Stop-the-world Garbage Collector phase without aggregation.")
                 .table(gcStats.getGcPhaseStats().stream()
                         .map(stat -> List.of(
                                 stat.getName(),

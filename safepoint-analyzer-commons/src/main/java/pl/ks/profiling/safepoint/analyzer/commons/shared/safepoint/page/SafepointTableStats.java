@@ -22,13 +22,13 @@ public class SafepointTableStats implements PageCreator {
                 .pageContents(List.of(
                         Table.builder()
                                 .header(List.of("Total count"))
-                                .info("Table presents number of Stop The World phases in your JVM.")
+                                .info("Table presents number of Stop-the-world phases in your JVM.")
                                 .table(List.of(List.of(soStats.getTotalCount() + "")))
                                 .screenWidth("25%")
                                 .build(),
                         Table.builder()
                                 .header(List.of("Percentile", "Time to safepoint time", "Safepoint operation time", "Application time"))
-                                .info("Application time - time that your application is really running, Safepoint operation time - this is the time of Stop The World phase, Time to safepoint time - wasted time between JVM ordered Stop The World phase and real start of following phase.")
+                                .info("Application time - time that your application is really running, Safepoint operation time - this is the time of Stop-the-world phase, Time to safepoint time - wasted time between JVM ordered Stop-the-world phase and real start of following phase.")
                                 .table(List.of(
                                         List.of("50", numToString(soStats.getTts().getPercentile50(), decimalFormat), numToString(soStats.getOperationTime().getPercentile50(), decimalFormat), numToString(soStats.getApplicationTime().getPercentile50(), decimalFormat)),
                                         List.of("75", numToString(soStats.getTts().getPercentile75(), decimalFormat), numToString(soStats.getOperationTime().getPercentile75(), decimalFormat), numToString(soStats.getApplicationTime().getPercentile75(), decimalFormat)),
@@ -43,7 +43,7 @@ public class SafepointTableStats implements PageCreator {
                                 .build(),
                         Table.builder()
                                 .header(List.of("Safepoint operation name", "Count", "Per. 50", "Per. 75", "Per. 90", "Per. 95", "Per. 99", "Per. 99.9", "Per. 100", "Average", "Total"))
-                                .info("Table presents what Safepoint operationt caused Stop The World phase.")
+                                .info("Table presents what Safepoint operationt caused Stop-the-world phase.")
                                 .table(
                                         soStats.getStatsByNames().stream()
                                                 .map(stat -> List.of(stat.getOperationName(),

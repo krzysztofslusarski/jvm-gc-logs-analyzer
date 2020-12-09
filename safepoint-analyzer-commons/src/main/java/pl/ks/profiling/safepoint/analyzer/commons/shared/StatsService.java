@@ -20,10 +20,10 @@ import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.page.GCAllocationRat
 import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.page.GCAllocationRateInTime;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.page.GCHeapAfter;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.page.GCHeapBefore;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.page.GCHeapBeforeAfter;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.page.GCPhaseTime;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.page.GCRegionCountAfter;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.page.GCRegionCountBefore;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.page.GCRegionCountBeforeAndAfter;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.page.GCRegionMax;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.page.GCRegionSizeAfter;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.page.GCSubphaseStats;
@@ -36,9 +36,7 @@ import pl.ks.profiling.safepoint.analyzer.commons.shared.jit.page.JitTieredCompi
 import pl.ks.profiling.safepoint.analyzer.commons.shared.jit.parser.JitLogFileParser;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.safepoint.page.SafepoinOperationCount;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.safepoint.page.SafepoinOperationTime;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.safepoint.page.SafepointApplicationTimeByTime15Sec;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.safepoint.page.SafepointApplicationTimeByTime2Sec;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.safepoint.page.SafepointApplicationTimeByTime5Sec;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.safepoint.page.SafepointApplicationTimeByTime;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.safepoint.page.SafepointOperationTimeCharts;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.safepoint.page.SafepointTableStats;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.safepoint.page.SafepointTotalTimeInPhases;
@@ -205,13 +203,12 @@ public class StatsService {
                 new GCPhaseTime(),
                 new GCRegionCountBefore(),
                 new GCRegionCountAfter(),
-                new GCRegionCountBeforeAndAfter(),
                 new GCRegionMax(),
                 new GCRegionSizeAfter(),
                 new GCHeapBefore(),
                 new GCHeapAfter(),
+                new GCHeapBeforeAfter(),
                 new GCAllocationRate(),
-                new GCAllocationRateInTime(new BigDecimal(1)),
                 new GCAllocationRateInTime(new BigDecimal(10))
         );
 
@@ -231,9 +228,7 @@ public class StatsService {
         List<PageCreator> safepointPageCreators = List.of(
                 new SafepointTableStats(),
                 new SafepointTotalTimeInPhases(),
-                new SafepointApplicationTimeByTime2Sec(),
-                new SafepointApplicationTimeByTime5Sec(),
-                new SafepointApplicationTimeByTime15Sec(),
+                new SafepointApplicationTimeByTime(),
                 new SafepoinOperationCount(),
                 new SafepoinOperationTime(),
                 new SafepointOperationTimeCharts()

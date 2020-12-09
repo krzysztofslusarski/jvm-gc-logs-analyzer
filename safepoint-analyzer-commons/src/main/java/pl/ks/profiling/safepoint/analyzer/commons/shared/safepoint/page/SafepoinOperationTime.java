@@ -16,13 +16,13 @@ public class SafepoinOperationTime implements PageCreator {
     public Page create(JvmLogFile jvmLogFile, DecimalFormat decimalFormat) {
         SafepointOperationStats soStats = jvmLogFile.getSafepointLogFile().getSafepointOperationStats();
         return Page.builder()
-                .menuName("SO time with TTS")
+                .menuName("Safepoint operation time")
                 .fullName("Safepoint operation time + avg(TTS)")
                 .icon(Page.Icon.CHART)
                 .pageContents(List.of(
                         Chart.builder()
                                 .title("Safepoint operation time + avg(TTS)")
-                                .info("Total time that your JVM wasted on Stop The World phases splited by Safepoint operation that caused it.")
+                                .info("Total time that your JVM wasted on Stop-the-world phases splited by Safepoint operation that caused it.")
                                 .chartType(Chart.ChartType.PIE)
                                 .data(getChart(soStats))
                                 .build()

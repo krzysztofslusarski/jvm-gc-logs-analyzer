@@ -33,7 +33,7 @@ public class GCPhaseTime implements PageCreator {
         return Page.builder()
                 .menuName("GC phase time")
                 .fullName("Garbage collector phase time")
-                .info("These charts presents total time in each Stop The World phases of Garbage Collector.")
+                .info("These charts presents total time in each Stop-the-world phases of Garbage Collector.")
                 .icon(Page.Icon.CHART)
                 .pageContents(pageContents)
                 .build();
