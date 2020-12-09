@@ -14,7 +14,6 @@ import lombok.RequiredArgsConstructor;
 import org.apache.commons.collections4.CollectionUtils;
 import pl.ks.profiling.gui.commons.Page;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.classloader.page.ClassCount;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.classloader.page.ClassLoading;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.classloader.parser.ClassLoaderLogFileParser;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.page.GCAllocationRate;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.page.GCAllocationRateInTime;
@@ -45,7 +44,6 @@ import pl.ks.profiling.safepoint.analyzer.commons.shared.stringdedup.page.String
 import pl.ks.profiling.safepoint.analyzer.commons.shared.stringdedup.page.StringDedupTotal;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.stringdedup.parser.StringDedupLogFileParser;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.thread.page.ThreadCount;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.thread.page.ThreadCreation;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.thread.parser.ThreadLogFileParser;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.tlab.page.TlabSummary;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.tlab.page.TlabThreadStats;
@@ -163,8 +161,7 @@ public class StatsService {
         }
 
         List<PageCreator> classLoaderPageCreators = List.of(
-                new ClassCount(),
-                new ClassLoading()
+                new ClassCount()
         );
 
         for (PageCreator classLoaderPageCreator : classLoaderPageCreators) {
@@ -181,8 +178,7 @@ public class StatsService {
         }
 
         List<PageCreator> threadPageCreators = List.of(
-                new ThreadCount(),
-                new ThreadCreation()
+                new ThreadCount()
         );
 
         for (PageCreator threadPageCreator : threadPageCreators) {

@@ -12,9 +12,9 @@ public class ClassCount implements PageCreator {
     @Override
     public Page create(JvmLogFile jvmLogFile, DecimalFormat decimalFormat) {
         return Page.builder()
-                .menuName("Class count")
-                .fullName("Class count")
-                .info("Following chart current class count.")
+                .menuName("Class count/loading")
+                .fullName("Class count/loading")
+                .info("Following chart current class count and class loading activity.")
                 .icon(Page.Icon.CHART)
                 .pageContents(
                         List.of(
@@ -22,6 +22,11 @@ public class ClassCount implements PageCreator {
                                         .chartType(Chart.ChartType.LINE)
                                         .title("Current count")
                                         .data(getCurrentCountChart(jvmLogFile.getClassLoaderLogFile().getClassStatuses()))
+                                        .build(),
+                                Chart.builder()
+                                        .chartType(Chart.ChartType.LINE)
+                                        .title("Loaded")
+                                        .data(getCreatedChart(jvmLogFile.getClassLoaderLogFile().getClassStatuses()))
                                         .build()
                         )
                 )
@@ -41,4 +46,16 @@ public class ClassCount implements PageCreator {
         return stats;
     }
 
+    private static Object[][] getCreatedChart(List<ClassStatus> classStatuses) {
+        Object[][] stats = new Object[classStatuses.size() + 1][2];
+        stats[0][0] = "Time";
+        stats[0][1] = "Loaded";
+        int i = 1;
+        for (ClassStatus status : classStatuses) {
+            stats[i][0] = status.getTimeStamp();
+            stats[i][1] = status.getLoadedCount();
+            i++;
+        }
+        return stats;
+    }
 }
