@@ -14,23 +14,23 @@ public class JitTieredCompilationCount implements PageCreator {
         return Page.builder()
                 .menuName("JIT tiered compilation count")
                 .fullName("JIT tiered compilation count")
-                .info("Following chart current compilation count in each tear.")
+                .info("Following chart current compilation count in each tier.")
                 .icon(Page.Icon.CHART)
                 .pageContents(
                         List.of(
                                 Chart.builder()
                                         .chartType(Chart.ChartType.LINE)
-                                        .title("Current tear count")
+                                        .title("Current tier count")
                                         .data(getCurrentCountChart(jvmLogFile.getJitLogFile().getCompilationStatuses()))
                                         .build(),
                                 Chart.builder()
                                         .chartType(Chart.ChartType.LINE)
-                                        .title("Current tear 2 count")
+                                        .title("Current tier 2 count")
                                         .data(getTierCountChart(jvmLogFile.getJitLogFile().getCompilationStatuses(), 2))
                                         .build(),
                                 Chart.builder()
                                         .chartType(Chart.ChartType.LINE)
-                                        .title("Current tear 4 count")
+                                        .title("Current tier 4 count")
                                         .data(getTierCountChart(jvmLogFile.getJitLogFile().getCompilationStatuses(), 4))
                                         .build()
                         )
@@ -41,10 +41,10 @@ public class JitTieredCompilationCount implements PageCreator {
     private static Object[][] getCurrentCountChart(List<CompilationStatus> compilationStatuses) {
         Object[][] stats = new Object[compilationStatuses.size() + 1][5];
         stats[0][0] = "Time";
-        stats[0][1] = "Tear 1";
-        stats[0][2] = "Tear 2";
-        stats[0][3] = "Tear 3";
-        stats[0][4] = "Tear 4";
+        stats[0][1] = "Tier 1";
+        stats[0][2] = "Tier 2";
+        stats[0][3] = "Tier 3";
+        stats[0][4] = "Tier 4";
         int i = 1;
         for (CompilationStatus status : compilationStatuses) {
             stats[i][0] = status.getTimeStamp();
@@ -60,7 +60,7 @@ public class JitTieredCompilationCount implements PageCreator {
     private static Object[][] getTierCountChart(List<CompilationStatus> compilationStatuses, int tier) {
         Object[][] stats = new Object[compilationStatuses.size() + 1][2];
         stats[0][0] = "Time";
-        stats[0][1] = "Tear " + tier;
+        stats[0][1] = "Tier " + tier;
         int i = 1;
         for (CompilationStatus status : compilationStatuses) {
             stats[i][0] = status.getTimeStamp();
