@@ -7,8 +7,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 import pl.ks.profiling.gui.commons.Page;
 import pl.ks.profiling.gui.commons.Table;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.safepoint.JvmLogFile;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.safepoint.SafepointOperationStats;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.parser.JvmLogFile;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.parser.safepoint.SafepointOperationStats;
 
 public class SafepointTableStats implements PageCreator{
     @Override

@@ -4,8 +4,8 @@ import java.text.DecimalFormat;
 import java.util.List;
 import pl.ks.profiling.gui.commons.Chart;
 import pl.ks.profiling.gui.commons.Page;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.safepoint.JvmLogFile;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.stringdedup.StringDedupLogEntry;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.parser.JvmLogFile;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.parser.stringdedup.StringDedupLogEntry;
 
 public class StringDedupTotal implements PageCreator {
     @Override

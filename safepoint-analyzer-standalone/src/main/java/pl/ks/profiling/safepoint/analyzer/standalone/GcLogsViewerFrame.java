@@ -13,7 +13,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import net.miginfocom.swing.MigLayout;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.gc.GcLogFile;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.parser.gc.GcLogFile;
 
 class GcLogsViewerFrame extends JFrame {
     private PresentationFontProvider presentationFontProvider;

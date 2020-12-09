@@ -6,9 +6,9 @@ import java.util.List;
 import pl.ks.profiling.gui.commons.Chart;
 import pl.ks.profiling.gui.commons.Page;
 import pl.ks.profiling.gui.commons.PageContent;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.gc.GcPhaseStats;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.gc.GcStats;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.safepoint.JvmLogFile;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.parser.JvmLogFile;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.parser.gc.GcPhaseStats;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.parser.gc.GcStats;
 
 public class GCPhaseTime implements PageCreator{
     @Override

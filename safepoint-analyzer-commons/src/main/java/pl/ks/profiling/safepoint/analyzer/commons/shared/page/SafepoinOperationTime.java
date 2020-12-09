@@ -6,9 +6,9 @@ import java.util.List;
 import java.util.Set;
 import pl.ks.profiling.gui.commons.Chart;
 import pl.ks.profiling.gui.commons.Page;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.safepoint.JvmLogFile;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.safepoint.SafepointOperationStats;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.safepoint.SafepointOperationStatsByName;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.parser.JvmLogFile;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.parser.safepoint.SafepointOperationStats;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.parser.safepoint.SafepointOperationStatsByName;
 
 public class SafepoinOperationTime implements PageCreator{
     @Override

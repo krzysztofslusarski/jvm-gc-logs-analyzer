@@ -8,9 +8,9 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import pl.ks.profiling.gui.commons.Chart;
 import pl.ks.profiling.gui.commons.Page;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.safepoint.JvmLogFile;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.safepoint.SafepointLogEntry;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.safepoint.SafepointOperationStatsByName;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.parser.JvmLogFile;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.parser.safepoint.SafepointLogEntry;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.parser.safepoint.SafepointOperationStatsByName;
 
 public class SafepointOperationTimeCharts implements PageCreator{
     public static final BigDecimal MULTIPLIER = new BigDecimal(1000);

@@ -7,8 +7,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import pl.ks.profiling.gui.commons.Chart;
 import pl.ks.profiling.gui.commons.Page;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.gc.GcCycleInfo;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.safepoint.JvmLogFile;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.parser.JvmLogFile;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.parser.gc.GcCycleInfo;
 
 public class GCRegionCountAfter implements PageCreator{
     @Override

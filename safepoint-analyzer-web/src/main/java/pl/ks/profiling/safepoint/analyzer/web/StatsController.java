@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 import pl.ks.profiling.io.StorageUtils;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.StatsService;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.safepoint.JvmLogFile;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.parser.JvmLogFile;
 import pl.ks.profiling.web.commons.WelcomePage;
 
 @Controller

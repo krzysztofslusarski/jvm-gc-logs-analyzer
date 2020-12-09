@@ -5,8 +5,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 import pl.ks.profiling.gui.commons.Chart;
 import pl.ks.profiling.gui.commons.Page;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.jit.CodeCacheStatus;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.safepoint.JvmLogFile;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.parser.JvmLogFile;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.parser.jit.CodeCacheStatus;
 
 public class JitCodeCacheStats implements PageCreator {
     @Override

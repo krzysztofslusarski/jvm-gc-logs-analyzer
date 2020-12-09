@@ -46,15 +46,15 @@ import pl.ks.profiling.safepoint.analyzer.commons.shared.page.ThreadCount;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.page.ThreadCreation;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.page.TlabSummary;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.page.TlabThreadStats;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.classloader.ClassLoaderLogFileParser;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.gc.GcLogFileParser;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.gc.GcStatsCreator;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.jit.JitLogFileParser;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.safepoint.JvmLogFile;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.safepoint.SafepointLogFileParser;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.stringdedup.StringDedupLogFileParser;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.thread.ThreadLogFileParser;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.tlab.TlabLogFileParser;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.parser.JvmLogFile;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.parser.classloader.ClassLoaderLogFileParser;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.parser.gc.GcLogFileParser;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.parser.gc.GcStatsCreator;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.parser.jit.JitLogFileParser;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.parser.safepoint.SafepointLogFileParser;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.parser.stringdedup.StringDedupLogFileParser;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.parser.thread.ThreadLogFileParser;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.parser.tlab.TlabLogFileParser;
 
 @RequiredArgsConstructor
 public class StatsService {
