@@ -11,7 +11,7 @@ import lombok.RequiredArgsConstructor;
 import pl.ks.profiling.gui.commons.Chart;
 import pl.ks.profiling.gui.commons.Page;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.parser.JvmLogFile;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.parser.gc.GcCycleInfo;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.parser.gc.GCLogCycleEntry;
 
 @RequiredArgsConstructor
 public class GCAllocationRateInTime implements PageCreator {
@@ -19,7 +19,7 @@ public class GCAllocationRateInTime implements PageCreator {
 
     @Override
     public Page create(JvmLogFile jvmLogFile, DecimalFormat decimalFormat) {
-        if (jvmLogFile.getGcStats().getGcRegions().isEmpty()) {
+        if (jvmLogFile.getGcLogFile().getStats().getGcRegions().isEmpty()) {
             return null;
         }
         Map<Long, List<BigDecimal>> byTimeMap = createByTimeMap(jvmLogFile);
@@ -87,19 +87,19 @@ public class GCAllocationRateInTime implements PageCreator {
     }
 
     private Map<Long, List<BigDecimal>> createByTimeMap(JvmLogFile jvmLogFile) {
-        List<GcCycleInfo> cycles = jvmLogFile.getGcLogFile().getGcCycleInfos();
+        List<GCLogCycleEntry> cycles = jvmLogFile.getGcLogFile().getCycleEntries();
 
         if (cycles.size() <= 1) {
             return null;
         }
 
-        GcCycleInfo prev = null;
-        GcCycleInfo current = null;
+        GCLogCycleEntry prev = null;
+        GCLogCycleEntry current = null;
         int i = 0;
 
         Map<Long, List<BigDecimal>> byTimeMap = new LinkedHashMap<>();
 
-        for (GcCycleInfo cycle : cycles) {
+        for (GCLogCycleEntry cycle : cycles) {
             prev = current;
             current = cycle;
             if (prev == null) {

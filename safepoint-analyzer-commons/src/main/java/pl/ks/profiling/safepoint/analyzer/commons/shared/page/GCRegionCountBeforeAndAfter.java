@@ -9,17 +9,17 @@ import pl.ks.profiling.gui.commons.Chart;
 import pl.ks.profiling.gui.commons.Page;
 import pl.ks.profiling.gui.commons.PageContent;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.parser.JvmLogFile;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.parser.gc.GcCycleInfo;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.parser.gc.GCLogCycleEntry;
 
 public class GCRegionCountBeforeAndAfter implements PageCreator{
     @Override
     public Page create(JvmLogFile jvmLogFile, DecimalFormat decimalFormat) {
-        if (jvmLogFile.getGcStats().getGcRegions().isEmpty()) {
+        if (jvmLogFile.getGcLogFile().getStats().getGcRegions().isEmpty()) {
             return null;
         }
         List<PageContent> charts = new ArrayList<>();
-        for (String region : jvmLogFile.getGcStats().getGcRegions()) {
-            charts.addAll(jvmLogFile.getGcStats().getGcAggregatedPhases().stream()
+        for (String region : jvmLogFile.getGcLogFile().getStats().getGcRegions()) {
+            charts.addAll(jvmLogFile.getGcLogFile().getStats().getGcAggregatedPhases().stream()
                     .map(phase -> Chart.builder()
                             .chartType(Chart.ChartType.LINE)
                             .title(phase + " (" + region + ")")
@@ -38,7 +38,7 @@ public class GCRegionCountBeforeAndAfter implements PageCreator{
     }
 
     private static Object[][] getChart(String aggregatedPhase, String region, JvmLogFile jvmLogFile) {
-        List<GcCycleInfo> cycles = jvmLogFile.getGcLogFile().getGcCycleInfos().stream()
+        List<GCLogCycleEntry> cycles = jvmLogFile.getGcLogFile().getCycleEntries().stream()
                 .filter(gcCycleInfo -> aggregatedPhase.equals(gcCycleInfo.getAggregatedPhase()))
                 .collect(Collectors.toList());
         Set<String> regions = cycles.stream()
@@ -54,7 +54,7 @@ public class GCRegionCountBeforeAndAfter implements PageCreator{
         int i = 1;
 
         int j = 1;
-        for (GcCycleInfo cycle : cycles) {
+        for (GCLogCycleEntry cycle : cycles) {
             stats[j][0] = cycle.getTimeStamp();
             stats[j][1] = cycle.getRegionsBeforeGC().get(region);
             stats[j][2] = cycle.getRegionsAfterGC().get(region);

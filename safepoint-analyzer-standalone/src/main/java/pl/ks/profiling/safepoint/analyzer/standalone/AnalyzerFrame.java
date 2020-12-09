@@ -89,12 +89,12 @@ public class AnalyzerFrame extends JFrame {
                 });
                 add(button, "span");
             }
-//                JButton button = new JButton("GC logs viewer");
-//                button.setPreferredSize(new Dimension(280, 30));
-//                button.addActionListener(e -> {
-//                    new GcLogsViewerFrame(presentationFontProvider, stats.getGcLogFile());
-//                });
-//                add(button, "span");
+            JButton button = new JButton("GC logs viewer");
+            button.setPreferredSize(new Dimension(280, 30));
+            button.addActionListener(e -> {
+                new GcLogsViewerFrame(presentationFontProvider, stats.getGcLogFile());
+            });
+            add(button, "span");
         }
     }
 

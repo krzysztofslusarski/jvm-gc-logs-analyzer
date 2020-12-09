@@ -17,25 +17,25 @@ import java.util.stream.Collectors;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.OneFiledAllStats;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.OneFiledAllStatsUtil;
 
-public class GcStatsCreator {
-    public static GcStats createStats(GcLogFile gcLogFile) {
-        GcStats gcStats = new GcStats();
-        generateAgingStats(gcLogFile, gcStats);
-        generateAgingSummary(gcLogFile, gcStats);
+public class GCStatsCreator {
+    public static GCStats createStats(GCLogFile GCLogFile) {
+        GCStats gcStats = new GCStats();
+        generateAgingStats(GCLogFile, gcStats);
+        generateAgingSummary(GCLogFile, gcStats);
 
-        gcStats.setGcRegions(gcLogFile.getGcCycleInfos().stream()
-                .flatMap(gcCycleInfo -> gcCycleInfo.getRegionsBeforeGC().keySet().stream())
+        gcStats.setGcRegions(GCLogFile.getCycleEntries().stream()
+                .flatMap(GCLogCycleEntry -> GCLogCycleEntry.getRegionsBeforeGC().keySet().stream())
                 .collect(Collectors.toSet()));
-        gcStats.setGcPhases(gcLogFile.getGcCycleInfos().stream()
-                .map(GcCycleInfo::getPhase)
+        gcStats.setGcPhases(GCLogFile.getCycleEntries().stream()
+                .map(GCLogCycleEntry::getPhase)
                 .collect(Collectors.toSet()));
-        gcStats.setGcAggregatedPhases(gcLogFile.getGcCycleInfos().stream()
-                .map(GcCycleInfo::getAggregatedPhase)
+        gcStats.setGcAggregatedPhases(GCLogFile.getCycleEntries().stream()
+                .map(GCLogCycleEntry::getAggregatedPhase)
                 .collect(Collectors.toSet()));
         Map<String, Set<String>> subPhasesMap = new LinkedHashMap<>();
-        for (GcCycleInfo gcCycleInfo : gcLogFile.getGcCycleInfos()) {
+        for (GCLogCycleEntry GCLogCycleEntry : GCLogFile.getCycleEntries()) {
             Set<String> currentParentSet = null;
-            for (String phaseName : gcCycleInfo.getSubPhasesTime().keySet()) {
+            for (String phaseName : GCLogCycleEntry.getSubPhasesTime().keySet()) {
                 if (phaseName.startsWith("--") && currentParentSet != null) {
                     currentParentSet.add(phaseName);
                 } else {
@@ -52,35 +52,35 @@ public class GcStatsCreator {
 
         gcStats.setSubPhases(subPhases);
 
-        generatePhaseStats(gcLogFile, gcStats);
-        generateAggregatedPhaseStats(gcLogFile, gcStats);
-        generateConcurrentCycleStats(gcLogFile, gcStats);
-        generateHumongousStats(gcLogFile, gcStats);
-        generateToSpaceStats(gcLogFile, gcStats);
-        generateFullGcStats(gcLogFile, gcStats);
+        generatePhaseStats(GCLogFile, gcStats);
+        generateAggregatedPhaseStats(GCLogFile, gcStats);
+        generateConcurrentCycleStats(GCLogFile, gcStats);
+        generateHumongousStats(GCLogFile, gcStats);
+        generateToSpaceStats(GCLogFile, gcStats);
+        generateFullGcStats(GCLogFile, gcStats);
         return gcStats;
     }
 
-    private static void generateFullGcStats(GcLogFile gcLogFile, GcStats gcStats) {
+    private static void generateFullGcStats(GCLogFile gcLogFile, GCStats gcStats) {
         gcStats.setFullGcSequenceIds(
-                gcLogFile.getGcCycleInfos().stream()
-                        .filter(gcCycleInfo -> gcCycleInfo.getPhase().contains("Full"))
-                        .map(GcCycleInfo::getSequenceId)
+                gcLogFile.getCycleEntries().stream()
+                        .filter(GCLogCycleEntry -> GCLogCycleEntry.getPhase().contains("Full"))
+                        .map(GCLogCycleEntry::getSequenceId)
                         .collect(Collectors.toList())
         );
     }
 
-    private static void generateToSpaceStats(GcLogFile gcLogFile, GcStats gcStats) {
-        List<GcToSpaceStats> toSPaceStats = gcLogFile.getGcCycleInfos().stream()
-                .filter(GcCycleInfo::isWasToSpaceExhausted)
-                .map(gcCycleInfo -> {
-                    GcToSpaceStats toSpaceStats = new GcToSpaceStats();
-                    toSpaceStats.setSequenceId(gcCycleInfo.getSequenceId());
+    private static void generateToSpaceStats(GCLogFile gcLogFile, GCStats gcStats) {
+        List<GCToSpaceStats> toSPaceStats = gcLogFile.getCycleEntries().stream()
+                .filter(GCLogCycleEntry::isWasToSpaceExhausted)
+                .map(GCLogCycleEntry -> {
+                    GCToSpaceStats toSpaceStats = new GCToSpaceStats();
+                    toSpaceStats.setSequenceId(GCLogCycleEntry.getSequenceId());
                     for (String region : gcStats.getGcRegions()) {
                         String stat = "---";
-                        if (gcCycleInfo.getRegionsBeforeGC().get(region) != null &&
-                                gcCycleInfo.getRegionsAfterGC().get(region) != null) {
-                            stat = gcCycleInfo.getRegionsBeforeGC().get(region) + " --> " + gcCycleInfo.getRegionsAfterGC().get(region);
+                        if (GCLogCycleEntry.getRegionsBeforeGC().get(region) != null &&
+                                GCLogCycleEntry.getRegionsAfterGC().get(region) != null) {
+                            stat = GCLogCycleEntry.getRegionsBeforeGC().get(region) + " --> " + GCLogCycleEntry.getRegionsAfterGC().get(region);
                         }
                         toSpaceStats.getRegionStats().put(region, stat);
                     }
@@ -90,12 +90,12 @@ public class GcStatsCreator {
         gcStats.setToSpaceStats(toSPaceStats);
     }
 
-    private static void generateHumongousStats(GcLogFile gcLogFile, GcStats gcStats) {
-        List<Long> live = gcLogFile.getGcCycleInfos().stream()
-                .flatMap(gcCycleInfo -> gcCycleInfo.getLiveHumongousSizes().stream())
+    private static void generateHumongousStats(GCLogFile gcLogFile, GCStats gcStats) {
+        List<Long> live = gcLogFile.getCycleEntries().stream()
+                .flatMap(GCLogCycleEntry -> GCLogCycleEntry.getLiveHumongousSizes().stream())
                 .collect(Collectors.toList());
-        List<Long> dead = gcLogFile.getGcCycleInfos().stream()
-                .flatMap(gcCycleInfo -> gcCycleInfo.getDeadHumongousSizes().stream())
+        List<Long> dead = gcLogFile.getCycleEntries().stream()
+                .flatMap(GCLogCycleEntry -> GCLogCycleEntry.getDeadHumongousSizes().stream())
                 .collect(Collectors.toList());
         List<Long> all = new ArrayList<>(live.size() + dead.size());
         all.addAll(live);
@@ -121,15 +121,15 @@ public class GcStatsCreator {
         }
     }
 
-    private static void generateConcurrentCycleStats(GcLogFile gcLogFile, GcStats gcStats) {
-        Set<String> phasesName = gcLogFile.getGcConcurrentCycleInfos().stream()
-                .map(GcConcurrentCycleInfo::getPhase)
+    private static void generateConcurrentCycleStats(GCLogFile gcLogFile, GCStats gcStats) {
+        Set<String> phasesName = gcLogFile.getConcurrentCycleEntries().stream()
+                .map(GCLogConcurrentCycleEntry::getPhase)
                 .collect(Collectors.toSet());
-        List<GcConcurrentCycleStats> cyclesStats = phasesName.stream()
+        List<GCConcurrentCycleStats> cyclesStats = phasesName.stream()
                 .map(phase -> {
-                    GcConcurrentCycleStats stats = new GcConcurrentCycleStats();
+                    GCConcurrentCycleStats stats = new GCConcurrentCycleStats();
                     stats.setName(phase);
-                    List<GcConcurrentCycleInfo> toProcess = gcLogFile.getGcConcurrentCycleInfos().stream()
+                    List<GCLogConcurrentCycleEntry> toProcess = gcLogFile.getConcurrentCycleEntries().stream()
                             .filter(gcConcurrentCycleInfo -> phase.equals(gcConcurrentCycleInfo.getPhase()))
                             .collect(Collectors.toList());
                     stats.setCount((long) toProcess.size());
@@ -142,19 +142,19 @@ public class GcStatsCreator {
         gcStats.setGcConcurrentCycleStats(cyclesStats);
     }
 
-    private static void generatePhaseStats(GcLogFile gcLogFile, GcStats gcStats) {
-        List<GcPhaseStats> phasesStats = gcStats.getGcPhases().stream()
+    private static void generatePhaseStats(GCLogFile gcLogFile, GCStats gcStats) {
+        List<GCPhaseStats> phasesStats = gcStats.getGcPhases().stream()
                 .map(phase -> {
-                    GcPhaseStats gcPhaseStats = new GcPhaseStats();
+                    GCPhaseStats gcPhaseStats = new GCPhaseStats();
                     gcPhaseStats.setName(phase);
-                    List<GcCycleInfo> cycles = gcLogFile.getGcCycleInfos().stream()
-                            .filter(gcCycleInfo -> phase.equals(gcCycleInfo.getPhase()))
+                    List<GCLogCycleEntry> cycles = gcLogFile.getCycleEntries().stream()
+                            .filter(GCLogCycleEntry -> phase.equals(GCLogCycleEntry.getPhase()))
                             .collect(Collectors.toList());
                     Map<String, OneFiledAllStats> subPhasesStats = new LinkedHashMap<>();
                     for (String subPhase : gcStats.getSubPhases()) {
                         final String subPhaseName = subPhase;
                         subPhasesStats.put(subPhase, OneFiledAllStatsUtil.create(cycles.stream()
-                                .map(gcCycleInfo -> gcCycleInfo.getSubPhasesTime().get(subPhaseName))
+                                .map(GCLogCycleEntry -> GCLogCycleEntry.getSubPhasesTime().get(subPhaseName))
                                 .filter(Objects::nonNull)
                                 .mapToDouble(BigDecimal::doubleValue)
                                 .toArray()
@@ -165,24 +165,24 @@ public class GcStatsCreator {
                     gcPhaseStats.setTime(createAllStats(cycles, cycleInfo -> cycleInfo.getTime().doubleValue()));
                     return gcPhaseStats;
                 })
-                .sorted(Comparator.comparing(GcPhaseStats::getName))
+                .sorted(Comparator.comparing(GCPhaseStats::getName))
                 .collect(Collectors.toList());
         gcStats.setGcPhaseStats(phasesStats);
     }
 
-    private static void generateAggregatedPhaseStats(GcLogFile gcLogFile, GcStats gcStats) {
-        List<GcPhaseStats> phasesStats = gcStats.getGcAggregatedPhases().stream()
+    private static void generateAggregatedPhaseStats(GCLogFile gcLogFile, GCStats gcStats) {
+        List<GCPhaseStats> phasesStats = gcStats.getGcAggregatedPhases().stream()
                 .map(phase -> {
-                    GcPhaseStats gcPhaseStats = new GcPhaseStats();
+                    GCPhaseStats gcPhaseStats = new GCPhaseStats();
                     gcPhaseStats.setName(phase);
-                    List<GcCycleInfo> cycles = gcLogFile.getGcCycleInfos().stream()
-                            .filter(gcCycleInfo -> phase.equals(gcCycleInfo.getAggregatedPhase()))
+                    List<GCLogCycleEntry> cycles = gcLogFile.getCycleEntries().stream()
+                            .filter(GCLogCycleEntry -> phase.equals(GCLogCycleEntry.getAggregatedPhase()))
                             .collect(Collectors.toList());
                     Map<String, OneFiledAllStats> subPhasesStats = new LinkedHashMap<>();
                     for (String subPhase : gcStats.getSubPhases()) {
                         final String subPhaseName = subPhase;
                         subPhasesStats.put(subPhase, OneFiledAllStatsUtil.create(cycles.stream()
-                                .map(gcCycleInfo -> gcCycleInfo.getSubPhasesTime().get(subPhaseName))
+                                .map(GCLogCycleEntry -> GCLogCycleEntry.getSubPhasesTime().get(subPhaseName))
                                 .filter(Objects::nonNull)
                                 .mapToDouble(BigDecimal::doubleValue)
                                 .toArray()
@@ -193,17 +193,17 @@ public class GcStatsCreator {
                     gcPhaseStats.setTime(createAllStats(cycles, cycleInfo -> cycleInfo.getTime().doubleValue()));
                     return gcPhaseStats;
                 })
-                .sorted(Comparator.comparing(GcPhaseStats::getName))
+                .sorted(Comparator.comparing(GCPhaseStats::getName))
                 .collect(Collectors.toList());
         gcStats.setGcAggregatedPhaseStats(phasesStats);
     }
 
-    private static void generateAgingSummary(GcLogFile gcLogFile, GcStats gcStats) {
-        if (gcLogFile.getGcCycleInfos().size() < 2) {
+    private static void generateAgingSummary(GCLogFile gcLogFile, GCStats gcStats) {
+        if (gcLogFile.getCycleEntries().size() < 2) {
             return;
         }
 
-        GcAgingSummary gcAgingSummary = new GcAgingSummary();
+        GCAgingSummary gcAgingSummary = new GCAgingSummary();
         gcAgingSummary.setSurvivedRatio(new HashMap<>());
         for (int i = 1; i <= gcStats.getMaxSurvivorAge() - 1; i++) {
             int age = i;
@@ -216,9 +216,9 @@ public class GcStatsCreator {
 
         for (int i = 1; i <= gcStats.getMaxSurvivorAge(); i++) {
             int age = i;
-            double[] sizes = gcLogFile.getGcCycleInfos().stream()
-                    .filter(gcCycleInfo -> !gcCycleInfo.getBytesInAges().isEmpty())
-                    .map(gcCycleInfo -> gcCycleInfo.getBytesInAges().get(age))
+            double[] sizes = gcLogFile.getCycleEntries().stream()
+                    .filter(GCLogCycleEntry -> !GCLogCycleEntry.getBytesInAges().isEmpty())
+                    .map(GCLogCycleEntry -> GCLogCycleEntry.getBytesInAges().get(age))
                     .filter(Objects::nonNull)
                     .mapToDouble(Long::doubleValue)
                     .toArray();
@@ -228,40 +228,40 @@ public class GcStatsCreator {
         gcStats.setGcAgingSummary(gcAgingSummary);
     }
 
-    private static void generateAgingStats(GcLogFile gcLogFile, GcStats gcStats) {
-        if (gcLogFile.getGcCycleInfos() == null || gcLogFile.getGcCycleInfos().size() < 2) {
+    private static void generateAgingStats(GCLogFile gcLogFile, GCStats gcStats) {
+        if (gcLogFile.getCycleEntries() == null || gcLogFile.getCycleEntries().size() < 2) {
             return;
         }
 
-        List<GcAgingStats> gcAgingStatsList = new ArrayList<>();
-        GcCycleInfo prev = null;
+        List<GCAgingStats> gcAgingStatsList = new ArrayList<>();
+        GCLogCycleEntry prev = null;
         long maxAge = 0L;
-        List<GcCycleInfo> toProcess = gcLogFile.getGcCycleInfos().stream()
-                .filter(gcCycleInfo -> !gcCycleInfo.getBytesInAges().isEmpty())
+        List<GCLogCycleEntry> toProcess = gcLogFile.getCycleEntries().stream()
+                .filter(GCLogCycleEntry -> !GCLogCycleEntry.getBytesInAges().isEmpty())
                 .collect(Collectors.toList());
 
-        for (GcCycleInfo gcCycleInfo : toProcess) {
+        for (GCLogCycleEntry GCLogCycleEntry : toProcess) {
             if (prev != null) {
-                GcAgingStats gcAgingStats = new GcAgingStats();
-                for (Map.Entry<Integer, Long> agingEntry : gcCycleInfo.getBytesInAges().entrySet()) {
+                GCAgingStats gcAgingStats = new GCAgingStats();
+                for (Map.Entry<Integer, Long> agingEntry : GCLogCycleEntry.getBytesInAges().entrySet()) {
                     if (agingEntry.getKey() == 1) {
                         continue;
                     }
                     BigDecimal rate = BigDecimal.valueOf(agingEntry.getValue()).divide(BigDecimal.valueOf(prev.getBytesInAges().get(agingEntry.getKey() - 1)), 3, RoundingMode.HALF_EVEN);
                     gcAgingStats.getSurvivedRatio().put(agingEntry.getKey() - 1, rate);
                 }
-                gcAgingStats.setSequenceId(gcCycleInfo.getSequenceId());
-                gcAgingStats.setTimeStamp(gcCycleInfo.getTimeStamp());
+                gcAgingStats.setSequenceId(GCLogCycleEntry.getSequenceId());
+                gcAgingStats.setTimeStamp(GCLogCycleEntry.getTimeStamp());
                 gcAgingStatsList.add(gcAgingStats);
             }
-            maxAge = Math.max(maxAge, gcCycleInfo.getMaxAge());
-            prev = gcCycleInfo;
+            maxAge = Math.max(maxAge, GCLogCycleEntry.getMaxAge());
+            prev = GCLogCycleEntry;
         }
         gcStats.setGcAgingStats(gcAgingStatsList);
         gcStats.setMaxSurvivorAge(maxAge);
     }
 
-    private static OneFiledAllStats createAllStats(List<GcCycleInfo> cycles, Function<GcCycleInfo, Double> valueFunc) {
+    private static OneFiledAllStats createAllStats(List<GCLogCycleEntry> cycles, Function<GCLogCycleEntry, Double> valueFunc) {
         double[] values = cycles.stream()
                 .map(valueFunc)
                 .mapToDouble(Double::doubleValue)

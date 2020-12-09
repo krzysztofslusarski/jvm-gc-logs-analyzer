@@ -12,30 +12,32 @@ import pl.ks.profiling.gui.commons.PageContent;
 import pl.ks.profiling.gui.commons.Table;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.OneFiledAllStats;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.parser.JvmLogFile;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.parser.gc.GCStats;
 
 public class GCTableStats implements PageCreator {
     @Override
     public Page create(JvmLogFile jvmLogFile, DecimalFormat decimalFormat) {
         List<PageContent> pageContents = new ArrayList<>();
-        if (jvmLogFile.getGcStats().getMaxSurvivorAge() > 0) {
+        GCStats gcStats = jvmLogFile.getGcLogFile().getStats();
+        if (gcStats.getMaxSurvivorAge() > 0) {
             pageContents.add(Table.builder()
                     .header(List.of("Age promotion", "Survival ratio"))
                     .title("Survivals ratio")
                     .info("Table presents what is the average of survivors in each age.")
                     .screenWidth("25%")
-                    .table(IntStream.range(1, (int) (jvmLogFile.getGcStats().getMaxSurvivorAge()))
+                    .table(IntStream.range(1, (int) (gcStats.getMaxSurvivorAge()))
                             .mapToObj(i -> List.of(
                                     i + " -> " + (i + 1),
-                                    numToString(jvmLogFile.getGcStats().getGcAgingSummary().getSurvivedRatio().get(i) * 100, decimalFormat) + "%"))
+                                    numToString(gcStats.getGcAgingSummary().getSurvivedRatio().get(i) * 100, decimalFormat) + "%"))
                             .collect(Collectors.toList()))
                     .build());
         }
-        if (jvmLogFile.getGcStats().getGcAgingSummary().getAgingSizes().size() > 0) {
+        if (gcStats.getGcAgingSummary().getAgingSizes().size() > 0) {
             pageContents.add(Table.builder()
                     .header(List.of("Age", "Per. 50", "Per. 75", "Per. 90", "Per. 95", "Per. 99", "Per. 99.9", "Per. 100", "Average"))
                     .title("Survivals size")
                     .info("Table presents statistics about survivor sizes in each age (size in bytes).")
-                    .table(jvmLogFile.getGcStats().getGcAgingSummary().getAgingSizes().entrySet().stream()
+                    .table(gcStats.getGcAgingSummary().getAgingSizes().entrySet().stream()
                             .map(entry -> List.of(entry.getKey() + "",
                                     numToString(entry.getValue().getPercentile50(), decimalFormat),
                                     numToString(entry.getValue().getPercentile75(), decimalFormat),
@@ -50,12 +52,12 @@ public class GCTableStats implements PageCreator {
                     )
                     .build());
         }
-        if (jvmLogFile.getGcStats().getGcAggregatedPhaseStats().size() < jvmLogFile.getGcStats().getGcPhaseStats().size()) {
+        if (gcStats.getGcAggregatedPhaseStats().size() < gcStats.getGcPhaseStats().size()) {
             pageContents.add(Table.builder()
                     .header(List.of("Phase name", "Count", "Per. 50", "Per. 75", "Per. 90", "Per. 95", "Per. 99", "Per. 99.9", "Per. 100", "Average", "Total"))
                     .title("Phase stats (aggregated) - times in ms")
                     .info("Table presents statistics about each Stop The World Garbage Collector phase. Phases are aggregated to major type of collection.")
-                    .table(jvmLogFile.getGcStats().getGcAggregatedPhaseStats().stream()
+                    .table(gcStats.getGcAggregatedPhaseStats().stream()
                             .map(stat -> List.of(
                                     stat.getName(),
                                     stat.getCount() + "",
@@ -77,7 +79,7 @@ public class GCTableStats implements PageCreator {
                 .header(List.of("Phase name", "Count", "Per. 50", "Per. 75", "Per. 90", "Per. 95", "Per. 99", "Per. 99.9", "Per. 100", "Average", "Total"))
                 .title("Phase stats - times in ms")
                 .info("Table presents statistics about each Stop The World Garbage Collector phase without aggregation.")
-                .table(jvmLogFile.getGcStats().getGcPhaseStats().stream()
+                .table(gcStats.getGcPhaseStats().stream()
                         .map(stat -> List.of(
                                 stat.getName(),
                                 stat.getCount() + "",
@@ -94,12 +96,12 @@ public class GCTableStats implements PageCreator {
                         .collect(Collectors.toList())
                 )
                 .build());
-        if (jvmLogFile.getGcStats().getGcConcurrentCycleStats().size() > 0) {
+        if (gcStats.getGcConcurrentCycleStats().size() > 0) {
             pageContents.add(Table.builder()
                     .header(List.of("Concurrent phase name", "Count", "Per. 50", "Per. 75", "Per. 90", "Per. 95", "Per. 99", "Per. 99.9", "Per. 100", "Average", "Total"))
                     .title("Concurrent stats - times in ms")
                     .info("Table presents statistics about Concurrent Cycle of Garbage Collector.")
-                    .table(jvmLogFile.getGcStats().getGcConcurrentCycleStats().stream()
+                    .table(gcStats.getGcConcurrentCycleStats().stream()
                             .map(stat -> List.of(
                                     stat.getName(),
                                     stat.getCount() + "",
@@ -117,9 +119,9 @@ public class GCTableStats implements PageCreator {
                     )
                     .build());
         }
-        OneFiledAllStats allHumongousStats = jvmLogFile.getGcStats().getAllHumongousStats();
-        OneFiledAllStats liveHumongousStats = jvmLogFile.getGcStats().getLiveHumongousStats();
-        OneFiledAllStats deadHumongousStats = jvmLogFile.getGcStats().getDeadHumongousStats();
+        OneFiledAllStats allHumongousStats = gcStats.getAllHumongousStats();
+        OneFiledAllStats liveHumongousStats = gcStats.getLiveHumongousStats();
+        OneFiledAllStats deadHumongousStats = gcStats.getDeadHumongousStats();
 
         List<List<String>> table = new ArrayList<>();
         if (liveHumongousStats != null) {
@@ -172,32 +174,32 @@ public class GCTableStats implements PageCreator {
                     .build());
         }
 
-        if (jvmLogFile.getGcStats().getFullGcSequenceIds().size() > 0) {
+        if (gcStats.getFullGcSequenceIds().size() > 0) {
             List<String> header = new ArrayList<>();
             header.add("Cycle");
             pageContents.add(Table.builder()
                     .header(header)
                     .title("Full GC cycle ids")
                     .info("List of Full GC cycles")
-                    .table(jvmLogFile.getGcStats().getFullGcSequenceIds().stream()
+                    .table(gcStats.getFullGcSequenceIds().stream()
                             .map(id -> List.of(id.toString()))
                             .collect(Collectors.toList()))
                     .build());
         }
 
-        if (jvmLogFile.getGcStats().getToSpaceStats().size() > 0) {
+        if (gcStats.getToSpaceStats().size() > 0) {
             List<String> header = new ArrayList<>();
             header.add("Cycle");
-            header.addAll(jvmLogFile.getGcStats().getGcRegions());
+            header.addAll(gcStats.getGcRegions());
             pageContents.add(Table.builder()
                     .header(header)
                     .title("To-space exhausted")
                     .info("List of GC cycles where To-space exhausted occured")
-                    .table(jvmLogFile.getGcStats().getToSpaceStats().stream()
+                    .table(gcStats.getToSpaceStats().stream()
                             .map(gcToSpaceStats -> {
                                 List<String> stats = new ArrayList<>();
                                 stats.add(String.valueOf(gcToSpaceStats.getSequenceId()));
-                                for (String region : jvmLogFile.getGcStats().getGcRegions()) {
+                                for (String region : gcStats.getGcRegions()) {
                                     stats.add(gcToSpaceStats.getRegionStats().get(region));
                                 }
                                 return stats;

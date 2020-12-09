@@ -7,7 +7,7 @@ import pl.ks.profiling.safepoint.analyzer.commons.shared.OneFiledAllStats;
 
 @Getter
 @Setter
-public class GcPhaseStats {
+public class GCPhaseStats {
     private String name;
     private Long count;
     private OneFiledAllStats time;

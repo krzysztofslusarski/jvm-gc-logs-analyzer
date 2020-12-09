@@ -7,26 +7,26 @@ import pl.ks.profiling.gui.commons.Chart;
 import pl.ks.profiling.gui.commons.Page;
 import pl.ks.profiling.gui.commons.PageContent;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.parser.JvmLogFile;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.parser.gc.GcPhaseStats;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.parser.gc.GcStats;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.parser.gc.GCPhaseStats;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.parser.gc.GCStats;
 
 public class GCPhaseTime implements PageCreator{
     @Override
     public Page create(JvmLogFile jvmLogFile, DecimalFormat decimalFormat) {
         List<PageContent> pageContents = new ArrayList<>();
-        if (jvmLogFile.getGcStats().getGcAggregatedPhaseStats().size() < jvmLogFile.getGcStats().getGcPhaseStats().size()) {
+        if (jvmLogFile.getGcLogFile().getStats().getGcAggregatedPhaseStats().size() < jvmLogFile.getGcLogFile().getStats().getGcPhaseStats().size()) {
             pageContents.add(Chart.builder()
                     .chartType(Chart.ChartType.PIE)
                     .title("Phase time (aggregated)")
                     .info("Phases with aggregation to major type of collection.")
-                    .data(getGcAggregatedPhaseTimeChart(jvmLogFile.getGcStats()))
+                    .data(getGcAggregatedPhaseTimeChart(jvmLogFile.getGcLogFile().getStats()))
                     .build());
         }
         pageContents.add(Chart.builder()
                 .chartType(Chart.ChartType.PIE)
                 .title("Phase time")
                 .info("Phases without aggregation.")
-                .data(getGcPhaseTimeChart(jvmLogFile.getGcStats()))
+                .data(getGcPhaseTimeChart(jvmLogFile.getGcLogFile().getStats()))
                 .build());
 
         return Page.builder()
@@ -38,13 +38,13 @@ public class GCPhaseTime implements PageCreator{
                 .build();
     }
 
-    private static Object[][] getGcAggregatedPhaseTimeChart(GcStats gcStats) {
-        List<GcPhaseStats> gcPhaseStats = gcStats.getGcAggregatedPhaseStats();
+    private static Object[][] getGcAggregatedPhaseTimeChart(GCStats gcStats) {
+        List<GCPhaseStats> gcPhaseStats = gcStats.getGcAggregatedPhaseStats();
         Object[][] stats = new Object[gcPhaseStats.size() + 1][2];
         stats[0][0] = "Phase name";
         stats[0][1] = "Total time";
         int i = 1;
-        for (GcPhaseStats stat : gcPhaseStats) {
+        for (GCPhaseStats stat : gcPhaseStats) {
             stats[i][0] = stat.getName();
             stats[i][1] = stat.getTime().getTotal();
             i++;
@@ -52,13 +52,13 @@ public class GCPhaseTime implements PageCreator{
         return stats;
     }
 
-    private static Object[][] getGcPhaseTimeChart(GcStats gcStats) {
-        List<GcPhaseStats> gcPhaseStats = gcStats.getGcPhaseStats();
+    private static Object[][] getGcPhaseTimeChart(GCStats gcStats) {
+        List<GCPhaseStats> gcPhaseStats = gcStats.getGcPhaseStats();
         Object[][] stats = new Object[gcPhaseStats.size() + 1][2];
         stats[0][0] = "Phase name";
         stats[0][1] = "Total time";
         int i = 1;
-        for (GcPhaseStats stat : gcPhaseStats) {
+        for (GCPhaseStats stat : gcPhaseStats) {
             stats[i][0] = stat.getName();
             stats[i][1] = stat.getTime().getTotal();
             i++;

@@ -8,7 +8,7 @@ import pl.ks.profiling.safepoint.analyzer.commons.shared.OneFiledAllStats;
 
 @Getter
 @Setter
-public class GcAgingSummary {
+public class GCAgingSummary {
     private Map<Integer, Double> survivedRatio = new HashMap<>();
     private Map<Integer, OneFiledAllStats> agingSizes = new HashMap<>();
 }

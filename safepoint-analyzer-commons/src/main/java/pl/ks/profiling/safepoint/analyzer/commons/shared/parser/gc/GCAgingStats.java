@@ -8,7 +8,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-class GcAgingStats {
+class GCAgingStats {
     private Map<Integer, BigDecimal> survivedRatio = new HashMap<>();
     private long sequenceId;
     private BigDecimal timeStamp;

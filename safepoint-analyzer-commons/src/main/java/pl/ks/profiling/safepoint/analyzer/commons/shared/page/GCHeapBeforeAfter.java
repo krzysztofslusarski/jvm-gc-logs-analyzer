@@ -6,7 +6,7 @@ import java.util.stream.Collectors;
 import pl.ks.profiling.gui.commons.Chart;
 import pl.ks.profiling.gui.commons.Page;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.parser.JvmLogFile;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.parser.gc.GcCycleInfo;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.parser.gc.GCLogCycleEntry;
 
 public class GCHeapBeforeAfter implements PageCreator {
     @Override
@@ -34,9 +34,9 @@ public class GCHeapBeforeAfter implements PageCreator {
     }
 
     private static Object[][] getHeapSizeChart(JvmLogFile jvmLogFile) {
-        List<GcCycleInfo> cyclesToShow = jvmLogFile.getGcLogFile().getGcCycleInfos()
+        List<GCLogCycleEntry> cyclesToShow = jvmLogFile.getGcLogFile().getCycleEntries()
                 .stream()
-                .filter(GcCycleInfo::isGenuineCollection)
+                .filter(GCLogCycleEntry::isGenuineCollection)
                 .collect(Collectors.toList());
         Object[][] stats = new Object[cyclesToShow.size() + 1][4];
         stats[0][0] = "Cycle";
@@ -45,7 +45,7 @@ public class GCHeapBeforeAfter implements PageCreator {
         stats[0][3] = "Heap size";
         int i = 1;
 
-        for (GcCycleInfo gcCycleInfo : cyclesToShow) {
+        for (GCLogCycleEntry gcCycleInfo : cyclesToShow) {
             stats[i][0] = gcCycleInfo.getTimeStamp();
             stats[i][1] = gcCycleInfo.getHeapBeforeGC();
             stats[i][2] = gcCycleInfo.getHeapAfterGC();
@@ -57,16 +57,16 @@ public class GCHeapBeforeAfter implements PageCreator {
     }
 
     private static Object[][] getReclaimedSizeChart(JvmLogFile jvmLogFile) {
-        List<GcCycleInfo> cyclesToShow = jvmLogFile.getGcLogFile().getGcCycleInfos()
+        List<GCLogCycleEntry> cyclesToShow = jvmLogFile.getGcLogFile().getCycleEntries()
                 .stream()
-                .filter(GcCycleInfo::isGenuineCollection)
+                .filter(GCLogCycleEntry::isGenuineCollection)
                 .collect(Collectors.toList());
         Object[][] stats = new Object[cyclesToShow.size() + 1][2];
         stats[0][0] = "Cycle";
         stats[0][1] = "Reclaimed space";
         int i = 1;
 
-        for (GcCycleInfo gcCycleInfo : cyclesToShow) {
+        for (GCLogCycleEntry gcCycleInfo : cyclesToShow) {
             stats[i][0] = gcCycleInfo.getTimeStamp();
             stats[i][1] = gcCycleInfo.getHeapBeforeGC() - gcCycleInfo.getHeapAfterGC();
             i++;
@@ -76,9 +76,9 @@ public class GCHeapBeforeAfter implements PageCreator {
     }
 
     private static Object[][] getHeapBeforeGCSizeChart(JvmLogFile jvmLogFile) {
-        List<GcCycleInfo> cyclesToShow = jvmLogFile.getGcLogFile().getGcCycleInfos()
+        List<GCLogCycleEntry> cyclesToShow = jvmLogFile.getGcLogFile().getCycleEntries()
                 .stream()
-                .filter(GcCycleInfo::isGenuineCollection)
+                .filter(GCLogCycleEntry::isGenuineCollection)
                 .collect(Collectors.toList());
         Object[][] stats = new Object[cyclesToShow.size() + 1][3];
         stats[0][0] = "Cycle";
@@ -86,7 +86,7 @@ public class GCHeapBeforeAfter implements PageCreator {
         stats[0][2] = "Heap size";
         int i = 1;
 
-        for (GcCycleInfo gcCycleInfo : cyclesToShow) {
+        for (GCLogCycleEntry gcCycleInfo : cyclesToShow) {
             stats[i][0] = gcCycleInfo.getTimeStamp();
             stats[i][1] = gcCycleInfo.getHeapBeforeGC();
             stats[i][2] = gcCycleInfo.getHeapSize();
@@ -97,9 +97,9 @@ public class GCHeapBeforeAfter implements PageCreator {
     }
 
     private static Object[][] getHeapAfterGCSizeChart(JvmLogFile jvmLogFile) {
-        List<GcCycleInfo> cyclesToShow = jvmLogFile.getGcLogFile().getGcCycleInfos()
+        List<GCLogCycleEntry> cyclesToShow = jvmLogFile.getGcLogFile().getCycleEntries()
                 .stream()
-                .filter(GcCycleInfo::isGenuineCollection)
+                .filter(GCLogCycleEntry::isGenuineCollection)
                 .collect(Collectors.toList());
         Object[][] stats = new Object[cyclesToShow.size() + 1][3];
         stats[0][0] = "Cycle";
@@ -107,7 +107,7 @@ public class GCHeapBeforeAfter implements PageCreator {
         stats[0][2] = "Heap size";
         int i = 1;
 
-        for (GcCycleInfo gcCycleInfo : cyclesToShow) {
+        for (GCLogCycleEntry gcCycleInfo : cyclesToShow) {
             stats[i][0] = gcCycleInfo.getTimeStamp();
             stats[i][1] = gcCycleInfo.getHeapAfterGC();
             stats[i][2] = gcCycleInfo.getHeapSize();

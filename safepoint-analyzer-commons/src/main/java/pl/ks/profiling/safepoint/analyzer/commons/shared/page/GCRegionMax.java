@@ -8,12 +8,12 @@ import java.util.stream.Collectors;
 import pl.ks.profiling.gui.commons.Chart;
 import pl.ks.profiling.gui.commons.Page;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.parser.JvmLogFile;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.parser.gc.GcCycleInfo;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.parser.gc.GCLogCycleEntry;
 
 public class GCRegionMax implements PageCreator {
     @Override
     public Page create(JvmLogFile jvmLogFile, DecimalFormat decimalFormat) {
-        if (jvmLogFile.getGcStats().getGcRegions().isEmpty()) {
+        if (jvmLogFile.getGcLogFile().getStats().getGcRegions().isEmpty()) {
             return null;
         }
         return Page.builder()
@@ -32,7 +32,7 @@ public class GCRegionMax implements PageCreator {
     }
 
     private static Object[][] getChart(JvmLogFile jvmLogFile) {
-        List<GcCycleInfo> cycles = jvmLogFile.getGcLogFile().getGcCycleInfos();
+        List<GCLogCycleEntry> cycles = jvmLogFile.getGcLogFile().getCycleEntries();
         Set<String> regions = cycles.stream()
                 .flatMap(gcCycleInfo -> gcCycleInfo.getRegionsMax().keySet().stream())
                 .collect(Collectors.toSet());
@@ -50,7 +50,7 @@ public class GCRegionMax implements PageCreator {
         }
 
         int j = 1;
-        for (GcCycleInfo cycle : cycles) {
+        for (GCLogCycleEntry cycle : cycles) {
             stats[j][0] = cycle.getTimeStamp();
             i = 1;
             for (String region : regionsSorted) {

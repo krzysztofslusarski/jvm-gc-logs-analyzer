@@ -8,16 +8,16 @@ import java.util.stream.Collectors;
 import pl.ks.profiling.gui.commons.Chart;
 import pl.ks.profiling.gui.commons.Page;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.parser.JvmLogFile;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.parser.gc.GcCycleInfo;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.parser.gc.GCLogCycleEntry;
 
 public class GCRegionSizeAfter implements PageCreator {
     @Override
     public Page create(JvmLogFile jvmLogFile, DecimalFormat decimalFormat) {
-        if (jvmLogFile.getGcStats().getGcRegions().isEmpty()) {
+        if (jvmLogFile.getGcLogFile().getStats().getGcRegions().isEmpty()) {
             return null;
         }
 
-        if (jvmLogFile.getGcLogFile().getGcCycleInfos().stream()
+        if (jvmLogFile.getGcLogFile().getCycleEntries().stream()
                 .allMatch(gcCycleInfo -> gcCycleInfo.getRegionsSizeAfterGC().isEmpty())) {
             return null;
         };
@@ -44,7 +44,7 @@ public class GCRegionSizeAfter implements PageCreator {
     }
 
     private static Object[][] getUsedChart(JvmLogFile jvmLogFile) {
-        List<GcCycleInfo> cycles = jvmLogFile.getGcLogFile().getGcCycleInfos().stream()
+        List<GCLogCycleEntry> cycles = jvmLogFile.getGcLogFile().getCycleEntries().stream()
                 .filter(gcCycleInfo -> !gcCycleInfo.getRegionsSizeAfterGC().isEmpty())
                 .collect(Collectors.toList());
         Set<String> regions = cycles.stream()
@@ -64,7 +64,7 @@ public class GCRegionSizeAfter implements PageCreator {
         }
 
         int j = 1;
-        for (GcCycleInfo cycle : cycles) {
+        for (GCLogCycleEntry cycle : cycles) {
             stats[j][0] = cycle.getTimeStamp();
             i = 1;
             for (String region : regionsSorted) {
@@ -78,7 +78,7 @@ public class GCRegionSizeAfter implements PageCreator {
     }
 
     private static Object[][] getWastedChart(JvmLogFile jvmLogFile) {
-        List<GcCycleInfo> cycles = jvmLogFile.getGcLogFile().getGcCycleInfos().stream()
+        List<GCLogCycleEntry> cycles = jvmLogFile.getGcLogFile().getCycleEntries().stream()
                 .filter(gcCycleInfo -> !gcCycleInfo.getRegionsWastedAfterGC().isEmpty())
                 .collect(Collectors.toList());
         Set<String> regions = cycles.stream()
@@ -98,7 +98,7 @@ public class GCRegionSizeAfter implements PageCreator {
         }
 
         int j = 1;
-        for (GcCycleInfo cycle : cycles) {
+        for (GCLogCycleEntry cycle : cycles) {
             stats[j][0] = cycle.getTimeStamp();
             i = 1;
             for (String region : regionsSorted) {

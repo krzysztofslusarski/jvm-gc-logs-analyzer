@@ -6,7 +6,7 @@ import pl.ks.profiling.safepoint.analyzer.commons.shared.OneFiledAllStats;
 
 @Getter
 @Setter
-public class GcConcurrentCycleStats {
+public class GCConcurrentCycleStats {
     private String name;
     private Long count;
     private OneFiledAllStats time;

@@ -7,12 +7,12 @@ import java.util.List;
 import pl.ks.profiling.gui.commons.Chart;
 import pl.ks.profiling.gui.commons.Page;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.parser.JvmLogFile;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.parser.gc.GcCycleInfo;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.parser.gc.GCLogCycleEntry;
 
 public class GCAllocationRate implements PageCreator {
     @Override
     public Page create(JvmLogFile jvmLogFile, DecimalFormat decimalFormat) {
-        if (jvmLogFile.getGcStats().getGcRegions().isEmpty()) {
+        if (jvmLogFile.getGcLogFile().getStats().getGcRegions().isEmpty()) {
             return null;
         }
         return Page.builder()
@@ -30,17 +30,17 @@ public class GCAllocationRate implements PageCreator {
     }
 
     private static Object[][] getChart(JvmLogFile jvmLogFile) {
-        List<GcCycleInfo> cycles = jvmLogFile.getGcLogFile().getGcCycleInfos();
+        List<GCLogCycleEntry> cycles = jvmLogFile.getGcLogFile().getCycleEntries();
 
         if (cycles.size() <= 1) {
             return null;
         }
 
         BigDecimal[] allocationRate = new BigDecimal[cycles.size() -1];
-        GcCycleInfo prev = null;
-        GcCycleInfo current = null;
+        GCLogCycleEntry prev = null;
+        GCLogCycleEntry current = null;
         int i = 0;
-        for (GcCycleInfo cycle : cycles) {
+        for (GCLogCycleEntry cycle : cycles) {
             prev = current;
             current = cycle;
             if (prev == null) {
@@ -55,7 +55,7 @@ public class GCAllocationRate implements PageCreator {
         stats[0][1] = "Allocation rate";
 
         int j = 1;
-        for (GcCycleInfo cycle : cycles) {
+        for (GCLogCycleEntry cycle : cycles) {
             if (j - 1 >= allocationRate.length) {
                 break;
             }

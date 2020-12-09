@@ -14,7 +14,7 @@ import pl.ks.profiling.safepoint.analyzer.commons.shared.parser.JvmLogFile;
 public class GCSubphaseStats implements PageCreator{
     @Override
     public Page create(JvmLogFile jvmLogFile, DecimalFormat decimalFormat) {
-        List<PageContent> pageContents = jvmLogFile.getGcStats().getGcAggregatedPhaseStats().stream()
+        List<PageContent> pageContents = jvmLogFile.getGcLogFile().getStats().getGcAggregatedPhaseStats().stream()
                 .map(stat -> Table.builder()
                         .header(List.of("Subphase name", "Per. 50", "Per. 75", "Per. 90", "Per. 95", "Per. 99", "Per. 99.9", "Per. 100", "Average", "Total"))
                         .title(stat.getName() + " - subphase stats - times in ms")

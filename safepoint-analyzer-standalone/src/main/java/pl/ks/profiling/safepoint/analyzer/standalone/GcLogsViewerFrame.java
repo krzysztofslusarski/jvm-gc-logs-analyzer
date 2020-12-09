@@ -13,7 +13,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import net.miginfocom.swing.MigLayout;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.parser.gc.GcLogFile;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.parser.gc.GCLogFile;
 
 class GcLogsViewerFrame extends JFrame {
     private PresentationFontProvider presentationFontProvider;
@@ -23,9 +23,9 @@ class GcLogsViewerFrame extends JFrame {
     private JScrollPane contentScroll;
     private GcLogsPanel gcLogsPanel;
     private GcLogsViewerFrame uberFrame;
-    private GcLogFile gcLogFile;
+    private GCLogFile gcLogFile;
 
-    public GcLogsViewerFrame(PresentationFontProvider presentationFontProvider, GcLogFile gcLogFile) throws HeadlessException {
+    public GcLogsViewerFrame(PresentationFontProvider presentationFontProvider, GCLogFile gcLogFile) throws HeadlessException {
         this.presentationFontProvider = presentationFontProvider;
         this.gcLogsPanel = new GcLogsPanel();
         this.gcLogFile = gcLogFile;
@@ -96,7 +96,7 @@ class GcLogsViewerFrame extends JFrame {
             removeAll();
             StringBuilder builder = new StringBuilder();
             for (long i = collectionIdFrom; i <= collectionIdTo; i++) {
-                List<String> lines = gcLogFile.getLines().get(i);
+                List<String> lines = gcLogFile.getRawLogLines().get(i);
                 for (String line : lines) {
                     String toShow = showDecorators ? line : line.replaceFirst(".*GC\\(", "GC(");
                     builder.append(toShow).append("\n");

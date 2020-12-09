@@ -1,13 +1,13 @@
 package pl.ks.profiling.safepoint.analyzer.commons.shared.parser.gc;
 
-import java.math.BigDecimal;
+import java.util.HashMap;
+import java.util.Map;
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
-public class GcConcurrentCycleInfo {
+public class GCToSpaceStats {
     private long sequenceId;
-    private String phase;
-    private BigDecimal time;
+    private Map<String, String> regionStats = new HashMap<>();
 }
