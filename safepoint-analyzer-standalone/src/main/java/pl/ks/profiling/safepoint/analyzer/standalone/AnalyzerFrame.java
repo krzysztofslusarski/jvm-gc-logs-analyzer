@@ -35,7 +35,7 @@ import pl.ks.profiling.gui.commons.Page;
 import pl.ks.profiling.gui.commons.PageContent;
 import pl.ks.profiling.gui.commons.Table;
 import pl.ks.profiling.io.TempFileUtils;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.parser.JvmLogFile;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.JvmLogFile;
 
 public class AnalyzerFrame extends JFrame {
     private static final List<String> colors = List.of(
