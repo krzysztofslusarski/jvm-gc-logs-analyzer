@@ -1,6 +1,16 @@
 # jvm-gc-logs-anylzer
 
 This project is a JVM log analyzer. It is dedicated to JVM 11 and above.
+
+The project creates two artifacts:
+* **analyzer-web.jar** - web application that is deployed on [http://gclogs.com](http://gclogs.com)
+* **analyzer-standalone.jar** - much faster standalone Swing application 
+
+## How to install - from sources
+
+git clone --depth 1 https://github.com/krzysztofslusarski/jvm-gc-logs-analyzer.git
+cd jvm-gc-logs-analyzer/
+mvn clean package
  
 ## Features
 
@@ -184,3 +194,8 @@ decorators="level,tags,time,uptime,pid
 * For JDK 11+ decorators: level,tags,time,uptime are needed, check sample Xlog configuration below.
 * UI is optimized for Full HD resolution.
 * There is no exception handling at all :) 
+
+## How to contribute
+
+* If you have any idea what other charts/tables I can add please create an issue with explanation why this new feature may be helpful
+* If you have logs that doesn't work create an issue with logs included
