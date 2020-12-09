@@ -97,6 +97,14 @@ public class GCLogFile {
         concurrentCycleEntries.add(new GCLogConcurrentCycleEntry(sequenceId, time));
     }
 
+    void addSurvivorStats(Long sequenceId, long desiredSize, long newThreshold, long maxThreshold) {
+        GCLogCycleEntry gcLogCycleEntry = unprocessedCycles.get(sequenceId);
+        if (gcLogCycleEntry == null) {
+            return;
+        }
+        gcLogCycleEntry.addSurvivorStats(desiredSize, newThreshold, maxThreshold);
+    }
+
     void parsingCompleted() {
         if (stats != null) {
             return;

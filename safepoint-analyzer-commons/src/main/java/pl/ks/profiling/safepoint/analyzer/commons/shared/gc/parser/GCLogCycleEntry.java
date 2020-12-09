@@ -37,6 +37,10 @@ public class GCLogCycleEntry {
     private Map<Integer, Long> bytesInAges = new HashMap<>();
     private int maxAge;
 
+    private long desiredSurvivorSize;
+    private long newTenuringThreshold;
+    private long maxTenuringThreshold;
+
     private boolean wasToSpaceExhausted;
 
     GCLogCycleEntry(Long sequenceId, String phase, BigDecimal timeStamp) {
@@ -102,5 +106,11 @@ public class GCLogCycleEntry {
 
     void toSpaceExhausted() {
         wasToSpaceExhausted = true;
+    }
+
+    void addSurvivorStats(long desiredSize, long newThreshold, long maxThreshold) {
+        this.desiredSurvivorSize = desiredSize;;
+        this.newTenuringThreshold = newThreshold;
+        this.maxTenuringThreshold = maxThreshold;
     }
 }

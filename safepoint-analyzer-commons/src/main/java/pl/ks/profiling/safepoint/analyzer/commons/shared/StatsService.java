@@ -26,6 +26,7 @@ import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.page.GCRegionCountBe
 import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.page.GCRegionMax;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.page.GCRegionSizeAfter;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.page.GCSubphaseStats;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.page.GCSurvivorAndTenuring;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.page.GCTableStats;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.parser.GCLogFileParser;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.jit.page.JitCodeCacheStats;
@@ -204,6 +205,7 @@ public class StatsService {
                 new GCHeapBefore(),
                 new GCHeapAfter(),
                 new GCHeapBeforeAfter(),
+                new GCSurvivorAndTenuring(),
                 new GCAllocationRate(),
                 new GCAllocationRateInTime(new BigDecimal(10))
         );

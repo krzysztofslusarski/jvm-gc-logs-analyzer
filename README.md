@@ -13,7 +13,9 @@ git clone --depth 1 https://github.com/krzysztofslusarski/jvm-gc-logs-analyzer.g
 cd jvm-gc-logs-analyzer/
 mvn clean package
 ```
- 
+
+JAVA_HOME should point to JDK 11. 
+
 ## Features
 
 ### Garbage collector logs analyzer

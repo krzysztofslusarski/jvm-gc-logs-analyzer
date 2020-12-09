@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import pl.ks.profiling.safepoint.analyzer.commons.FileParser;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.ParserUtils;
 
 public class GCLogFileParser implements FileParser<GCLogFile> {
     private GCLogFile gcLogFile = new GCLogFile();
@@ -41,6 +42,8 @@ public class GCLogFileParser implements FileParser<GCLogFile> {
             addHumongous(sequenceId, line);
         } else if (line.contains("- age")) {
             addAgeCount(sequenceId, line);
+        } else if (line.contains("gc,age") && line.contains("debug")) {
+            addSurvivorStats(sequenceId, line);
         } else if (line.contains("To-space exhausted")) {
             gcLogFile.toSpaceExhausted(sequenceId);
         }
@@ -110,6 +113,18 @@ public class GCLogFileParser implements FileParser<GCLogFile> {
         String time = matcher.group().replace("ms", "").replace(",", ".");
 
         gcLogFile.addSizesAndTime(sequenceId, Integer.parseInt(before), Integer.parseInt(after), Integer.parseInt(heapSize), new BigDecimal(time));
+    }
+
+    private void addSurvivorStats(Long sequenceId, String line) {
+        int desiredSizePos = line.indexOf("Desired survivor size");
+        int newThresholdPos = line.indexOf("new threshold", desiredSizePos);
+        int maxThresholdPos = line.indexOf("max threshold", newThresholdPos);
+
+        long desiredSize = ParserUtils.parseFirstNumber(line, desiredSizePos);
+        long newThreshold = ParserUtils.parseFirstNumber(line, newThresholdPos);
+        long maxThreshold = ParserUtils.parseFirstNumber(line, maxThresholdPos);
+
+        gcLogFile.addSurvivorStats(sequenceId, desiredSize, newThreshold, maxThreshold);
     }
 
     private void addHumongous(Long sequenceId, String line) {
