@@ -8,9 +8,11 @@ The project creates two artifacts:
 
 ## How to install - from sources
 
+```shell script
 git clone --depth 1 https://github.com/krzysztofslusarski/jvm-gc-logs-analyzer.git
 cd jvm-gc-logs-analyzer/
 mvn clean package
+```
  
 ## Features
 
