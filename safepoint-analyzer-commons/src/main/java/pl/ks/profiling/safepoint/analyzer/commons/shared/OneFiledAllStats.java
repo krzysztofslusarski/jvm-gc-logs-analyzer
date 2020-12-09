@@ -7,8 +7,6 @@ import lombok.Setter;
 @Getter
 @Setter
 public class OneFiledAllStats {
-    private Long id;
-
     private BigDecimal percentile50;
     private BigDecimal percentile75;
     private BigDecimal percentile90;

@@ -2,14 +2,14 @@ package pl.ks.profiling.safepoint.analyzer.commons.shared.safepoint.parser;
 
 import java.util.List;
 import java.util.Set;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.OneFiledAllStats;
 
 @Getter
-@Setter
+@Setter(AccessLevel.PACKAGE)
 public class SafepointOperationStats {
-    private Long id;
     private long totalCount;
     private OneFiledAllStats tts;
     private OneFiledAllStats operationTime;

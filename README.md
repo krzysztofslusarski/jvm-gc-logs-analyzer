@@ -1,6 +1,7 @@
 # jvm-gc-logs-anylzer
 
-This project is a JVM log analyzer. It is dedicated to JVM 11 and above.
+This project is a JVM log analyzer. It is dedicated to JVM 11 and above. **The logs have to be in a proper format with proper decorators**, check sections at
+the end for limitations and working examples.
 
 The project creates two artifacts:
 * **analyzer-web.jar** - web application that is deployed on [http://gclogs.com](http://gclogs.com)
@@ -193,9 +194,8 @@ decorators="level,tags,time,uptime,pid
 
 * Logs from JDK 11, 12, 13 - works with flags below, tested on Parallel, CMS and G1.
 * Logs from JDK 9, 10 - should work.
-* Logs from JDK 8 and below - experimental (no GC log support, only safepoint, charts and stas are not accurate, because log file style sucks).
-* Max 10MB file (after compression).
-* For JDK 11+ decorators: level,tags,time,uptime are needed, check sample Xlog configuration below.
+* Logs from JDK 8 and below - experimental (no GC log support, only safepoint, charts and stas are not accurate, because this logs sucks).
+* For JDK 11+ decorators: level,tags,time,uptime are needed, check sample Xlog configuration above.
 * UI is optimized for Full HD resolution.
 * There is no exception handling at all :) 
 

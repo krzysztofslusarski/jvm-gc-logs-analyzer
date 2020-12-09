@@ -2,16 +2,16 @@ package pl.ks.profiling.safepoint.analyzer.commons.shared.gc.parser;
 
 import java.util.List;
 import java.util.Set;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.OneFiledAllStats;
 
 @Getter
-@Setter
+@Setter(AccessLevel.PACKAGE)
 public class GCStats {
     private List<GCAgingStats> gcAgingStats;
     private GCAgingSummary gcAgingSummary;
-    private List<GCRegionStats> gcRegionStats;
     private long maxSurvivorAge;
     private Set<String> gcRegions;
     private Set<String> gcPhases;

@@ -1,11 +1,12 @@
 package pl.ks.profiling.safepoint.analyzer.commons.shared.safepoint.parser;
 
 import java.math.BigDecimal;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
-@Setter
+@Setter(AccessLevel.PACKAGE)
 public class TimesInTime {
     private BigDecimal startTime;
     private BigDecimal endTime;
