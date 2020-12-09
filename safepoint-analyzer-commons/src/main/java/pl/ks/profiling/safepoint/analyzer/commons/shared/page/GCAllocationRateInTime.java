@@ -11,18 +11,18 @@ import lombok.RequiredArgsConstructor;
 import pl.ks.profiling.gui.commons.Chart;
 import pl.ks.profiling.gui.commons.Page;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.gc.GcCycleInfo;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.safepoint.SafepointLogFile;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.safepoint.JvmLogFile;
 
 @RequiredArgsConstructor
 public class GCAllocationRateInTime implements PageCreator {
     private final BigDecimal minuteCount;
 
     @Override
-    public Page create(SafepointLogFile safepointLogFile, DecimalFormat decimalFormat) {
-        if (safepointLogFile.getGcStats().getGcRegions().isEmpty()) {
+    public Page create(JvmLogFile jvmLogFile, DecimalFormat decimalFormat) {
+        if (jvmLogFile.getGcStats().getGcRegions().isEmpty()) {
             return null;
         }
-        Map<Long, List<BigDecimal>> byTimeMap = createByTimeMap(safepointLogFile);
+        Map<Long, List<BigDecimal>> byTimeMap = createByTimeMap(jvmLogFile);
         return Page.builder()
                 .menuName("Allocation rate (in time) - " + minuteCount + "m")
                 .fullName("Allocation rate (in time) - " + minuteCount + " minutes period")
@@ -86,8 +86,8 @@ public class GCAllocationRateInTime implements PageCreator {
         return stats;
     }
 
-    private Map<Long, List<BigDecimal>> createByTimeMap(SafepointLogFile safepointLogFile) {
-        List<GcCycleInfo> cycles = safepointLogFile.getGcLogFile().getGcCycleInfos();
+    private Map<Long, List<BigDecimal>> createByTimeMap(JvmLogFile jvmLogFile) {
+        List<GcCycleInfo> cycles = jvmLogFile.getGcLogFile().getGcCycleInfos();
 
         if (cycles.size() <= 1) {
             return null;

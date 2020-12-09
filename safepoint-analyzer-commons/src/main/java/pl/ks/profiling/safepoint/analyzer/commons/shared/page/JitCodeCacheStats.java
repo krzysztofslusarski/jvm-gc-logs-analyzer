@@ -6,18 +6,18 @@ import java.util.stream.Collectors;
 import pl.ks.profiling.gui.commons.Chart;
 import pl.ks.profiling.gui.commons.Page;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.jit.CodeCacheStatus;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.safepoint.SafepointLogFile;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.safepoint.JvmLogFile;
 
 public class JitCodeCacheStats implements PageCreator {
     @Override
-    public Page create(SafepointLogFile safepointLogFile, DecimalFormat decimalFormat) {
+    public Page create(JvmLogFile jvmLogFile, DecimalFormat decimalFormat) {
         return Page.builder()
                 .menuName("CodeCache stats")
                 .fullName("CodeCache stats")
                 .info("Following charts shows CodeCache stats in all segments.")
                 .icon(Page.Icon.CHART)
                 .pageContents(
-                        safepointLogFile.getJitLogFile().getCodeCacheStatuses().entrySet().stream()
+                        jvmLogFile.getJitLogFile().getCodeCacheStatuses().entrySet().stream()
                                 .map(entry ->
                                         Chart.builder()
                                                 .chartType(Chart.ChartType.LINE)

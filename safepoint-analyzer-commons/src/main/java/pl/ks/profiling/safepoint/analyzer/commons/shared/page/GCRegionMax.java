@@ -8,12 +8,12 @@ import java.util.stream.Collectors;
 import pl.ks.profiling.gui.commons.Chart;
 import pl.ks.profiling.gui.commons.Page;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.gc.GcCycleInfo;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.safepoint.SafepointLogFile;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.safepoint.JvmLogFile;
 
 public class GCRegionMax implements PageCreator {
     @Override
-    public Page create(SafepointLogFile safepointLogFile, DecimalFormat decimalFormat) {
-        if (safepointLogFile.getGcStats().getGcRegions().isEmpty()) {
+    public Page create(JvmLogFile jvmLogFile, DecimalFormat decimalFormat) {
+        if (jvmLogFile.getGcStats().getGcRegions().isEmpty()) {
             return null;
         }
         return Page.builder()
@@ -25,14 +25,14 @@ public class GCRegionMax implements PageCreator {
                         Chart.builder()
                                 .title("Max number or regions")
                                 .chartType(Chart.ChartType.POINTS)
-                                .data(getChart(safepointLogFile))
+                                .data(getChart(jvmLogFile))
                                 .build())
                 )
                 .build();
     }
 
-    private static Object[][] getChart(SafepointLogFile safepointLogFile) {
-        List<GcCycleInfo> cycles = safepointLogFile.getGcLogFile().getGcCycleInfos();
+    private static Object[][] getChart(JvmLogFile jvmLogFile) {
+        List<GcCycleInfo> cycles = jvmLogFile.getGcLogFile().getGcCycleInfos();
         Set<String> regions = cycles.stream()
                 .flatMap(gcCycleInfo -> gcCycleInfo.getRegionsMax().keySet().stream())
                 .collect(Collectors.toSet());

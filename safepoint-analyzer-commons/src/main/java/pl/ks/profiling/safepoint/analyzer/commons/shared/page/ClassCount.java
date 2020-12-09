@@ -5,11 +5,11 @@ import java.util.List;
 import pl.ks.profiling.gui.commons.Chart;
 import pl.ks.profiling.gui.commons.Page;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.classloader.ClassStatus;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.safepoint.SafepointLogFile;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.safepoint.JvmLogFile;
 
 public class ClassCount implements PageCreator {
     @Override
-    public Page create(SafepointLogFile safepointLogFile, DecimalFormat decimalFormat) {
+    public Page create(JvmLogFile jvmLogFile, DecimalFormat decimalFormat) {
         return Page.builder()
                 .menuName("Class count")
                 .fullName("Class count")
@@ -20,7 +20,7 @@ public class ClassCount implements PageCreator {
                                 Chart.builder()
                                         .chartType(Chart.ChartType.LINE)
                                         .title("Current count")
-                                        .data(getCurrentCountChart(safepointLogFile.getClassLoaderLogFile().getClassStatuses()))
+                                        .data(getCurrentCountChart(jvmLogFile.getClassLoaderLogFile().getClassStatuses()))
                                         .build()
                         )
                 )

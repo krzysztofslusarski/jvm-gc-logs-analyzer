@@ -4,14 +4,14 @@ import java.text.DecimalFormat;
 import java.util.List;
 import pl.ks.profiling.gui.commons.Chart;
 import pl.ks.profiling.gui.commons.Page;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.safepoint.SafepointLogFile;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.safepoint.JvmLogFile;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.safepoint.SafepointOperationStats;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.safepoint.TimesInTime;
 
 public class SafepointApplicationTimeByTime5Sec implements PageCreator {
     @Override
-    public Page create(SafepointLogFile safepointLogFile, DecimalFormat decimalFormat) {
-        SafepointOperationStats soStats = safepointLogFile.getSafepointOperationStats();
+    public Page create(JvmLogFile jvmLogFile, DecimalFormat decimalFormat) {
+        SafepointOperationStats soStats = jvmLogFile.getSafepointLogFile().getSafepointOperationStats();
         return Page.builder()
                 .menuName("Application time (in time) - 5s")
                 .fullName("Application time (in time) - 5s window")

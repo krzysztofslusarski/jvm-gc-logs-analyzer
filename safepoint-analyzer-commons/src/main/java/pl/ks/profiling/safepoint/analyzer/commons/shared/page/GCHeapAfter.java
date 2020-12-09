@@ -6,11 +6,11 @@ import java.util.stream.Collectors;
 import pl.ks.profiling.gui.commons.Chart;
 import pl.ks.profiling.gui.commons.Page;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.gc.GcCycleInfo;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.safepoint.SafepointLogFile;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.safepoint.JvmLogFile;
 
 public class GCHeapAfter implements PageCreator {
     @Override
-    public Page create(SafepointLogFile safepointLogFile, DecimalFormat decimalFormat) {
+    public Page create(JvmLogFile jvmLogFile, DecimalFormat decimalFormat) {
         return Page.builder()
                 .menuName("Heap after GC")
                 .fullName("Heap after GC")
@@ -21,14 +21,14 @@ public class GCHeapAfter implements PageCreator {
                         Chart.builder()
                                 .chartType(Chart.ChartType.LINE)
                                 .title("Heap after GC")
-                                .data(getHeapAfterGCSizeChart(safepointLogFile))
+                                .data(getHeapAfterGCSizeChart(jvmLogFile))
                                 .build()
                 ))
                 .build();
     }
 
-    private static Object[][] getHeapAfterGCSizeChart(SafepointLogFile safepointLogFile) {
-        List<GcCycleInfo> cyclesToShow = safepointLogFile.getGcLogFile().getGcCycleInfos()
+    private static Object[][] getHeapAfterGCSizeChart(JvmLogFile jvmLogFile) {
+        List<GcCycleInfo> cyclesToShow = jvmLogFile.getGcLogFile().getGcCycleInfos()
                 .stream()
                 .filter(GcCycleInfo::isGenuineCollection)
                 .collect(Collectors.toList());

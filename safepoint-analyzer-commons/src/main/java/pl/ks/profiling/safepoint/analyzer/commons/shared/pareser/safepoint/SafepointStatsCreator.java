@@ -20,24 +20,24 @@ public class SafepointStatsCreator {
     private static final BigDecimal PERCENT_MULTIPLIER = new BigDecimal(100);
     private static final int NEW_SCALE = 2;
 
-    public static SafepointOperationStats create(List<SafepointOperation> operations) {
+    public static SafepointOperationStats create(SafepointLogFile safepointLogFile) {
         SafepointOperationStats stats = new SafepointOperationStats();
-        stats.setTts(createAllStats(operations, operation -> operation.getTtsTime().multiply(TO_MS_MULTIPLIER).setScale(NEW_SCALE, RoundingMode.HALF_EVEN).doubleValue()));
-        stats.setApplicationTime(createAllStats(operations, operation -> operation.getApplicationTime().multiply(TO_MS_MULTIPLIER).setScale(NEW_SCALE, RoundingMode.HALF_EVEN).doubleValue()));
-        stats.setOperationTime(createAllStats(operations, operation -> operation.getStoppedTime().subtract(operation.getTtsTime()).multiply(TO_MS_MULTIPLIER).setScale(NEW_SCALE, RoundingMode.HALF_EVEN).doubleValue()));
-        stats.setTotalCount(operations.size());
-        stats.setTimesInTimes2sec(generateTimeStats(operations, new BigDecimal("2")));
-        stats.setTimesInTimes5sec(generateTimeStats(operations, new BigDecimal("5")));
-        stats.setTimesInTimes15sec(generateTimeStats(operations, new BigDecimal("15")));
-        Map<String, List<SafepointOperation>> statsByNameMap = new HashMap<>();
-        operations.forEach(operation -> {
-            List<SafepointOperation> operationsByName = statsByNameMap.computeIfAbsent(operation.getOperationName(), name -> new ArrayList<>());
+        stats.setTts(createAllStats(safepointLogFile.getSafepoints(), operation -> operation.getTtsTime().multiply(TO_MS_MULTIPLIER).setScale(NEW_SCALE, RoundingMode.HALF_EVEN).doubleValue()));
+        stats.setApplicationTime(createAllStats(safepointLogFile.getSafepoints(), operation -> operation.getApplicationTime().multiply(TO_MS_MULTIPLIER).setScale(NEW_SCALE, RoundingMode.HALF_EVEN).doubleValue()));
+        stats.setOperationTime(createAllStats(safepointLogFile.getSafepoints(), operation -> operation.getStoppedTime().subtract(operation.getTtsTime()).multiply(TO_MS_MULTIPLIER).setScale(NEW_SCALE, RoundingMode.HALF_EVEN).doubleValue()));
+        stats.setTotalCount(safepointLogFile.getSafepoints().size());
+        stats.setTimesInTimes2sec(generateTimeStats(safepointLogFile.getSafepoints(), new BigDecimal("2")));
+        stats.setTimesInTimes5sec(generateTimeStats(safepointLogFile.getSafepoints(), new BigDecimal("5")));
+        stats.setTimesInTimes15sec(generateTimeStats(safepointLogFile.getSafepoints(), new BigDecimal("15")));
+        Map<String, List<SafepointLogEntry>> statsByNameMap = new HashMap<>();
+        safepointLogFile.getSafepoints().forEach(operation -> {
+            List<SafepointLogEntry> operationsByName = statsByNameMap.computeIfAbsent(operation.getOperationName(), name -> new ArrayList<>());
             operationsByName.add(operation);
         });
 
         stats.setStatsByNames(new HashSet<>());
-        for (Map.Entry<String, List<SafepointOperation>> entry : statsByNameMap.entrySet()) {
-            List<SafepointOperation> operationsByName = entry.getValue();
+        for (Map.Entry<String, List<SafepointLogEntry>> entry : statsByNameMap.entrySet()) {
+            List<SafepointLogEntry> operationsByName = entry.getValue();
             SafepointOperationStatsByName statsByName = new SafepointOperationStatsByName();
             statsByName.setOperationTime(createAllStats(operationsByName, operation -> operation.getStoppedTime()
                     .subtract(operation.getTtsTime())
@@ -47,7 +47,7 @@ public class SafepointStatsCreator {
             statsByName.setOperationName(entry.getKey());
             statsByName.setCountPercent(new BigDecimal(operationsByName.size())
                     .multiply(PERCENT_MULTIPLIER)
-                    .divide(new BigDecimal(operations.size()), NEW_SCALE, RoundingMode.HALF_EVEN)
+                    .divide(new BigDecimal(safepointLogFile.getSafepoints().size()), NEW_SCALE, RoundingMode.HALF_EVEN)
                     .setScale(NEW_SCALE, RoundingMode.HALF_EVEN));
             BigDecimal ttsTime = stats.getTts().getAverage()
                     .multiply(new BigDecimal(operationsByName.size()));
@@ -56,15 +56,15 @@ public class SafepointStatsCreator {
                     .multiply(PERCENT_MULTIPLIER)
                     .divide(stats.getOperationTime().getTotal().add(stats.getTts().getTotal()), NEW_SCALE, RoundingMode.HALF_EVEN)
                     .setScale(NEW_SCALE, RoundingMode.HALF_EVEN));
-            statsByName.setStatsByTime(generateInTimeStats(operations, entry.getKey()));
+            statsByName.setStatsByTime(generateInTimeStats(safepointLogFile.getSafepoints(), entry.getKey()));
             stats.getStatsByNames().add(statsByName);
         }
         return stats;
     }
 
-    private static List<TimesInTime> generateTimeStats(List<SafepointOperation> operations, BigDecimal interval) {
+    private static List<TimesInTime> generateTimeStats(List<SafepointLogEntry> operations, BigDecimal interval) {
         List<Phase> phases = new ArrayList<>(operations.size() * 3);
-        for (SafepointOperation operation : operations) {
+        for (SafepointLogEntry operation : operations) {
             phases.add(Phase.builder()
                     .time(operation.getApplicationTime())
                     .type(PhaseType.APPLICATION)
@@ -148,12 +148,12 @@ public class SafepointStatsCreator {
         TTS
     }
 
-    private static Set<SafepointInTimeStats> generateInTimeStats(List<SafepointOperation> operations, String name) {
+    private static Set<SafepointInTimeStats> generateInTimeStats(List<SafepointLogEntry> operations, String name) {
         Set<SafepointInTimeStats> safepointInTimeStats = new HashSet<>();
         BigDecimal time = BigDecimal.ZERO;
         long count = 0;
         BigDecimal timeSpent = BigDecimal.ZERO;
-        for (SafepointOperation operation : operations) {
+        for (SafepointLogEntry operation : operations) {
             if (operation.getOperationName().equals(name)) {
                 count++;
                 timeSpent = timeSpent.add(operation.getStoppedTime().subtract(operation.getTtsTime()));
@@ -168,7 +168,7 @@ public class SafepointStatsCreator {
         return safepointInTimeStats;
     }
 
-    private static OneFiledAllStats createAllStats(List<SafepointOperation> operations, Function<SafepointOperation, Double> valueFunc) {
+    private static OneFiledAllStats createAllStats(List<SafepointLogEntry> operations, Function<SafepointLogEntry, Double> valueFunc) {
         double[] values = operations.stream()
                 .map(valueFunc)
                 .mapToDouble(Double::doubleValue)

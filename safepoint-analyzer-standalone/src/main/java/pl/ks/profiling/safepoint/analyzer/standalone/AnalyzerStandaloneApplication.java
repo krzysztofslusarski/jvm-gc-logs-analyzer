@@ -18,7 +18,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import pl.ks.profiling.io.InputUtils;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.StatsService;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.safepoint.SafepointLogFile;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.safepoint.JvmLogFile;
 
 @Slf4j
 @SpringBootApplication
@@ -52,7 +52,7 @@ public class AnalyzerStandaloneApplication extends JFrame {
                 if (ret == JFileChooser.APPROVE_OPTION) {
                     File file = fileChooser.getSelectedFile().getAbsoluteFile();
                     InputStream inputStream = InputUtils.getInputStream(file.getName(), file.getAbsolutePath());
-                    SafepointLogFile stats = statsService.createAllStats(inputStream, file.getName());
+                    JvmLogFile stats = statsService.createAllStats(inputStream, file.getName());
                     new AnalyzerFrame(stats, presentationFontProvider);
                 }
             } catch (IOException e) {

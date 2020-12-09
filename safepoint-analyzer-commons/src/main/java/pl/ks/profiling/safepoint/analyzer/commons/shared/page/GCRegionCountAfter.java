@@ -8,12 +8,12 @@ import java.util.stream.Collectors;
 import pl.ks.profiling.gui.commons.Chart;
 import pl.ks.profiling.gui.commons.Page;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.gc.GcCycleInfo;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.safepoint.SafepointLogFile;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.safepoint.JvmLogFile;
 
 public class GCRegionCountAfter implements PageCreator{
     @Override
-    public Page create(SafepointLogFile safepointLogFile, DecimalFormat decimalFormat) {
-        if (safepointLogFile.getGcStats().getGcRegions().isEmpty()) {
+    public Page create(JvmLogFile jvmLogFile, DecimalFormat decimalFormat) {
+        if (jvmLogFile.getGcStats().getGcRegions().isEmpty()) {
             return null;
         }
         return Page.builder()
@@ -22,11 +22,11 @@ public class GCRegionCountAfter implements PageCreator{
                 .info("Page presents charts with count of G1 regions after Garbage Collection. Charts are generated for every Garbage Collector phase.")
                 .icon(Page.Icon.CHART)
                 .pageContents(
-                        safepointLogFile.getGcStats().getGcAggregatedPhases().stream()
+                        jvmLogFile.getGcStats().getGcAggregatedPhases().stream()
                                 .map(phase -> Chart.builder()
                                         .chartType(Chart.ChartType.LINE)
                                         .title(phase)
-                                        .data(getChart(phase, safepointLogFile))
+                                        .data(getChart(phase, jvmLogFile))
                                         .build())
                                 .filter(chart -> chart.getData() != null)
                                 .collect(Collectors.toList())
@@ -34,8 +34,8 @@ public class GCRegionCountAfter implements PageCreator{
                 .build();
     }
 
-    private static Object[][] getChart(String aggregatedPhase, SafepointLogFile safepointLogFile) {
-        List<GcCycleInfo> cycles = safepointLogFile.getGcLogFile().getGcCycleInfos().stream()
+    private static Object[][] getChart(String aggregatedPhase, JvmLogFile jvmLogFile) {
+        List<GcCycleInfo> cycles = jvmLogFile.getGcLogFile().getGcCycleInfos().stream()
                 .filter(gcCycleInfo -> aggregatedPhase.equals(gcCycleInfo.getAggregatedPhase()))
                 .collect(Collectors.toList());
         Set<String> regions = cycles.stream()

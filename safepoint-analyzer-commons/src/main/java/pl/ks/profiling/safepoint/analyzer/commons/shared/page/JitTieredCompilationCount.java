@@ -5,11 +5,11 @@ import java.util.List;
 import pl.ks.profiling.gui.commons.Chart;
 import pl.ks.profiling.gui.commons.Page;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.jit.CompilationStatus;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.safepoint.SafepointLogFile;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.safepoint.JvmLogFile;
 
 public class JitTieredCompilationCount implements PageCreator {
     @Override
-    public Page create(SafepointLogFile safepointLogFile, DecimalFormat decimalFormat) {
+    public Page create(JvmLogFile jvmLogFile, DecimalFormat decimalFormat) {
         return Page.builder()
                 .menuName("JIT tiered compilation count")
                 .fullName("JIT tiered compilation count")
@@ -20,17 +20,17 @@ public class JitTieredCompilationCount implements PageCreator {
                                 Chart.builder()
                                         .chartType(Chart.ChartType.LINE)
                                         .title("Current tear count")
-                                        .data(getCurrentCountChart(safepointLogFile.getJitLogFile().getCompilationStatuses()))
+                                        .data(getCurrentCountChart(jvmLogFile.getJitLogFile().getCompilationStatuses()))
                                         .build(),
                                 Chart.builder()
                                         .chartType(Chart.ChartType.LINE)
                                         .title("Current tear 2 count")
-                                        .data(getTierCountChart(safepointLogFile.getJitLogFile().getCompilationStatuses(), 2))
+                                        .data(getTierCountChart(jvmLogFile.getJitLogFile().getCompilationStatuses(), 2))
                                         .build(),
                                 Chart.builder()
                                         .chartType(Chart.ChartType.LINE)
                                         .title("Current tear 4 count")
-                                        .data(getTierCountChart(safepointLogFile.getJitLogFile().getCompilationStatuses(), 4))
+                                        .data(getTierCountChart(jvmLogFile.getJitLogFile().getCompilationStatuses(), 4))
                                         .build()
                         )
                 )

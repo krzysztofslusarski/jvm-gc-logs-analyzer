@@ -7,13 +7,13 @@ import java.util.List;
 import java.util.stream.Collectors;
 import pl.ks.profiling.gui.commons.Page;
 import pl.ks.profiling.gui.commons.Table;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.safepoint.SafepointLogFile;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.safepoint.JvmLogFile;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.safepoint.SafepointOperationStats;
 
 public class SafepointTableStats implements PageCreator{
     @Override
-    public Page create(SafepointLogFile safepointLogFile, DecimalFormat decimalFormat) {
-        SafepointOperationStats soStats = safepointLogFile.getSafepointOperationStats();
+    public Page create(JvmLogFile jvmLogFile, DecimalFormat decimalFormat) {
+        SafepointOperationStats soStats = jvmLogFile.getSafepointLogFile().getSafepointOperationStats();
         return Page.builder()
                 .menuName("Safepoint table stats")
                 .fullName("Safepoint operation statistics")

@@ -4,12 +4,12 @@ import java.text.DecimalFormat;
 import java.util.List;
 import pl.ks.profiling.gui.commons.Chart;
 import pl.ks.profiling.gui.commons.Page;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.safepoint.SafepointLogFile;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.safepoint.JvmLogFile;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.tlab.TlabSummaryInfo;
 
 public class TlabSummary implements PageCreator {
     @Override
-    public Page create(SafepointLogFile safepointLogFile, DecimalFormat decimalFormat) {
+    public Page create(JvmLogFile jvmLogFile, DecimalFormat decimalFormat) {
         return Page.builder()
                 .menuName("TLAB summary")
                 .fullName("TLAB summary")
@@ -20,22 +20,22 @@ public class TlabSummary implements PageCreator {
                                 Chart.builder()
                                         .chartType(Chart.ChartType.POINTS)
                                         .title("Slow allocation of objects")
-                                        .data(getSlowAllocationChart(safepointLogFile.getTlabLogFile().getTlabSummaries()))
+                                        .data(getSlowAllocationChart(jvmLogFile.getTlabLogFile().getTlabSummaries()))
                                         .build(),
                                 Chart.builder()
                                         .chartType(Chart.ChartType.POINTS)
                                         .title("TLAB refills")
-                                        .data(getRefillsChart(safepointLogFile.getTlabLogFile().getTlabSummaries()))
+                                        .data(getRefillsChart(jvmLogFile.getTlabLogFile().getTlabSummaries()))
                                         .build(),
                                 Chart.builder()
                                         .chartType(Chart.ChartType.POINTS)
                                         .title("Waste percent")
-                                        .data(getWasteChart(safepointLogFile.getTlabLogFile().getTlabSummaries()))
+                                        .data(getWasteChart(jvmLogFile.getTlabLogFile().getTlabSummaries()))
                                         .build(),
                                 Chart.builder()
                                         .chartType(Chart.ChartType.POINTS)
                                         .title("Number of allocating threads")
-                                        .data(getAllocatingThreadsChart(safepointLogFile.getTlabLogFile().getTlabSummaries()))
+                                        .data(getAllocatingThreadsChart(jvmLogFile.getTlabLogFile().getTlabSummaries()))
                                         .build()
                         )
                 )

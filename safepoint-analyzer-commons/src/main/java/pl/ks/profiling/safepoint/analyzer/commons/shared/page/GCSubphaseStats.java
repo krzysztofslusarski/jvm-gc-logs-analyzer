@@ -9,12 +9,12 @@ import java.util.stream.Collectors;
 import pl.ks.profiling.gui.commons.Page;
 import pl.ks.profiling.gui.commons.PageContent;
 import pl.ks.profiling.gui.commons.Table;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.safepoint.SafepointLogFile;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.safepoint.JvmLogFile;
 
 public class GCSubphaseStats implements PageCreator{
     @Override
-    public Page create(SafepointLogFile safepointLogFile, DecimalFormat decimalFormat) {
-        List<PageContent> pageContents = safepointLogFile.getGcStats().getGcAggregatedPhaseStats().stream()
+    public Page create(JvmLogFile jvmLogFile, DecimalFormat decimalFormat) {
+        List<PageContent> pageContents = jvmLogFile.getGcStats().getGcAggregatedPhaseStats().stream()
                 .map(stat -> Table.builder()
                         .header(List.of("Subphase name", "Per. 50", "Per. 75", "Per. 90", "Per. 95", "Per. 99", "Per. 99.9", "Per. 100", "Average", "Total"))
                         .title(stat.getName() + " - subphase stats - times in ms")

@@ -8,25 +8,25 @@ import pl.ks.profiling.gui.commons.Page;
 import pl.ks.profiling.gui.commons.PageContent;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.gc.GcPhaseStats;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.gc.GcStats;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.safepoint.SafepointLogFile;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.safepoint.JvmLogFile;
 
 public class GCPhaseTime implements PageCreator{
     @Override
-    public Page create(SafepointLogFile safepointLogFile, DecimalFormat decimalFormat) {
+    public Page create(JvmLogFile jvmLogFile, DecimalFormat decimalFormat) {
         List<PageContent> pageContents = new ArrayList<>();
-        if (safepointLogFile.getGcStats().getGcAggregatedPhaseStats().size() < safepointLogFile.getGcStats().getGcPhaseStats().size()) {
+        if (jvmLogFile.getGcStats().getGcAggregatedPhaseStats().size() < jvmLogFile.getGcStats().getGcPhaseStats().size()) {
             pageContents.add(Chart.builder()
                     .chartType(Chart.ChartType.PIE)
                     .title("Phase time (aggregated)")
                     .info("Phases with aggregation to major type of collection.")
-                    .data(getGcAggregatedPhaseTimeChart(safepointLogFile.getGcStats()))
+                    .data(getGcAggregatedPhaseTimeChart(jvmLogFile.getGcStats()))
                     .build());
         }
         pageContents.add(Chart.builder()
                 .chartType(Chart.ChartType.PIE)
                 .title("Phase time")
                 .info("Phases without aggregation.")
-                .data(getGcPhaseTimeChart(safepointLogFile.getGcStats()))
+                .data(getGcPhaseTimeChart(jvmLogFile.getGcStats()))
                 .build());
 
         return Page.builder()

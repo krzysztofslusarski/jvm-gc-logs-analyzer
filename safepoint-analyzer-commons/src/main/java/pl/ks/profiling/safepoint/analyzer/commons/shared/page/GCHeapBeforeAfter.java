@@ -6,11 +6,11 @@ import java.util.stream.Collectors;
 import pl.ks.profiling.gui.commons.Chart;
 import pl.ks.profiling.gui.commons.Page;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.gc.GcCycleInfo;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.safepoint.SafepointLogFile;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.safepoint.JvmLogFile;
 
 public class GCHeapBeforeAfter implements PageCreator {
     @Override
-    public Page create(SafepointLogFile safepointLogFile, DecimalFormat decimalFormat) {
+    public Page create(JvmLogFile jvmLogFile, DecimalFormat decimalFormat) {
         return Page.builder()
                 .menuName("Heap before/after GC")
                 .fullName("Heap before/after GC")
@@ -22,19 +22,19 @@ public class GCHeapBeforeAfter implements PageCreator {
                                 .chartType(Chart.ChartType.POINTS_OR_LINE)
                                 .seriesTypes(new Chart.SeriesType[]{Chart.SeriesType.POINTS, Chart.SeriesType.LINE, Chart.SeriesType.LINE})
                                 .title("Heap before/after GC")
-                                .data(getHeapSizeChart(safepointLogFile))
+                                .data(getHeapSizeChart(jvmLogFile))
                                 .build(),
                         Chart.builder()
                                 .chartType(Chart.ChartType.POINTS)
                                 .title("Reclaimed space")
-                                .data(getReclaimedSizeChart(safepointLogFile))
+                                .data(getReclaimedSizeChart(jvmLogFile))
                                 .build()
                 ))
                 .build();
     }
 
-    private static Object[][] getHeapSizeChart(SafepointLogFile safepointLogFile) {
-        List<GcCycleInfo> cyclesToShow = safepointLogFile.getGcLogFile().getGcCycleInfos()
+    private static Object[][] getHeapSizeChart(JvmLogFile jvmLogFile) {
+        List<GcCycleInfo> cyclesToShow = jvmLogFile.getGcLogFile().getGcCycleInfos()
                 .stream()
                 .filter(GcCycleInfo::isGenuineCollection)
                 .collect(Collectors.toList());
@@ -56,8 +56,8 @@ public class GCHeapBeforeAfter implements PageCreator {
         return stats;
     }
 
-    private static Object[][] getReclaimedSizeChart(SafepointLogFile safepointLogFile) {
-        List<GcCycleInfo> cyclesToShow = safepointLogFile.getGcLogFile().getGcCycleInfos()
+    private static Object[][] getReclaimedSizeChart(JvmLogFile jvmLogFile) {
+        List<GcCycleInfo> cyclesToShow = jvmLogFile.getGcLogFile().getGcCycleInfos()
                 .stream()
                 .filter(GcCycleInfo::isGenuineCollection)
                 .collect(Collectors.toList());
@@ -75,8 +75,8 @@ public class GCHeapBeforeAfter implements PageCreator {
         return stats;
     }
 
-    private static Object[][] getHeapBeforeGCSizeChart(SafepointLogFile safepointLogFile) {
-        List<GcCycleInfo> cyclesToShow = safepointLogFile.getGcLogFile().getGcCycleInfos()
+    private static Object[][] getHeapBeforeGCSizeChart(JvmLogFile jvmLogFile) {
+        List<GcCycleInfo> cyclesToShow = jvmLogFile.getGcLogFile().getGcCycleInfos()
                 .stream()
                 .filter(GcCycleInfo::isGenuineCollection)
                 .collect(Collectors.toList());
@@ -96,8 +96,8 @@ public class GCHeapBeforeAfter implements PageCreator {
         return stats;
     }
 
-    private static Object[][] getHeapAfterGCSizeChart(SafepointLogFile safepointLogFile) {
-        List<GcCycleInfo> cyclesToShow = safepointLogFile.getGcLogFile().getGcCycleInfos()
+    private static Object[][] getHeapAfterGCSizeChart(JvmLogFile jvmLogFile) {
+        List<GcCycleInfo> cyclesToShow = jvmLogFile.getGcLogFile().getGcCycleInfos()
                 .stream()
                 .filter(GcCycleInfo::isGenuineCollection)
                 .collect(Collectors.toList());

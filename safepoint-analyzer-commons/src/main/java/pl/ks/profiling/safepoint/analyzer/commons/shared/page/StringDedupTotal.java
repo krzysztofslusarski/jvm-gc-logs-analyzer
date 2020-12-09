@@ -4,12 +4,12 @@ import java.text.DecimalFormat;
 import java.util.List;
 import pl.ks.profiling.gui.commons.Chart;
 import pl.ks.profiling.gui.commons.Page;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.safepoint.SafepointLogFile;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.safepoint.JvmLogFile;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.stringdedup.StringDedupLogEntry;
 
 public class StringDedupTotal implements PageCreator {
     @Override
-    public Page create(SafepointLogFile safepointLogFile, DecimalFormat decimalFormat) {
+    public Page create(JvmLogFile jvmLogFile, DecimalFormat decimalFormat) {
         return Page.builder()
                 .menuName("Str. Dedup. total stats")
                 .fullName("String Deduplication total stats")
@@ -20,22 +20,22 @@ public class StringDedupTotal implements PageCreator {
                                 Chart.builder()
                                         .chartType(Chart.ChartType.LINE)
                                         .title("Total size of deduplicated strings (in Kb)")
-                                        .data(getSizeChart(safepointLogFile.getStringDedupLogFile().getEntries()))
+                                        .data(getSizeChart(jvmLogFile.getStringDedupLogFile().getEntries()))
                                         .build(),
                                 Chart.builder()
                                         .chartType(Chart.ChartType.LINE)
                                         .title("Count of deduplicated strings")
-                                        .data(getCountChart(safepointLogFile.getStringDedupLogFile().getEntries()))
+                                        .data(getCountChart(jvmLogFile.getStringDedupLogFile().getEntries()))
                                         .build(),
                                 Chart.builder()
                                         .chartType(Chart.ChartType.LINE)
                                         .title("Size (in Kb) of all scanned strings")
-                                        .data(getNewSizeChart(safepointLogFile.getStringDedupLogFile().getEntries()))
+                                        .data(getNewSizeChart(jvmLogFile.getStringDedupLogFile().getEntries()))
                                         .build(),
                                 Chart.builder()
                                         .chartType(Chart.ChartType.LINE)
                                         .title("Count of all scanned strings")
-                                        .data(getNewCountChart(safepointLogFile.getStringDedupLogFile().getEntries()))
+                                        .data(getNewCountChart(jvmLogFile.getStringDedupLogFile().getEntries()))
                                         .build()
                         )
                 )

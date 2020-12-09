@@ -5,14 +5,14 @@ import java.util.List;
 import java.util.Set;
 import pl.ks.profiling.gui.commons.Chart;
 import pl.ks.profiling.gui.commons.Page;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.safepoint.SafepointLogFile;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.safepoint.JvmLogFile;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.safepoint.SafepointOperationStats;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.safepoint.SafepointOperationStatsByName;
 
 public class SafepoinOperationCount implements PageCreator{
     @Override
-    public Page create(SafepointLogFile safepointLogFile, DecimalFormat decimalFormat) {
-        SafepointOperationStats soStats = safepointLogFile.getSafepointOperationStats();
+    public Page create(JvmLogFile jvmLogFile, DecimalFormat decimalFormat) {
+        SafepointOperationStats soStats = jvmLogFile.getSafepointLogFile().getSafepointOperationStats();
         return Page.builder()
                 .menuName("SO count")
                 .fullName("Safepoint operation count")

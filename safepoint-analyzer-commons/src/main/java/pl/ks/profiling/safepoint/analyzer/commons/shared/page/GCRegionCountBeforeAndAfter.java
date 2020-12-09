@@ -9,21 +9,21 @@ import pl.ks.profiling.gui.commons.Chart;
 import pl.ks.profiling.gui.commons.Page;
 import pl.ks.profiling.gui.commons.PageContent;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.gc.GcCycleInfo;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.safepoint.SafepointLogFile;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.safepoint.JvmLogFile;
 
 public class GCRegionCountBeforeAndAfter implements PageCreator{
     @Override
-    public Page create(SafepointLogFile safepointLogFile, DecimalFormat decimalFormat) {
-        if (safepointLogFile.getGcStats().getGcRegions().isEmpty()) {
+    public Page create(JvmLogFile jvmLogFile, DecimalFormat decimalFormat) {
+        if (jvmLogFile.getGcStats().getGcRegions().isEmpty()) {
             return null;
         }
         List<PageContent> charts = new ArrayList<>();
-        for (String region : safepointLogFile.getGcStats().getGcRegions()) {
-            charts.addAll(safepointLogFile.getGcStats().getGcAggregatedPhases().stream()
+        for (String region : jvmLogFile.getGcStats().getGcRegions()) {
+            charts.addAll(jvmLogFile.getGcStats().getGcAggregatedPhases().stream()
                     .map(phase -> Chart.builder()
                             .chartType(Chart.ChartType.LINE)
                             .title(phase + " (" + region + ")")
-                            .data(getChart(phase, region, safepointLogFile))
+                            .data(getChart(phase, region, jvmLogFile))
                             .build())
                     .filter(chart -> chart.getData() != null)
                     .collect(Collectors.toList()));
@@ -37,8 +37,8 @@ public class GCRegionCountBeforeAndAfter implements PageCreator{
                 .build();
     }
 
-    private static Object[][] getChart(String aggregatedPhase, String region, SafepointLogFile safepointLogFile) {
-        List<GcCycleInfo> cycles = safepointLogFile.getGcLogFile().getGcCycleInfos().stream()
+    private static Object[][] getChart(String aggregatedPhase, String region, JvmLogFile jvmLogFile) {
+        List<GcCycleInfo> cycles = jvmLogFile.getGcLogFile().getGcCycleInfos().stream()
                 .filter(gcCycleInfo -> aggregatedPhase.equals(gcCycleInfo.getAggregatedPhase()))
                 .collect(Collectors.toList());
         Set<String> regions = cycles.stream()

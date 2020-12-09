@@ -35,7 +35,7 @@ import pl.ks.profiling.gui.commons.Page;
 import pl.ks.profiling.gui.commons.PageContent;
 import pl.ks.profiling.gui.commons.Table;
 import pl.ks.profiling.io.TempFileUtils;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.safepoint.SafepointLogFile;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.safepoint.JvmLogFile;
 
 public class AnalyzerFrame extends JFrame {
     private static final List<String> colors = List.of(
@@ -48,13 +48,13 @@ public class AnalyzerFrame extends JFrame {
             .map(Color::decode)
             .toArray(Color[]::new);
 
-    private SafepointLogFile stats;
+    private JvmLogFile stats;
     private PresentationFontProvider presentationFontProvider;
     private AnalyzerFrame uberFrame = this;
     private ContentPanel contentPanel = new ContentPanel();
     private JScrollPane contentScroll = new JScrollPane(contentPanel);
 
-    public AnalyzerFrame(SafepointLogFile stats, PresentationFontProvider presentationFontProvider) {
+    public AnalyzerFrame(JvmLogFile stats, PresentationFontProvider presentationFontProvider) {
         this.stats = stats;
         this.presentationFontProvider = presentationFontProvider;
 

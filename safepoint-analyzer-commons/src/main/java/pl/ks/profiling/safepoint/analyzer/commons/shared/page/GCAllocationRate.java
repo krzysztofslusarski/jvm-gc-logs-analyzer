@@ -7,12 +7,12 @@ import java.util.List;
 import pl.ks.profiling.gui.commons.Chart;
 import pl.ks.profiling.gui.commons.Page;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.gc.GcCycleInfo;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.safepoint.SafepointLogFile;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.safepoint.JvmLogFile;
 
 public class GCAllocationRate implements PageCreator {
     @Override
-    public Page create(SafepointLogFile safepointLogFile, DecimalFormat decimalFormat) {
-        if (safepointLogFile.getGcStats().getGcRegions().isEmpty()) {
+    public Page create(JvmLogFile jvmLogFile, DecimalFormat decimalFormat) {
+        if (jvmLogFile.getGcStats().getGcRegions().isEmpty()) {
             return null;
         }
         return Page.builder()
@@ -23,14 +23,14 @@ public class GCAllocationRate implements PageCreator {
                 .pageContents(List.of(
                         Chart.builder()
                                 .chartType(Chart.ChartType.POINTS)
-                                .data(getChart(safepointLogFile))
+                                .data(getChart(jvmLogFile))
                                 .build())
                 )
                 .build();
     }
 
-    private static Object[][] getChart(SafepointLogFile safepointLogFile) {
-        List<GcCycleInfo> cycles = safepointLogFile.getGcLogFile().getGcCycleInfos();
+    private static Object[][] getChart(JvmLogFile jvmLogFile) {
+        List<GcCycleInfo> cycles = jvmLogFile.getGcLogFile().getGcCycleInfos();
 
         if (cycles.size() <= 1) {
             return null;

@@ -9,11 +9,11 @@ import java.util.List;
 import java.util.stream.Collectors;
 import pl.ks.profiling.gui.commons.Page;
 import pl.ks.profiling.gui.commons.Table;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.safepoint.SafepointLogFile;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.safepoint.JvmLogFile;
 
 public class TlabThreadStats implements PageCreator {
     @Override
-    public Page create(SafepointLogFile safepointLogFile, DecimalFormat decimalFormat) {
+    public Page create(JvmLogFile jvmLogFile, DecimalFormat decimalFormat) {
         return Page.builder()
                 .menuName("TLAB thread stats")
                 .fullName("TLAB thread statistics")
@@ -25,7 +25,7 @@ public class TlabThreadStats implements PageCreator {
                                         .header(List.of("Tid", "Nid", "Per. 50", "Per. 99", "Per. 99.9", "Per. 100", "Average", "Max size (KB)", "Avg size (KB)", "Total", "Count"))
                                         .title("Slow allocations")
                                         .info("Table presents slow allocation (in eden) per thread.")
-                                        .table(safepointLogFile.getTlabLogFile().getThreadTlabStats().stream()
+                                        .table(jvmLogFile.getTlabLogFile().getThreadTlabStats().stream()
                                                 .filter(threadTlabInfo -> threadTlabInfo.getSlowAllocs().getTotal().compareTo(BigDecimal.ZERO) > 0)
                                                 .sorted(Comparator.comparing(value -> -value.getSlowAllocs().getTotal().doubleValue()))
                                                 .map(threadTlabInfo -> List.of(threadTlabInfo.getTid() + "",

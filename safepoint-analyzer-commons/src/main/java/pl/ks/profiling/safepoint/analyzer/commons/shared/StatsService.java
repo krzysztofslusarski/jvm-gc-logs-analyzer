@@ -50,16 +50,15 @@ import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.classloader.Cla
 import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.gc.GcLogFileParser;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.gc.GcStatsCreator;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.jit.JitLogFileParser;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.safepoint.SafepointLogFile;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.safepoint.JvmLogFile;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.safepoint.SafepointLogFileParser;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.safepoint.SafepointStatsCreator;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.stringdedup.StringDedupLogFileParser;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.thread.ThreadLogFileParser;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.tlab.TlabLogFileParser;
 
 @RequiredArgsConstructor
 public class StatsService {
-    public SafepointLogFile createAllStats(InputStream inputStream, String originalFilename) throws IOException {
+    public JvmLogFile createAllStats(InputStream inputStream, String originalFilename) throws IOException {
         BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
         SafepointLogFileParser safepointLogFileParser = new SafepointLogFileParser();
         GcLogFileParser gcLogFileParser = new GcLogFileParser();
@@ -80,91 +79,90 @@ public class StatsService {
             stringDedupLogFileParser.parseLine(line);
         }
 
-        SafepointLogFile safepointLogFile = new SafepointLogFile();
-        safepointLogFile.setFilename(originalFilename);
-        safepointLogFile.setSafepointOperations(safepointLogFileParser.fetchData());
-        safepointLogFile.setSafepointOperationStats(SafepointStatsCreator.create(safepointLogFile.getSafepointOperations()));
-        safepointLogFile.setGcLogFile(gcLogFileParser.fetchData());
-        safepointLogFile.setGcStats(GcStatsCreator.createStats(safepointLogFile.getGcLogFile()));
-        safepointLogFile.setThreadLogFile(threadLogFileParser.fetchData());
-        safepointLogFile.setClassLoaderLogFile(classLoaderLogFileParser.fetchData());
-        safepointLogFile.setJitLogFile(jitLogFileParser.fetchData());
-        safepointLogFile.setTlabLogFile(tlabLogFileParser.fetchData());
-        safepointLogFile.setStringDedupLogFile(stringDedupLogFileParser.fetchData());
+        JvmLogFile jvmLogFile = new JvmLogFile();
+        jvmLogFile.setFilename(originalFilename);
+        jvmLogFile.setSafepointLogFile(safepointLogFileParser.fetchData());
+        jvmLogFile.setGcLogFile(gcLogFileParser.fetchData());
+        jvmLogFile.setGcStats(GcStatsCreator.createStats(jvmLogFile.getGcLogFile()));
+        jvmLogFile.setThreadLogFile(threadLogFileParser.fetchData());
+        jvmLogFile.setClassLoaderLogFile(classLoaderLogFileParser.fetchData());
+        jvmLogFile.setJitLogFile(jitLogFileParser.fetchData());
+        jvmLogFile.setTlabLogFile(tlabLogFileParser.fetchData());
+        jvmLogFile.setStringDedupLogFile(stringDedupLogFileParser.fetchData());
 
-        addPages(safepointLogFile);
-        return safepointLogFile;
+        addPages(jvmLogFile);
+        return jvmLogFile;
     }
 
-    private void addPages(SafepointLogFile safepointLogFile) {
+    private void addPages(JvmLogFile jvmLogFile) {
         DecimalFormat decimalFormat = new DecimalFormat("#,##0.00", DecimalFormatSymbols.getInstance(Locale.US));
-        createSafepointPages(safepointLogFile, decimalFormat);
-        createGcPages(safepointLogFile, decimalFormat);
-        createThreadPages(safepointLogFile, decimalFormat);
-        createClassLoaderPages(safepointLogFile, decimalFormat);
-        createJitPages(safepointLogFile, decimalFormat);
-        createTlabPages(safepointLogFile, decimalFormat);
-        createStringDedupPages(safepointLogFile, decimalFormat);
+        createSafepointPages(jvmLogFile, decimalFormat);
+        createGcPages(jvmLogFile, decimalFormat);
+        createThreadPages(jvmLogFile, decimalFormat);
+        createClassLoaderPages(jvmLogFile, decimalFormat);
+        createJitPages(jvmLogFile, decimalFormat);
+        createTlabPages(jvmLogFile, decimalFormat);
+        createStringDedupPages(jvmLogFile, decimalFormat);
     }
 
-    private void createStringDedupPages(SafepointLogFile safepointLogFile, DecimalFormat decimalFormat) {
+    private void createStringDedupPages(JvmLogFile jvmLogFile, DecimalFormat decimalFormat) {
         List<PageCreator> stringDedupPageCreators = new ArrayList<>();
-        if (!safepointLogFile.getStringDedupLogFile().getEntries().isEmpty()) {
+        if (!jvmLogFile.getStringDedupLogFile().getEntries().isEmpty()) {
             stringDedupPageCreators.add(new StringDedupTotal());
             stringDedupPageCreators.add(new StringDedupLast());
         }
 
         for (PageCreator stringDedupPageCreator : stringDedupPageCreators) {
-            Page page = stringDedupPageCreator.create(safepointLogFile, decimalFormat);
+            Page page = stringDedupPageCreator.create(jvmLogFile, decimalFormat);
             if (page != null) {
-                safepointLogFile.getPages().add(page);
+                jvmLogFile.getPages().add(page);
             }
         }
     }
 
-    private void createTlabPages(SafepointLogFile safepointLogFile, DecimalFormat decimalFormat) {
+    private void createTlabPages(JvmLogFile jvmLogFile, DecimalFormat decimalFormat) {
         List<PageCreator> tlabPageCreators = new ArrayList<>();
-        if (!safepointLogFile.getTlabLogFile().getTlabSummaries().isEmpty()) {
+        if (!jvmLogFile.getTlabLogFile().getTlabSummaries().isEmpty()) {
             tlabPageCreators.add(new TlabSummary());
         }
 
-        if (!safepointLogFile.getTlabLogFile().getThreadTlabsBeforeGC().isEmpty()) {
+        if (!jvmLogFile.getTlabLogFile().getThreadTlabsBeforeGC().isEmpty()) {
             tlabPageCreators.add(new TlabThreadStats());
         }
 
         for (PageCreator jitPageCreator : tlabPageCreators) {
-            Page page = jitPageCreator.create(safepointLogFile, decimalFormat);
+            Page page = jitPageCreator.create(jvmLogFile, decimalFormat);
             if (page != null) {
-                safepointLogFile.getPages().add(page);
+                jvmLogFile.getPages().add(page);
             }
         }
     }
 
-    private void createJitPages(SafepointLogFile safepointLogFile, DecimalFormat decimalFormat) {
+    private void createJitPages(JvmLogFile jvmLogFile, DecimalFormat decimalFormat) {
         List<PageCreator> jitPageCreators = new ArrayList<>();
-        if (safepointLogFile.getJitLogFile().getLastStatus() != null) {
+        if (jvmLogFile.getJitLogFile().getLastStatus() != null) {
             jitPageCreators.add(new JitCompilationCount());
             jitPageCreators.add(new JitTieredCompilationCount());
         }
 
-        if (safepointLogFile.getJitLogFile().getCodeCacheStatuses().size() > 0) {
+        if (jvmLogFile.getJitLogFile().getCodeCacheStatuses().size() > 0) {
             jitPageCreators.add(new JitCodeCacheStats());
         }
 
-        if (safepointLogFile.getJitLogFile().getCodeCacheSweeperActivities().size() > 0) {
+        if (jvmLogFile.getJitLogFile().getCodeCacheSweeperActivities().size() > 0) {
             jitPageCreators.add(new JitCodeCacheSweeperActivity());
         }
 
         for (PageCreator jitPageCreator : jitPageCreators) {
-            Page page = jitPageCreator.create(safepointLogFile, decimalFormat);
+            Page page = jitPageCreator.create(jvmLogFile, decimalFormat);
             if (page != null) {
-                safepointLogFile.getPages().add(page);
+                jvmLogFile.getPages().add(page);
             }
         }
     }
 
-    private void createClassLoaderPages(SafepointLogFile safepointLogFile, DecimalFormat decimalFormat) {
-        if (safepointLogFile.getClassLoaderLogFile().getLastStatus() == null) {
+    private void createClassLoaderPages(JvmLogFile jvmLogFile, DecimalFormat decimalFormat) {
+        if (jvmLogFile.getClassLoaderLogFile().getLastStatus() == null) {
             return;
         }
 
@@ -174,15 +172,15 @@ public class StatsService {
         );
 
         for (PageCreator classLoaderPageCreator : classLoaderPageCreators) {
-            Page page = classLoaderPageCreator.create(safepointLogFile, decimalFormat);
+            Page page = classLoaderPageCreator.create(jvmLogFile, decimalFormat);
             if (page != null) {
-                safepointLogFile.getPages().add(page);
+                jvmLogFile.getPages().add(page);
             }
         }
     }
 
-    private void createThreadPages(SafepointLogFile safepointLogFile, DecimalFormat decimalFormat) {
-        if (safepointLogFile.getThreadLogFile().getLastStatus() == null) {
+    private void createThreadPages(JvmLogFile jvmLogFile, DecimalFormat decimalFormat) {
+        if (jvmLogFile.getThreadLogFile().getLastStatus() == null) {
             return;
         }
 
@@ -192,15 +190,15 @@ public class StatsService {
         );
 
         for (PageCreator threadPageCreator : threadPageCreators) {
-            Page page = threadPageCreator.create(safepointLogFile, decimalFormat);
+            Page page = threadPageCreator.create(jvmLogFile, decimalFormat);
             if (page != null) {
-                safepointLogFile.getPages().add(page);
+                jvmLogFile.getPages().add(page);
             }
         }
     }
 
-    private static void createGcPages(SafepointLogFile safepointLogFile, DecimalFormat decimalFormat) {
-        if (CollectionUtils.isEmpty(safepointLogFile.getGcLogFile().getGcCycleInfos())) {
+    private static void createGcPages(JvmLogFile jvmLogFile, DecimalFormat decimalFormat) {
+        if (CollectionUtils.isEmpty(jvmLogFile.getGcLogFile().getGcCycleInfos())) {
             return;
         }
         List<PageCreator> gcPageCreators = List.of(
@@ -220,15 +218,15 @@ public class StatsService {
         );
 
         for (PageCreator safepointPageCreator : gcPageCreators) {
-            Page page = safepointPageCreator.create(safepointLogFile, decimalFormat);
+            Page page = safepointPageCreator.create(jvmLogFile, decimalFormat);
             if (page != null) {
-                safepointLogFile.getPages().add(page);
+                jvmLogFile.getPages().add(page);
             }
         }
     }
 
-    private static void createSafepointPages(SafepointLogFile safepointLogFile, DecimalFormat decimalFormat) {
-        if (CollectionUtils.isEmpty(safepointLogFile.getSafepointOperations())) {
+    private static void createSafepointPages(JvmLogFile jvmLogFile, DecimalFormat decimalFormat) {
+        if (CollectionUtils.isEmpty(jvmLogFile.getSafepointLogFile().getSafepoints())) {
             return;
         }
 
@@ -244,7 +242,7 @@ public class StatsService {
         );
 
         for (PageCreator safepointPageCreator : safepointPageCreators) {
-            safepointLogFile.getPages().add(safepointPageCreator.create(safepointLogFile, decimalFormat));
+            jvmLogFile.getPages().add(safepointPageCreator.create(jvmLogFile, decimalFormat));
         }
     }
 }

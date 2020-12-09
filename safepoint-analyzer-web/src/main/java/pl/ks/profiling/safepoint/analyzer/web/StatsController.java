@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 import pl.ks.profiling.io.StorageUtils;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.StatsService;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.safepoint.SafepointLogFile;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.pareser.safepoint.JvmLogFile;
 import pl.ks.profiling.web.commons.WelcomePage;
 
 @Controller
@@ -36,7 +36,7 @@ class StatsController {
     String upload(Model model, @RequestParam("file") MultipartFile file) throws Exception {
         String originalFilename = file.getOriginalFilename();
         InputStream inputStream = StorageUtils.createCopy(INPUTS_PATH, originalFilename, file.getInputStream());
-        SafepointLogFile stats = statsService.createAllStats(inputStream, originalFilename);
+        JvmLogFile stats = statsService.createAllStats(inputStream, originalFilename);
         model.addAttribute("welcomePage", WelcomePage.builder()
                 .pages(stats.getPages())
                 .build());
@@ -46,7 +46,7 @@ class StatsController {
     @PostMapping("/upload-plain-text")
     String upload(Model model, String text) throws Exception {
         InputStream inputStream = StorageUtils.savePlainText(INPUTS_PATH, text);
-        SafepointLogFile stats = statsService.createAllStats(inputStream, "plain-text.log");
+        JvmLogFile stats = statsService.createAllStats(inputStream, "plain-text.log");
         model.addAttribute("welcomePage", WelcomePage.builder()
                 .pages(stats.getPages())
                 .build());
