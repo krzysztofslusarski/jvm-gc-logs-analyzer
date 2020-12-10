@@ -7,6 +7,10 @@ The project creates two artifacts:
 * **analyzer-web.jar** - web application that is deployed on [http://gclogs.com](http://gclogs.com)
 * **analyzer-standalone.jar** - much faster standalone Swing application 
 
+## How to install - from binaries
+
+Simply download latest [release](https://github.com/krzysztofslusarski/jvm-gc-logs-analyzer/releases).
+
 ## How to install - from sources
 
 ```shell script
@@ -16,6 +20,14 @@ mvn clean package
 ```
 
 JAVA_HOME should point to JDK 11. 
+
+## How to run
+
+Standalone application: ```java -jar analyzer-standalone.jar```
+
+Web application: ```java -jar analyzer-web.jar```
+
+Java should point to JDK 11.
 
 ## Features
 
