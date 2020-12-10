@@ -6,7 +6,7 @@
 
     <groupId>pl.ks.profiling</groupId>
     <artifactId>parent</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.0</version>
     <modules>
         <module>io-utils</module>
         <module>gui-commons</module>
