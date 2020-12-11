@@ -79,6 +79,19 @@ public class GCLogCycleEntry {
         } else if (phase.contains("Pause Full")) {
             aggregatedPhase = "Full collection";
             genuineCollection = true;
+        } else if (phase.startsWith("(G1")) {
+            if (phase.contains("(mixed)")) {
+                aggregatedPhase = "Mixed collection";
+                genuineCollection = true;
+            } else if (phase.endsWith("(young)")) {
+                aggregatedPhase = "Young collection";
+                genuineCollection = true;
+            } else {
+                aggregatedPhase = "Young collection - piggybacks";
+            }
+        } else if (phase.contains("Full")) {
+            aggregatedPhase = "Full collection";
+            genuineCollection = true;
         } else {
             aggregatedPhase = phase;
         }
@@ -93,6 +106,12 @@ public class GCLogCycleEntry {
         this.heapAfterGC = heapAfterGC;
         this.heapSize = heapSize;
         this.time = time;
+    }
+
+    void addSizes(int heapBeforeGC, int heapAfterGC, int heapSize) {
+        this.heapBeforeGC = heapBeforeGC;
+        this.heapAfterGC = heapAfterGC;
+        this.heapSize = heapSize;
     }
 
     void addRegionCount(String regionName, Integer beforeGC, Integer afterGC, Integer maxRegions) {
@@ -124,8 +143,13 @@ public class GCLogCycleEntry {
     }
 
     void addSurvivorStats(long desiredSize, long newThreshold, long maxThreshold) {
-        this.desiredSurvivorSize = desiredSize;;
+        this.desiredSurvivorSize = desiredSize;
+        ;
         this.newTenuringThreshold = newThreshold;
         this.maxTenuringThreshold = maxThreshold;
+    }
+
+    void addTime(BigDecimal phaseTime) {
+        this.time = phaseTime;
     }
 }

@@ -58,7 +58,8 @@ public class AnalyzerStandaloneApplication extends JFrame {
                 .put("defaultFont", presentationFontProvider.getDefaultFont());
 
         JButton quitButton = new JButton("Quit");
-        JButton loadButton = new JButton("Load file");
+        JButton loadButton = new JButton("Load file (JDK >= 9)");
+        JButton loadOldButton = new JButton("Load file (JDK 8)");
 
         loadButton.addActionListener((ActionEvent event) -> {
             try {
@@ -67,7 +68,22 @@ public class AnalyzerStandaloneApplication extends JFrame {
                 if (ret == JFileChooser.APPROVE_OPTION) {
                     File file = fileChooser.getSelectedFile().getAbsoluteFile();
                     InputStream inputStream = InputUtils.getInputStream(file.getName(), file.getAbsolutePath());
-                    JvmLogFile stats = statsService.createAllStats(inputStream, file.getName());
+                    JvmLogFile stats = statsService.createAllStatsUnifiedLogger(inputStream, file.getName());
+                    new AnalyzerFrame(stats, presentationFontProvider);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
+
+        loadOldButton.addActionListener((ActionEvent event) -> {
+            try {
+                JFileChooser fileChooser = new JFileChooser();
+                int ret = fileChooser.showOpenDialog(null);
+                if (ret == JFileChooser.APPROVE_OPTION) {
+                    File file = fileChooser.getSelectedFile().getAbsoluteFile();
+                    InputStream inputStream = InputUtils.getInputStream(file.getName(), file.getAbsolutePath());
+                    JvmLogFile stats = statsService.createAllStatsJdk8(inputStream, file.getName());
                     new AnalyzerFrame(stats, presentationFontProvider);
                 }
             } catch (IOException e) {
@@ -79,7 +95,7 @@ public class AnalyzerStandaloneApplication extends JFrame {
             System.exit(0);
         });
 
-        createLayout(loadButton, quitButton);
+        createLayout(loadButton, loadOldButton, quitButton);
 
         setTitle("Safepoint/GC log file analyzer");
         setSize(300, 200);
