@@ -53,12 +53,14 @@ public class GCJdk8LogFileParser implements FileParser<GCLogFile> {
             if (line.contains("secs")) {
                 addJava8Time(java8SequenceId, line);
             }
+        } else if (line.contains("Full GC")) {
+            gcLogFile.newPhase(++java8SequenceId, "Full GC", getJava8TimeStamp(line));
+            addJava8Time(java8SequenceId, line);
+            addJava8Sizes(java8SequenceId, line, "Full GC", false, false);
         } else if (line.contains("secs") && !line.contains("Times")) {
             addJava8Time(java8SequenceId, line);
-        } else if (line.contains("Full GC")) {
-//            gcLogFile.newPhase(++java8SequenceId, "Full GC", getJava8TimeStamp(line), ParserUtils.parseFirstBigDecimal(line, line.indexOf("GC pause")));
         } else if (line.contains("Heap: ") && line.contains("->")) {
-            addJava8Sizes(java8SequenceId, line);
+            addJava8Sizes(java8SequenceId, line, "Heap", true, true);
         }
     }
 
@@ -69,12 +71,15 @@ public class GCJdk8LogFileParser implements FileParser<GCLogFile> {
         gcLogFile.addTime(sequenceId, time);
     }
 
-    private void addJava8Sizes(long sequenceId, String line) {
-        Pattern pattern = Pattern.compile("\\d+,\\d+[BMKG]");
-        Matcher matcher = pattern.matcher(line.substring(line.indexOf("Heap")));
+    private void addJava8Sizes(long sequenceId, String line, String startingString, boolean containsComma, boolean containsMaxHeapSizeBeforeGC) {
+        Pattern pattern = containsComma ? Pattern.compile("\\d+,\\d+[BMKG]") : Pattern.compile("\\d+[BMKG]");
+        String stringToSearch = line.substring(line.indexOf(startingString));
+        Matcher matcher = pattern.matcher(stringToSearch);
         matcher.find();
         String before = matcher.group().replace(",", ".");
-        matcher.find();
+        if (containsMaxHeapSizeBeforeGC) {
+            matcher.find();
+        }
         matcher.find();
         String after = matcher.group().replace(",", ".");
         matcher.find();
