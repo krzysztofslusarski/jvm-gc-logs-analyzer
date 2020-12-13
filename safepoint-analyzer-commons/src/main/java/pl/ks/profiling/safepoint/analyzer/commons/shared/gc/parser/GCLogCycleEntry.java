@@ -79,7 +79,7 @@ public class GCLogCycleEntry {
         } else if (phase.contains("Pause Full")) {
             aggregatedPhase = "Full collection";
             genuineCollection = true;
-        } else if (phase.startsWith("(G1")) {
+        } else if (phase.startsWith("(G1") || phase.startsWith("(GC") || phase.startsWith("(Meta")) {
             if (phase.contains("(mixed)")) {
                 aggregatedPhase = "Mixed collection";
                 genuineCollection = true;

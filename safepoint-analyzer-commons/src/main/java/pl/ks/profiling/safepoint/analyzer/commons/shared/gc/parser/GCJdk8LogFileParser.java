@@ -33,9 +33,6 @@ public class GCJdk8LogFileParser implements FileParser<GCLogFile> {
     private GCLogFile gcLogFile = new GCLogFile();
     private long java8SequenceId;
 
-    public GCJdk8LogFileParser() {
-    }
-
     @Override
     public void parseLine(String line) {
         parseJava8File(line);
@@ -61,12 +58,50 @@ public class GCJdk8LogFileParser implements FileParser<GCLogFile> {
             addJava8Time(java8SequenceId, line);
         } else if (line.contains("Heap: ") && line.contains("->")) {
             addJava8Sizes(java8SequenceId, line, "Heap", true, true);
+        } else if (line.startsWith("Desired survivor size")) {
+            addJava8SurvivorStats(java8SequenceId, line);
+        } else if (line.startsWith("- age")) {
+            addJAva8AgeCount(java8SequenceId, line);
+        } else if (line.contains("Times")) {
+            gcLogFile.finishCycle(java8SequenceId);
         }
     }
 
+    private void addJAva8AgeCount(Long sequenceId, String line) {
+        String ageStr = line
+                .replaceFirst("- age", "")
+                .replaceFirst(":.*", "")
+                .trim();
+        String sizeStr = line
+                .replaceFirst(".*:", "")
+                .replaceFirst("bytes.*", "")
+                .trim();
+
+        int age = Integer.parseInt(ageStr);
+        long size = Long.parseLong(sizeStr);
+
+        gcLogFile.addAgeWithSize(sequenceId, age, size);
+    }
+
+    private void addJava8SurvivorStats(Long sequenceId, String line) {
+        int desiredSizePos = line.indexOf("Desired survivor size");
+        int newThresholdPos = line.indexOf("new threshold", desiredSizePos);
+        int maxThresholdPos = line.indexOf("max", newThresholdPos);
+
+        long desiredSize = ParserUtils.parseFirstNumber(line, desiredSizePos);
+        long newThreshold = ParserUtils.parseFirstNumber(line, newThresholdPos);
+        long maxThreshold = ParserUtils.parseFirstNumber(line, maxThresholdPos);
+
+        gcLogFile.addSurvivorStats(sequenceId, desiredSize, newThreshold, maxThreshold);
+    }
+
     private void addJava8Time(long sequenceId, String line) {
-        String[] splittedLine = line.split("(])|(\\[)");
-        String timeStr = splittedLine[splittedLine.length - 1];
+        Pattern pattern = Pattern.compile("\\d+,\\d+ secs");
+        Matcher matcher = pattern.matcher(line);
+        String timeStr = null;
+        while ((matcher.find())) {
+            timeStr = matcher.group();
+        }
         BigDecimal time = ParserUtils.parseFirstBigDecimal(timeStr, 0).multiply(TO_MS_MULTIPLIER);
         gcLogFile.addTime(sequenceId, time);
     }

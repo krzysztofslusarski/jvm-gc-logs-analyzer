@@ -34,7 +34,6 @@ public class GCLogFile {
 
     private Map<Long, GCLogCycleEntry> unprocessedCycles = new HashMap<>();
 
-
     void newLine(Long cycleId, String line) {
         rawLogLines.computeIfAbsent(cycleId, id -> new ArrayList<>()).add(line);
     }
@@ -52,12 +51,19 @@ public class GCLogFile {
     }
 
     void addSizes(Long sequenceId, int heapBeforeGC, int heapAfterGC, int heapSize) {
+        GCLogCycleEntry gcLogCycleEntry = unprocessedCycles.get(sequenceId);
+        if (gcLogCycleEntry == null) {
+            return;
+        }
+        gcLogCycleEntry.addSizes(heapBeforeGC, heapAfterGC, heapSize);
+    }
+
+    void finishCycle(Long sequenceId) {
         GCLogCycleEntry gcLogCycleEntry = unprocessedCycles.remove(sequenceId);
         if (gcLogCycleEntry == null) {
             return;
         }
         cycleEntries.add(gcLogCycleEntry);
-        gcLogCycleEntry.addSizes(heapBeforeGC, heapAfterGC, heapSize);
     }
 
     void addSizesAndTime(Long sequenceId, int heapBeforeGC, int heapAfterGC, int heapSize, BigDecimal phaseTime) {
@@ -74,7 +80,6 @@ public class GCLogFile {
         if (gcLogCycleEntry == null) {
             return;
         }
-        cycleEntries.add(gcLogCycleEntry);
         gcLogCycleEntry.addTime(phaseTime);
     }
 
