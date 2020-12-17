@@ -1,6 +1,6 @@
-# jvm-gc-logs-anylzer
+# jvm-gc-logs-anaylzer
 
-This project is a JVM log analyzer. It is dedicated to JVM 11 and above. **The logs have to be in a proper format with proper decorators**, check sections at
+This project is a Java Virtual Machine and Garbage Collector log analyzer. It is dedicated to JVM 11 and above. **The logs have to be in a proper format with proper decorators**, check sections at
 the end for limitations and working examples.
 
 The project creates two artifacts:
