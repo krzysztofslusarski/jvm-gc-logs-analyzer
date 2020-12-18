@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>pl.ks.profiling</groupId>
-    <artifactId>parent</artifactId>
+    <artifactId>jvm-gc-logs-analyzer</artifactId>
     <version>1.1-SNAPSHOT</version>
     <modules>
         <module>io-utils</module>
@@ -34,6 +34,7 @@
         <commons-collections4.version>4.1</commons-collections4.version>
         <xchart.version>3.6.0</xchart.version>
         <miglayout-swing.version>5.0</miglayout-swing.version>
+        <spock.version>1.2-groovy-2.4</spock.version>
     </properties>
 
     <dependencyManagement>
@@ -77,6 +78,12 @@
                 <groupId>com.miglayout</groupId>
                 <artifactId>miglayout-swing</artifactId>
                 <version>${miglayout-swing.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.spockframework</groupId>
+                <artifactId>spock-core</artifactId>
+                <version>${spock.version}</version>
+                <scope>test</scope>
             </dependency>
         </dependencies>
     </dependencyManagement>
