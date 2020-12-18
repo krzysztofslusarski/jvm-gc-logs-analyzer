@@ -15,12 +15,11 @@
  */
 package pl.ks.profiling.safepoint.analyzer.commons.shared.stringdedup.parser;
 
+import java.math.BigDecimal;
+import java.util.function.BiConsumer;
 import pl.ks.profiling.safepoint.analyzer.commons.FileParser;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.Consumer3;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.ParserUtils;
-
-import java.math.BigDecimal;
-import java.util.function.BiConsumer;
 
 public class StringDedupLogFileParser implements FileParser<StringDedupLogFile> {
     private final StringDedupLogFile logFile = new StringDedupLogFile();
@@ -32,7 +31,7 @@ public class StringDedupLogFileParser implements FileParser<StringDedupLogFile> 
             new SizeCountParser("Deduplicated", StringDedupLogFile::deduplicated),
             new SizeCountParser("Young", StringDedupLogFile::young),
             new SizeCountParser("Old", StringDedupLogFile::old),
-            new SizeCountParser("New", StringDedupLogFile::newStrings, SizeCountParser.SIZE_MARKERS_WITH_PARENTHESIS)
+            new SizeCountParser("New", StringDedupLogFile::newStrings, SizeCountParser.SIZE_MARKERS_WITHOUT_PARENTHESIS)
     };
 
     private static void markDeduplicationStarted(StringDedupLogFile logFile, String line) {
@@ -102,6 +101,7 @@ public class StringDedupLogFileParser implements FileParser<StringDedupLogFile> 
     }
 
     static class SizeCountParser extends TokenParser {
+        private final String bytesMarker;
         private final String megaMarker;
         private final String gigaMarker;
         private final Consumer3<StringDedupLogFile, Long, BigDecimal> applyFunction;
@@ -109,7 +109,7 @@ public class StringDedupLogFileParser implements FileParser<StringDedupLogFile> 
         public final static boolean SIZE_MARKERS_WITH_PARENTHESIS = true;
 
         public SizeCountParser(String token, Consumer3<StringDedupLogFile, Long, BigDecimal> applyFunction) {
-            this(token, applyFunction, SIZE_MARKERS_WITHOUT_PARENTHESIS);
+            this(token, applyFunction, SIZE_MARKERS_WITH_PARENTHESIS);
         }
 
         public SizeCountParser(String token, Consumer3<StringDedupLogFile, Long, BigDecimal> applyFunction, boolean paraSizeMarker) {
@@ -118,9 +118,11 @@ public class StringDedupLogFileParser implements FileParser<StringDedupLogFile> 
             this.applyFunction = applyFunction;
 
             if (paraSizeMarker) {
+                this.bytesMarker = "B(";
                 this.megaMarker = "M(";
                 this.gigaMarker = "G(";
             } else {
+                this.bytesMarker = "B";
                 this.megaMarker = "M";
                 this.gigaMarker = "G";
             }
@@ -140,7 +142,9 @@ public class StringDedupLogFileParser implements FileParser<StringDedupLogFile> 
 
         private BigDecimal getSizeInKiloBytes(String line, int percentPos) {
             BigDecimal size = ParserUtils.parseFirstBigDecimal(line, percentPos);
-            if (containsMarker(line, percentPos, megaMarker)) {
+            if (containsMarker(line, percentPos, bytesMarker)) {
+                return UnitsConverter.bytesToKiloBytes(size);
+            } else if (containsMarker(line, percentPos, megaMarker)) {
                 return UnitsConverter.megabytesToKiloBytes(size);
             } else if (containsMarker(line, percentPos, gigaMarker)) {
                 return UnitsConverter.gigabytesToKiloBytes(size);

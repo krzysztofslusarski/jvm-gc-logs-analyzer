@@ -3,7 +3,7 @@ package pl.ks.profiling.safepoint.analyzer.commons.shared.stringdedup.parser
 import spock.lang.Specification
 
 class StringDedupLogFileParserTest extends Specification {
-    def "sdf"() {
+    def "should parse string deduplication stats"() {
         given:
         def stringDedupLogFileParser = new StringDedupLogFileParser()
 
@@ -57,12 +57,12 @@ class StringDedupLogFileParserTest extends Specification {
         logFile.totalCount == 5926557
         logFile.totalCountYoung == 31584
         logFile.totalCountOld == 5894973
-        logFile.lastSize == 5952.0
-        logFile.lastSizeNew == 6936.0
+        logFile.lastSize == 5.81 // 5952.0B
+        logFile.lastSizeNew == 6.77 // 6936.0B
         logFile.lastSizeYoung == 0.0
-        logFile.lastSizeOld == 5_952.0
+        logFile.lastSizeOld ==  5.81  // 5952.0B
         logFile.totalSize == 239820.8 // 234.2M
-//        logFile.totalSizeNew == 1017446.4 // 993.6M // here is the problem
+        logFile.totalSizeNew == 1017446.4 // 993.6M
         logFile.totalSizeYoung == 1504.2 // 1504.2K
         logFile.totalSizeOld == 238284.8 // 232.7M
     }
