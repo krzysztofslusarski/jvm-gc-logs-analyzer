@@ -15,60 +15,100 @@
  */
 package pl.ks.profiling.safepoint.analyzer.commons.shared.tlab.parser;
 
+import pl.ks.profiling.safepoint.analyzer.commons.FileParser;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.ParserUtils;
+
 import java.math.BigDecimal;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import pl.ks.profiling.safepoint.analyzer.commons.FileParser;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.ParserUtils;
 
 public class TlabLogFileParser implements FileParser<TlabLogFile> {
     private final TlabLogFile tlabLogFile = new TlabLogFile();
     private final Map<String, String> lastThreadMap = new HashMap<>();
+    private final Comparator<ThreadTlabBeforeGC> MostFrequentSlowAllocsFirst = Comparator.comparingLong(ThreadTlabBeforeGC::getSlowAllocs).reversed();
 
     @Override
     public void parseLine(String line) {
-        if (line.contains("gc,start") && !lastThreadMap.isEmpty()) {
-            tlabLogFile.newThreadTlabBeforeGc(lastThreadMap.entrySet().stream()
-                    .map(entry -> ThreadTlabBeforeGC.builder()
-                            .tid(entry.getKey())
-                            .nid(ParserUtils.parseFirstNumber(entry.getValue(), entry.getValue().indexOf("id:")))
-                            .size(ParserUtils.parseFirstNumber(entry.getValue(), entry.getValue().indexOf("desired_size:")))
-                            .slowAllocs(ParserUtils.parseFirstNumber(entry.getValue(), entry.getValue().indexOf("slow allocs:")))
-                            .build())
-                    .sorted(Comparator.comparingLong(ThreadTlabBeforeGC::getSlowAllocs).reversed())
-                    .collect(Collectors.toList())
-            );
-            lastThreadMap.clear();
-            return;
-        }
-
-        if (!line.contains("gc,tlab")) {
-            return;
-        }
-
-        if (line.contains("debug")) {
-            parseSummary(line);
-        } else if (line.contains("trace") && line.contains("fill thread")) {
-            int beginIndex = line.indexOf("0x");
-            String tid = line.substring(beginIndex, beginIndex + 18);
-            lastThreadMap.put(tid, line);
+        if (isTlabLine(line)) {
+            if (isThreadTlabLine(line)) {
+                lastThreadMap.put(parseThreadId(line), line);
+            } else if (isTlabSummaryLine(line)) {
+                parseTlabSummary(line);
+            }
+        } else if (gcStarts(line) && !lastThreadMap.isEmpty()) {
+            logStatsForThreads();
         }
     }
 
-    private void parseSummary(String line) {
+    private boolean isTlabLine(String line) {
+        return line.contains("gc,tlab");
+    }
+
+    private void logStatsForThreads() {
+        tlabLogFile.newThreadTlabBeforeGc(parseLinesForThreads(lastThreadMap));
+        lastThreadMap.clear();
+    }
+
+    private boolean gcStarts(String line) {
+        return line.contains("gc,start");
+    }
+
+    private String parseThreadId(String line) {
+        PositionalParser parser = new PositionalParser(line);
+        parser.moveAfter("TLAB");
+        return parser.readHexadecimalNumber("fill thread");
+    }
+
+    private List<ThreadTlabBeforeGC> parseLinesForThreads(Map<String, String> lastThreadMap) {
+        return lastThreadMap.entrySet()
+                .stream()
+                .map(threadEntry -> parseThreadTlabStats(threadEntry.getKey(), threadEntry.getValue()))
+                .sorted(MostFrequentSlowAllocsFirst)
+                .collect(Collectors.toList());
+    }
+
+    private ThreadTlabBeforeGC parseThreadTlabStats(String threadId, String line) {
+        PositionalParser parser = new PositionalParser(line);
+        parser.moveAfter("TLAB:");
+        long nid = parser.readNumericValue("id:");
+        long size = parser.readNumericValue("desired_size:");
+        long slowAllocs = parser.readNumericValue("slow allocs:");
+        return ThreadTlabBeforeGC.builder()
+                .tid(threadId)
+                .nid(nid)
+                .size(size)
+                .slowAllocs(slowAllocs)
+                .build();
+    }
+
+    private void parseTlabSummary(String line) {
         BigDecimal timeStamp = ParserUtils.getTimeStamp(line);
-        long threadCount = ParserUtils.parseFirstNumber(line, line.indexOf("thrds:"));
-        long refills = ParserUtils.parseFirstNumber(line, line.indexOf("refills:"));
-        long maxRefills = ParserUtils.parseFirstNumber(line, line.indexOf("max:"));
-        int slowAllocsPos = line.indexOf("slow allocs:");
-        long slowAllocs = ParserUtils.parseFirstNumber(line, slowAllocsPos);
-        long maxSlowAllocs = ParserUtils.parseFirstNumber(line, line.indexOf("max", slowAllocsPos));
-        BigDecimal wastePercent = ParserUtils.parseFirstBigDecimal(line, line.indexOf("waste:"));
+
+        PositionalParser parser = new PositionalParser(line);
+        parser.moveAfter("TLAB totals:");
+        long threadCount = parser.readNumericValue("thrds:");
+        long refills = parser.readNumericValue("refills:");
+        long maxRefills = parser.readNumericValue("max:");
+        long slowAllocs = parser.readNumericValue("slow allocs:");
+        long maxSlowAllocs = parser.readNumericValue("max");
+        BigDecimal wastePercent = parser.readPercentValue("waste:");
+
         tlabLogFile.newSummary(timeStamp, threadCount, refills, maxRefills, slowAllocs, maxSlowAllocs, wastePercent);
     }
 
+    private boolean isTlabSummaryLine(String line) {
+        // src/hotspot/share/gc/shared/threadLocalAllocBuffer.cpp:453
+        return line.contains("TLAB totals"); // isn't better indicator?
+//        return line.contains("debug");
+    }
+
+    private boolean isThreadTlabLine(String line) {
+        // src/hotspot/share/gc/shared/threadLocalAllocBuffer.cpp:283
+        return line.contains("trace") && (line.contains("TLAB: fill thread") || line.contains("TLAB: gc thread"));
+    }
 
     @Override
     public TlabLogFile fetchData() {

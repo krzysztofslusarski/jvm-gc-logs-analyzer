@@ -59,10 +59,10 @@ class StringDedupLogFileParserTest extends Specification {
         parsedStats.totalCount == 5926557
         parsedStats.totalCountYoung == 31584
         parsedStats.totalCountOld == 5894973
-        parsedStats.lastSize == 5952.0
-        parsedStats.lastSizeNew == 6936.0
+        parsedStats.lastSize == 5.81 // 5952.0B
+        parsedStats.lastSizeNew == 6.77 // 6936.0B
         parsedStats.lastSizeYoung == 0.0
-        parsedStats.lastSizeOld == 5952.0
+        parsedStats.lastSizeOld == 5.81 // 5952.0B
         parsedStats.totalSize == 239820.8 // 234.2M
         parsedStats.totalSizeNew == 1017446.4 // 993.6M
         parsedStats.totalSizeYoung == 1504.2 // 1504.2K
