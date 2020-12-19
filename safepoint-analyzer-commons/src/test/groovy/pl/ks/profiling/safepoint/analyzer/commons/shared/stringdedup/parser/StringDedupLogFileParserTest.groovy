@@ -3,11 +3,7 @@ package pl.ks.profiling.safepoint.analyzer.commons.shared.stringdedup.parser
 import spock.lang.Specification
 
 class StringDedupLogFileParserTest extends Specification {
-    def "should parse string deduplication stats"() {
-        given:
-        def stringDedupLogFileParser = new StringDedupLogFileParser()
-
-        def fileLines = '''
+    String stringDeduplicationLog = '''
 [2020-11-26T14:39:28.003+0000][2689.530s][info ][gc,stringdedup       ] Concurrent String Deduplication (2689.530s)
 [2020-11-26T14:39:28.003+0000][2689.530s][info ][gc,stringdedup       ] Concurrent String Deduplication 6936.0B->984.0B(5952.0B) avg 23.6% (2689.530s, 2689.530s) 0.171ms
 [2020-11-26T14:39:28.004+0000][2689.530s][debug][gc,stringdedup       ]   Last Exec: 0.171ms, Idle: 579.950ms, Blocked: 0/0.000ms
@@ -37,33 +33,56 @@ class StringDedupLogFileParserTest extends Specification {
 [2020-11-26T14:39:28.004+0000][2689.531s][debug][gc,stringdedup       ]     Age Threshold: 3
 [2020-11-26T14:39:28.004+0000][2689.531s][debug][gc,stringdedup       ]   Queue
 [2020-11-26T14:39:28.004+0000][2689.531s][debug][gc,stringdedup       ]     Dropped: 2453659
-[2020-11-26T14:39:30.003+0000][2689.530s][info ][gc,stringdedup       ] Concurrent String Deduplication (2689.530s)
-'''.split( '\n' )
+'''
+    String beginningOfNextDeduplication = "[2020-11-26T14:39:30.003+0000][2689.530s][info ][gc,stringdedup       ] Concurrent String Deduplication (2689.530s)"
+
+    String makeStringDeduplicationLogComplete(String log) {
+        return log + "\n" + beginningOfNextDeduplication
+    }
+
+
+    def "should parse string deduplication stats"() {
+        given:
+        String deduplicationLogs = makeStringDeduplicationLogComplete(stringDeduplicationLog)
 
         when:
-        for (logLine in fileLines) {
-            stringDedupLogFileParser.parseLine(logLine)
-        }
-        def logFile = stringDedupLogFileParser.fetchData().entries.head()
+        StringDedupLogEntry parsedStats = parse(deduplicationLogs).head()
 
         then:
-        logFile.timeStamp == 2689.530
-        logFile.initialized
-        logFile.lastCountNew == 188
-        logFile.lastCount == 174
-        logFile.lastCountYoung == 0
-        logFile.lastCountOld == 174
-        logFile.totalCountNew == 23858866
-        logFile.totalCount == 5926557
-        logFile.totalCountYoung == 31584
-        logFile.totalCountOld == 5894973
-        logFile.lastSize == 5.81 // 5952.0B
-        logFile.lastSizeNew == 6.77 // 6936.0B
-        logFile.lastSizeYoung == 0.0
-        logFile.lastSizeOld ==  5.81  // 5952.0B
-        logFile.totalSize == 239820.8 // 234.2M
-        logFile.totalSizeNew == 1017446.4 // 993.6M
-        logFile.totalSizeYoung == 1504.2 // 1504.2K
-        logFile.totalSizeOld == 238284.8 // 232.7M
+        parsedStats.timeStamp == 2689.530
+        parsedStats.initialized
+        parsedStats.lastCountNew == 188
+        parsedStats.lastCount == 174
+        parsedStats.lastCountYoung == 0
+        parsedStats.lastCountOld == 174
+        parsedStats.totalCountNew == 23858866
+        parsedStats.totalCount == 5926557
+        parsedStats.totalCountYoung == 31584
+        parsedStats.totalCountOld == 5894973
+        parsedStats.lastSize == 5952.0
+        parsedStats.lastSizeNew == 6936.0
+        parsedStats.lastSizeYoung == 0.0
+        parsedStats.lastSizeOld == 5952.0
+        parsedStats.totalSize == 239820.8 // 234.2M
+        parsedStats.totalSizeNew == 1017446.4 // 993.6M
+        parsedStats.totalSizeYoung == 1504.2 // 1504.2K
+        parsedStats.totalSizeOld == 238284.8 // 232.7M
+    }
+
+    def "should not complete parsing until meets next deduplication"() {
+        when:
+        List<StringDedupLogEntry> listOfStats = parse(stringDeduplicationLog)
+
+        then:
+        listOfStats.isEmpty()
+    }
+
+    def parse(String logs) {
+        StringDedupLogFileParser parser = new StringDedupLogFileParser()
+        String[] lines = logs.split('\n')
+        for (logLine in lines) {
+            parser.parseLine(logLine)
+        }
+        return parser.fetchData().entries
     }
 }
