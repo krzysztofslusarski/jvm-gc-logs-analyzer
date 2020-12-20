@@ -101,8 +101,7 @@ public class TlabLogFileParser implements FileParser<TlabLogFile> {
 
     private boolean isTlabSummaryLine(String line) {
         // src/hotspot/share/gc/shared/threadLocalAllocBuffer.cpp:453
-        return line.contains("TLAB totals"); // isn't better indicator?
-//        return line.contains("debug");
+        return line.contains("TLAB totals");
     }
 
     private boolean isThreadTlabLine(String line) {
