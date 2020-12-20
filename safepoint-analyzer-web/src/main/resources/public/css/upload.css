@@ -1,12 +1,13 @@
 :root {
-    --gray: #f1f0ed;
-    --background: #fff;
+    --background-gray: #f1f0ed;
+    --background-white: #fff;
+    --text-default-color: 000;
 }
 
 a,
 a:focus,
 a:hover {
-    color: #000;
+    color: var(--text-default-color);
     text-decoration: underline;
 }
 
@@ -20,12 +21,12 @@ a:hover {
 }
 
 body {
-    background-color: var(--gray);
-    color: #000;
+    background-color: var(--background-gray);
+    color: var(--text-default-color);
 }
 
 main {
-    background-color: var(--background)
+    background-color: var(--background-white)
 }
 
 .cover-container {
