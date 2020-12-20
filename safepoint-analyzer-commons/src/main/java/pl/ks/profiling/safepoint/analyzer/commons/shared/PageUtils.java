@@ -27,25 +27,36 @@ public class PageUtils {
             throw new IllegalArgumentException("Number of columns(" + numberOfColumns + ") is different than number of extracting functions (" + valueExtractors.size() + ")");
         }
 
-        Object[][] stats = new Object[elements.size() + 1][numberOfColumns];
-        setHeaders(stats, columnNames);
+        Object[][] matrix = initiateMatrix(elements, numberOfColumns);
+        setHeaders(matrix, columnNames);
+        setRows(matrix, elements, valueExtractors);
+        return matrix;
+    }
 
+    private static <T> Object[][] initiateMatrix(Collection<T> elements, int numberOfColumns) {
+        return new Object[elements.size() + 1][numberOfColumns];
+    }
+
+    private static <T> void setRows(Object[][] stats, Collection<T> elements, List<Function<T, Object>> valueExtractors) {
         int itemIndex = 1;
         for (T status : elements) {
-            int columnIndex = 0;
-            for (Function<T, Object> valueExtractor : valueExtractors) {
-                stats[itemIndex][columnIndex] = valueExtractor.apply(status);
-                columnIndex++;
-            }
+            setColumnsValues(stats, valueExtractors, status, itemIndex);
             itemIndex++;
         }
-        return stats;
     }
 
     private static void setHeaders(Object[][] stats, List<String> columnNames) {
         int columnIndex = 0;
         for(String column: columnNames) {
             stats[0][columnIndex] = column;
+            columnIndex++;
+        }
+    }
+
+    private static <T> void setColumnsValues(Object[][]stats, List<Function<T, Object>> valueExtractors, T status, int itemIndex) {
+        int columnIndex = 0;
+        for (Function<T, Object> valueExtractor : valueExtractors) {
+            stats[itemIndex][columnIndex] = valueExtractor.apply(status);
             columnIndex++;
         }
     }
