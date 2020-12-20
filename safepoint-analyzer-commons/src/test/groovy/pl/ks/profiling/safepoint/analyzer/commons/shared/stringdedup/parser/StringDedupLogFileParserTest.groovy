@@ -1,3 +1,18 @@
+/*
+ * Copyright 2020 Artur Owczarek, Krzysztof Slusarski
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package pl.ks.profiling.safepoint.analyzer.commons.shared.stringdedup.parser
 
 import spock.lang.Specification
@@ -59,10 +74,10 @@ class StringDedupLogFileParserTest extends Specification {
         parsedStats.totalCount == 5926557
         parsedStats.totalCountYoung == 31584
         parsedStats.totalCountOld == 5894973
-        parsedStats.lastSize == 5952.0
-        parsedStats.lastSizeNew == 6936.0
+        parsedStats.lastSize == 5.81 // 5952.0B
+        parsedStats.lastSizeNew == 6.77 // 6936.0B
         parsedStats.lastSizeYoung == 0.0
-        parsedStats.lastSizeOld == 5952.0
+        parsedStats.lastSizeOld == 5.81 // 5952.0B
         parsedStats.totalSize == 239820.8 // 234.2M
         parsedStats.totalSizeNew == 1017446.4 // 993.6M
         parsedStats.totalSizeYoung == 1504.2 // 1504.2K

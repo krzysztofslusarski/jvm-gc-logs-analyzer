@@ -255,22 +255,22 @@ public class GCStatsCreator {
                 .filter(GCLogCycleEntry -> !GCLogCycleEntry.getBytesInAges().isEmpty())
                 .collect(Collectors.toList());
 
-        for (GCLogCycleEntry GCLogCycleEntry : toProcess) {
+        for (GCLogCycleEntry gcLogCycleEntry : toProcess) {
             if (prev != null) {
                 GCAgingStats gcAgingStats = new GCAgingStats();
-                for (Map.Entry<Integer, Long> agingEntry : GCLogCycleEntry.getBytesInAges().entrySet()) {
+                for (Map.Entry<Integer, Long> agingEntry : gcLogCycleEntry.getBytesInAges().entrySet()) {
                     if (agingEntry.getKey() == 1) {
                         continue;
                     }
                     BigDecimal rate = BigDecimal.valueOf(agingEntry.getValue()).divide(BigDecimal.valueOf(prev.getBytesInAges().get(agingEntry.getKey() - 1)), 3, RoundingMode.HALF_EVEN);
                     gcAgingStats.getSurvivedRatio().put(agingEntry.getKey() - 1, rate);
                 }
-                gcAgingStats.setSequenceId(GCLogCycleEntry.getSequenceId());
-                gcAgingStats.setTimeStamp(GCLogCycleEntry.getTimeStamp());
+                gcAgingStats.setSequenceId(gcLogCycleEntry.getSequenceId());
+                gcAgingStats.setTimeStamp(gcLogCycleEntry.getTimeStamp());
                 gcAgingStatsList.add(gcAgingStats);
             }
-            maxAge = Math.max(maxAge, GCLogCycleEntry.getMaxAge());
-            prev = GCLogCycleEntry;
+            maxAge = Math.max(maxAge, gcLogCycleEntry.getMaxAge());
+            prev = gcLogCycleEntry;
         }
         gcStats.setGcAgingStats(gcAgingStatsList);
         gcStats.setMaxSurvivorAge(maxAge);

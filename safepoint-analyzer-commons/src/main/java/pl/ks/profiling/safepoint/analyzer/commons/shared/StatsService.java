@@ -43,7 +43,8 @@ import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.page.GCRegionSizeAft
 import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.page.GCSubphaseStats;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.page.GCSurvivorAndTenuring;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.page.GCTableStats;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.parser.GCLogFileParser;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.parser.GCJdk8LogFileParser;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.parser.GCUnifiedLogFileParser;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.jit.page.JitCodeCacheStats;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.jit.page.JitCodeCacheSweeperActivity;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.jit.page.JitCompilationCount;
@@ -55,7 +56,8 @@ import pl.ks.profiling.safepoint.analyzer.commons.shared.safepoint.page.Safepoin
 import pl.ks.profiling.safepoint.analyzer.commons.shared.safepoint.page.SafepointOperationTimeCharts;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.safepoint.page.SafepointTableStats;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.safepoint.page.SafepointTotalTimeInPhases;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.safepoint.parser.SafepointLogFileParser;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.safepoint.parser.SafepointJdk8LogFileParser;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.safepoint.parser.SafepointUnifiedLogFileParser;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.stringdedup.page.StringDedupLast;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.stringdedup.page.StringDedupTotal;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.stringdedup.parser.StringDedupLogFileParser;
@@ -69,10 +71,35 @@ import pl.ks.profiling.safepoint.analyzer.commons.shared.tlab.parser.TlabLogFile
 public class StatsService {
     private DecimalFormat decimalFormat = new DecimalFormat("#,##0.00", DecimalFormatSymbols.getInstance(Locale.US));
 
-    public JvmLogFile createAllStats(InputStream inputStream, String originalFilename) throws IOException {
+    public JvmLogFile createAllStatsJdk8(InputStream inputStream, String originalFilename) throws IOException {
         BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-        SafepointLogFileParser safepointLogFileParser = new SafepointLogFileParser();
-        GCLogFileParser gcLogFileParser = new GCLogFileParser();
+        SafepointJdk8LogFileParser safepointJdk8LogFileParser = new SafepointJdk8LogFileParser();
+        GCJdk8LogFileParser gcJdk8LogFileParser = new GCJdk8LogFileParser();
+
+        while (reader.ready()) {
+            String line = reader.readLine();
+            if (reader.ready()) {
+                // last line may be broken in Java 8 format
+                safepointJdk8LogFileParser.parseLine(line);
+                gcJdk8LogFileParser.parseLine(line);
+            } else {
+                break;
+            }
+        }
+
+        JvmLogFile jvmLogFile = new JvmLogFile();
+        jvmLogFile.setFilename(originalFilename);
+        jvmLogFile.setSafepointLogFile(safepointJdk8LogFileParser.fetchData());
+        jvmLogFile.setGcLogFile(gcJdk8LogFileParser.fetchData());
+        addPages(jvmLogFile);
+        return jvmLogFile;
+
+    }
+
+    public JvmLogFile createAllStatsUnifiedLogger(InputStream inputStream, String originalFilename) throws IOException {
+        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+        SafepointUnifiedLogFileParser safepointUnifiedLogFileParser = new SafepointUnifiedLogFileParser();
+        GCUnifiedLogFileParser gcUnifiedLogFileParser = new GCUnifiedLogFileParser();
         ThreadLogFileParser threadLogFileParser = new ThreadLogFileParser();
         ClassLoaderLogFileParser classLoaderLogFileParser = new ClassLoaderLogFileParser();
         JitLogFileParser jitLogFileParser = new JitLogFileParser();
@@ -81,8 +108,8 @@ public class StatsService {
 
         while (reader.ready()) {
             String line = reader.readLine();
-            safepointLogFileParser.parseLine(line);
-            gcLogFileParser.parseLine(line);
+            safepointUnifiedLogFileParser.parseLine(line);
+            gcUnifiedLogFileParser.parseLine(line);
             threadLogFileParser.parseLine(line);
             classLoaderLogFileParser.parseLine(line);
             jitLogFileParser.parseLine(line);
@@ -92,9 +119,8 @@ public class StatsService {
 
         JvmLogFile jvmLogFile = new JvmLogFile();
         jvmLogFile.setFilename(originalFilename);
-        jvmLogFile.setSafepointLogFile(safepointLogFileParser.fetchData());
-        jvmLogFile.setGcLogFile(gcLogFileParser.fetchData());
-//        jvmLogFile.setGcStats(GcStatsCreator.createStats(jvmLogFile.getGcLogFile()));
+        jvmLogFile.setSafepointLogFile(safepointUnifiedLogFileParser.fetchData());
+        jvmLogFile.setGcLogFile(gcUnifiedLogFileParser.fetchData());
         jvmLogFile.setThreadLogFile(threadLogFileParser.fetchData());
         jvmLogFile.setClassLoaderLogFile(classLoaderLogFileParser.fetchData());
         jvmLogFile.setJitLogFile(jitLogFileParser.fetchData());
@@ -116,6 +142,10 @@ public class StatsService {
     }
 
     private void createStringDedupPages(JvmLogFile jvmLogFile) {
+        if (jvmLogFile.getStringDedupLogFile() == null) {
+            return;
+        }
+
         List<PageCreator> stringDedupPageCreators = new ArrayList<>();
         if (!jvmLogFile.getStringDedupLogFile().getEntries().isEmpty()) {
             stringDedupPageCreators.add(new StringDedupTotal());
@@ -131,6 +161,10 @@ public class StatsService {
     }
 
     private void createTlabPages(JvmLogFile jvmLogFile) {
+        if (jvmLogFile.getTlabLogFile() == null) {
+            return;
+        }
+
         List<PageCreator> tlabPageCreators = new ArrayList<>();
         if (!jvmLogFile.getTlabLogFile().getTlabSummaries().isEmpty()) {
             tlabPageCreators.add(new TlabSummary());
@@ -149,6 +183,10 @@ public class StatsService {
     }
 
     private void createJitPages(JvmLogFile jvmLogFile) {
+        if (jvmLogFile.getJitLogFile() == null) {
+            return;
+        }
+
         List<PageCreator> jitPageCreators = new ArrayList<>();
         if (jvmLogFile.getJitLogFile().getLastStatus() != null) {
             jitPageCreators.add(new JitCompilationCount());
@@ -172,7 +210,7 @@ public class StatsService {
     }
 
     private void createClassLoaderPages(JvmLogFile jvmLogFile) {
-        if (jvmLogFile.getClassLoaderLogFile().getLastStatus() == null) {
+        if (jvmLogFile.getClassLoaderLogFile() == null || jvmLogFile.getClassLoaderLogFile().getLastStatus() == null) {
             return;
         }
 
@@ -189,7 +227,7 @@ public class StatsService {
     }
 
     private void createThreadPages(JvmLogFile jvmLogFile) {
-        if (jvmLogFile.getThreadLogFile().getLastStatus() == null) {
+        if (jvmLogFile.getThreadLogFile() == null || jvmLogFile.getThreadLogFile().getLastStatus() == null) {
             return;
         }
 
@@ -234,7 +272,7 @@ public class StatsService {
     }
 
     private void createSafepointPages(JvmLogFile jvmLogFile) {
-        if (CollectionUtils.isEmpty(jvmLogFile.getSafepointLogFile().getSafepoints())) {
+        if (jvmLogFile.getSafepointLogFile() == null || CollectionUtils.isEmpty(jvmLogFile.getSafepointLogFile().getSafepoints())) {
             return;
         }
 

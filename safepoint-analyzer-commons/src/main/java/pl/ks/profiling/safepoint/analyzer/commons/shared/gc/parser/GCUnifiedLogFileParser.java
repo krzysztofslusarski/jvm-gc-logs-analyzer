@@ -21,11 +21,11 @@ import java.util.regex.Pattern;
 import pl.ks.profiling.safepoint.analyzer.commons.FileParser;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.ParserUtils;
 
-public class GCLogFileParser implements FileParser<GCLogFile> {
+public class GCUnifiedLogFileParser implements FileParser<GCLogFile> {
     private GCLogFile gcLogFile = new GCLogFile();
     private String lastRegion;
 
-    public GCLogFileParser() {
+    public GCUnifiedLogFileParser() {
     }
 
     @Override

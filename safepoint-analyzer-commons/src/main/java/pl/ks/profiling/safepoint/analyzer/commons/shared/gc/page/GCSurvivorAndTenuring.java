@@ -27,6 +27,13 @@ import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.parser.GCLogCycleEnt
 public class GCSurvivorAndTenuring implements PageCreator {
     @Override
     public Page create(JvmLogFile jvmLogFile, DecimalFormat decimalFormat) {
+        boolean dataPresent = jvmLogFile.getGcLogFile().getCycleEntries()
+                .stream()
+                .anyMatch(gcLogCycleEntry -> gcLogCycleEntry.getNewTenuringThreshold() > 0 || gcLogCycleEntry.getDesiredSurvivorSize() > 0);
+        if (!dataPresent) {
+            return null;
+        }
+
         return Page.builder()
                 .menuName("Tenuring threshold/survivor size")
                 .fullName("Tenuring threshold/survivor size")
@@ -70,7 +77,7 @@ public class GCSurvivorAndTenuring implements PageCreator {
     private static Object[][] getTenuringThreshold(JvmLogFile jvmLogFile) {
         List<GCLogCycleEntry> cyclesToShow = jvmLogFile.getGcLogFile().getCycleEntries()
                 .stream()
-                .filter(gcLogCycleEntry -> gcLogCycleEntry.getMaxAge() > 0)
+                .filter(gcLogCycleEntry -> gcLogCycleEntry.getNewTenuringThreshold() > 0)
                 .collect(Collectors.toList());
         Object[][] stats = new Object[cyclesToShow.size() + 1][2];
         stats[0][0] = "Cycle";

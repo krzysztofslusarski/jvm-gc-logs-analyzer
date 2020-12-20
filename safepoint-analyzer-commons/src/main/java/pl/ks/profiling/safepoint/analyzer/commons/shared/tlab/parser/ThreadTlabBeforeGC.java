@@ -23,6 +23,6 @@ import lombok.Value;
 class ThreadTlabBeforeGC {
     String tid;
     long nid;
-    long size;
+    long sizeKb;
     long slowAllocs;
 }

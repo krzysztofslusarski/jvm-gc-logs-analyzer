@@ -1,6 +1,7 @@
 # jvm-gc-logs-anaylzer
 
-This project is a Java Virtual Machine and Garbage Collector log analyzer. It is dedicated to JVM 11 and above. **The logs have to be in a proper format with proper decorators**, check sections at
+This project is a Java Virtual Machine and Garbage Collector log analyzer. It is dedicated to JVM 11 and above (JVM 8 support is under development).
+**The logs have to be in a proper format with proper decorators**, check sections at
 the end for limitations and working examples.
 
 The project creates two artifacts:
@@ -206,7 +207,8 @@ decorators="level,tags,time,uptime,pid
 
 * Logs from JDK 11, 12, 13 - works with flags below, tested on Parallel, CMS and G1.
 * Logs from JDK 9, 10 - should work.
-* Logs from JDK 8 and below - experimental (no GC log support, only safepoint, charts and stas are not accurate, because this logs sucks).
+* Logs from JDK 8 and below - experimental (GC and safepoints log support, charts and stas are not accurate, because this logs sucks), 
+  tested on Parallel and G1, **doesn't work with CMS**
 * For JDK 11+ decorators: level,tags,time,uptime are needed, check sample Xlog configuration above.
 * UI is optimized for Full HD resolution.
 * There is no exception handling at all :) 
