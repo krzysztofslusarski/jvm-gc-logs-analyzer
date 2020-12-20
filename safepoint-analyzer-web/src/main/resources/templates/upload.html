@@ -59,7 +59,7 @@
             Import from file...
         </h5>
         <div class="card-body">
-            <form method="POST" enctype="multipart/form-data" action="/upload" target="_blank">
+            <form method="POST" enctype="multipart/form-data" action="/upload" target="_blank" id="fileUploadForm">
                 <div class="form-group">
                     <label for="inputFile">File to upload</label>
                     <input type="file" name="file" id="inputFile" class="form-control-file"
@@ -75,7 +75,8 @@
             ...or paste log here:
         </h5>
         <div class="card-body">
-            <form method="POST" enctype="multipart/form-data" action="/upload-plain-text" target="_blank">
+            <form method="POST" enctype="multipart/form-data" action="/upload-plain-text" target="_blank"
+                  id="textUploadForm">
                 <div class="mb-3">
                     <textarea name="text" class="form-control" placeholder="Copy gc logs here" rows="5"></textarea>
                 </div>
@@ -188,10 +189,45 @@ decorators="level,tags,time,uptime,pid</code></pre>
 <script type="text/javascript" th:src="@{webjars/bootstrap/4.2.1/js/bootstrap.min.js}"></script>
 
 <script type="text/javascript">
+    function isEmpty(str) {
+        return (!str || 0 === str.length);
+    }
+
+    function isFileLessOrEqualThanMb(fileSize, sizeLimitMb) {
+        return fileSize <= sizeLimitMb * 1024 * 1024;
+    }
+
     $(document).ready(function () {
         $('#show-upload').click(function () {
             $(this).collapse("hide");
             $("#real-import").collapse("show");
+        });
+
+        $("#fileUploadForm").on("submit", function () {
+            var inputField = $(this).find("input");
+            var selectedFiles = inputField.prop('files');
+            if (selectedFiles.length) {
+                var selectedFile = selectedFiles[0];
+                if (isFileLessOrEqualThanMb(selectedFile.size, 10)) {
+                    return true;
+                } else {
+                    window.alert("File is too big!");
+                    return false;
+                }
+            } else {
+                window.alert("You must first select file with logs");
+                return false;
+            }
+        });
+
+        $("#textUploadForm").on("submit", function () {
+            var logs = $(this).find("textarea").val()
+            if (isEmpty(logs)) {
+                window.alert("The field with logs is empty!");
+                return false;
+            } else {
+                return true;
+            }
         });
     });
 
