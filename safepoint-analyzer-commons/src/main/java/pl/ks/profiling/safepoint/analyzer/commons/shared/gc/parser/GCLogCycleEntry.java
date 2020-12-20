@@ -83,7 +83,7 @@ public class GCLogCycleEntry {
             if (phase.contains("(mixed)")) {
                 aggregatedPhase = "Mixed collection";
                 genuineCollection = true;
-            } else if (phase.endsWith("(young)")) {
+            } else if (phase.endsWith("(young)") && !phase.contains("G1 Humongous Allocation")) {
                 aggregatedPhase = "Young collection";
                 genuineCollection = true;
             } else {

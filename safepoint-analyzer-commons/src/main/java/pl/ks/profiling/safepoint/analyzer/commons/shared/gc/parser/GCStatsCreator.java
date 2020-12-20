@@ -263,10 +263,6 @@ public class GCStatsCreator {
                         continue;
                     }
                     BigDecimal rate = BigDecimal.valueOf(agingEntry.getValue()).divide(BigDecimal.valueOf(prev.getBytesInAges().get(agingEntry.getKey() - 1)), 3, RoundingMode.HALF_EVEN);
-                    if (rate.compareTo(BigDecimal.ONE) > 0) {
-                        System.out.println(rate);
-                    }
-                    System.out.println(rate);
                     gcAgingStats.getSurvivedRatio().put(agingEntry.getKey() - 1, rate);
                 }
                 gcAgingStats.setSequenceId(gcLogCycleEntry.getSequenceId());

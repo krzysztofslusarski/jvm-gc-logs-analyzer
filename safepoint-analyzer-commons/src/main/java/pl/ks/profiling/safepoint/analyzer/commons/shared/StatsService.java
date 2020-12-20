@@ -78,8 +78,13 @@ public class StatsService {
 
         while (reader.ready()) {
             String line = reader.readLine();
-            safepointJdk8LogFileParser.parseLine(line);
-            gcJdk8LogFileParser.parseLine(line);
+            if (reader.ready()) {
+                // last line may be broken in Java 8 format
+                safepointJdk8LogFileParser.parseLine(line);
+                gcJdk8LogFileParser.parseLine(line);
+            } else {
+                break;
+            }
         }
 
         JvmLogFile jvmLogFile = new JvmLogFile();

@@ -50,10 +50,27 @@ public class GCJdk8LogFileParser implements FileParser<GCLogFile> {
             if (line.contains("secs")) {
                 addJava8Time(java8SequenceId, line);
             }
-        } else if (line.contains("Full GC")) {
-            gcLogFile.newPhase(++java8SequenceId, "Full GC", getJava8TimeStamp(line));
+        } else if (line.contains("Full GC") && line.contains("->")) {
+            gcLogFile.newPhase(++java8SequenceId, "Pause Full", getJava8TimeStamp(line));
             addJava8Time(java8SequenceId, line);
             addJava8Sizes(java8SequenceId, line, "Full GC", false, false);
+            if (line.contains("Times")) {
+                gcLogFile.finishCycle(java8SequenceId);
+            }
+        } else if (line.contains("[GC (") && line.contains("->")) {
+            gcLogFile.newPhase(++java8SequenceId, "Minor GC", getJava8TimeStamp(line));
+            addJava8Time(java8SequenceId, line);
+            addJava8Sizes(java8SequenceId, line, "[GC (", false, false);
+            if (line.contains("Times")) {
+                gcLogFile.finishCycle(java8SequenceId);
+            }
+        } else if (line.contains("GC cleanup")) {
+            gcLogFile.newPhase(++java8SequenceId, "Pause Cleanup", getJava8TimeStamp(line));
+            addJava8Time(java8SequenceId, line);
+            addJava8Sizes(java8SequenceId, line, "GC cleanup", false, false);
+        } else if (line.contains("GC remark")) {
+            gcLogFile.newPhase(++java8SequenceId, "Pause Remark", getJava8TimeStamp(line));
+            addJava8Time(java8SequenceId, line);
         } else if (line.contains("secs") && !line.contains("Times")) {
             addJava8Time(java8SequenceId, line);
         } else if (line.contains("Heap: ") && line.contains("->")) {
@@ -61,13 +78,32 @@ public class GCJdk8LogFileParser implements FileParser<GCLogFile> {
         } else if (line.startsWith("Desired survivor size")) {
             addJava8SurvivorStats(java8SequenceId, line);
         } else if (line.startsWith("- age")) {
-            addJAva8AgeCount(java8SequenceId, line);
+            addJava8AgeCount(java8SequenceId, line);
         } else if (line.contains("Times")) {
             gcLogFile.finishCycle(java8SequenceId);
+        } else if (line.startsWith("   [") && !line.contains("->")) {
+            addJava8PhaseYoungAndMixed(java8SequenceId, line, gcLogFile, false);
+        } else if (line.startsWith("      [") && !line.contains("GC Worker Start") && !line.contains("GC Worker End")) {
+            addJava8PhaseYoungAndMixed(java8SequenceId, line, gcLogFile, true);
         }
     }
 
-    private void addJAva8AgeCount(Long sequenceId, String line) {
+
+    private void addJava8PhaseYoungAndMixed(Long sequenceId, String line, GCLogFile gcLogFile, boolean subSubPhase) {
+        String phase = line.replaceFirst(".*\\[", "").replaceFirst(":.*", "");
+        if (subSubPhase) {
+            phase = "|______" + phase;
+        }
+        if (line.contains("Max:")) {
+            String time = line.replaceFirst(".*Max:", "").replaceFirst(", Diff.*", "").trim().replace(',', '.');
+            gcLogFile.addSubPhaseTime(sequenceId, phase, new BigDecimal(time));
+        } else {
+            String time = line.replaceFirst("ms.*", "").replaceFirst(".*:", "").trim().replace(',', '.');
+            gcLogFile.addSubPhaseTime(sequenceId, phase, new BigDecimal(time));
+        }
+    }
+
+    private void addJava8AgeCount(Long sequenceId, String line) {
         String ageStr = line
                 .replaceFirst("- age", "")
                 .replaceFirst(":.*", "")
@@ -96,6 +132,7 @@ public class GCJdk8LogFileParser implements FileParser<GCLogFile> {
     }
 
     private void addJava8Time(long sequenceId, String line) {
+        line = line.replaceFirst("\\[Times.*", "");
         Pattern pattern = Pattern.compile("\\d+,\\d+ secs");
         Matcher matcher = pattern.matcher(line);
         String timeStr = null;
