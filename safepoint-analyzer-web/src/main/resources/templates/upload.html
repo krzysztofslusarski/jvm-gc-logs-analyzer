@@ -7,131 +7,193 @@
     <link href="/css/upload.css" rel="stylesheet">
 </head>
 
-<body class="text-center">
+<body>
+<main role="main" class="container pb-3">
+    <h1 class="display-3 text-center">JDK 11</h1>
+    <h2 class="text-center">Safepoints and Garbage Collector log file analyzer</h2>
+    <p class="alert alert-warning">
+        Whole page is under heavy development, it is tested mostly on G1/Parallel GC on JDK 11. If you have any issues
+        with your log file send me
+        message to <a href="mailto:ks@gclogs.com">ks@gclogs.com</a>.
+    </p>
 
-<div class="cover-container d-flex h-100 p-3 mx-auto flex-column">
-    <main role="main" class="inner cover">
-        <span style="font-size: 5em; font-weight: bold;">JDK 11</span>
-        <h1>Safepoints and Garbage Collector log file analyzer</h1>
-        <div class="lead text-left">
-            Whole page is under heavy development, it is tested mostly on G1/Parallel GC on JDK 11. If you have any issues with your log file send me
-            message to <a href="mailto:ks@gclogs.com">ks@gclogs.com</a>.
-        </div>
-
-        <div class="lead text-left">
-            Current limitations:
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">Current limitations:</h5>
             <ul>
-                <li>Logs from <span class="must-read">JDK 11, 12, 13</span> - <span class="must-read">works with flags below</span>, tested on Parallel, CMS and G1.</li>
+                <li>Logs from
+                    <mark>JDK 11, 12, 13</mark>
+                    -
+                    <mark>works with flags below</mark>
+                    , tested on Parallel, CMS and G1.
+                </li>
                 <li>Logs from JDK 9, 10 - should work.</li>
-                <li>Logs from <span class="must-read">JDK 8</span> and below - experimental (<span class="must-read">no GC log support</span>,
+                <li>Logs from
+                    <mark>JDK 8</mark>
+                    and below - experimental (
+                    <mark>no GC log support</mark>
+                    ,
                     only safepoint, charts and stas are not accurate, because log file style sucks).
                 </li>
-                <li><span class="must-read">Max 10MB file (after compression).</span></li>
-                <li><span class="must-read">For JDK 11+ decorators: level,tags,time,uptime are needed, check sample Xlog configuration below.</span></li>
+                <li>
+                    <mark>Max 10MB file (after compression).</mark>
+                </li>
+                <li><span>For JDK 11+ decorators: level,tags,time,uptime are needed, check sample Xlog configuration below.</span>
+                </li>
                 <li>Max 1 file in compressed archive (will analyze first if there are many).</li>
                 <li>UI is ugly.</li>
                 <li>UI is optimized for Full HD resolution.</li>
                 <li>There is no exception handling at all :)</li>
             </ul>
+            <div class="text-center">
+                <button class="btn btn-primary btn-lg collapse show" id="show-upload">
+                    I have read at least highlighted text from that site
+                </button>
+            </div>
         </div>
+    </div>
 
-        <button class="show-upload">I have read at least red text from that site</button>
-        <br>
-        <br>
-        <div class="real-import">
-            <h2>Import from file ...</h2>
+
+    <div class="card mt-3 shadow rounded collapse" id="real-import">
+        <h5 class="card-header">
+            Import from file...
+        </h5>
+        <div class="card-body">
             <form method="POST" enctype="multipart/form-data" action="/upload" target="_blank">
-                <p class="lead">File to upload: <input type="file" name="file"/><input type="submit" value="Submit"/></p>
+                <div class="form-group">
+                    <label for="inputFile">File to upload</label>
+                    <input type="file" name="file" id="inputFile" class="form-control-file"
+                           placeholder="Choose file with logs"/>
+                    <small class="form-text text-muted">HINT: Compress logs
+                        <span class="font-weight-bold">(*.zip, *.gz, *.xz, *.7z)</span> for fast uploads.
+                    </small>
+                </div>
+                <input type="submit" value="Submit file" class="btn btn-primary"/>
             </form>
-            <p class="lead">
-                Compress logs <span class="font-weight-bold">(*.zip, *.gz, *.xz, *.7z)</span> for fast uploads.
-            </p>
-            <h2>... or paste log here</h2>
+        </div>
+        <h5 class="card-header">
+            ...or paste log here:
+        </h5>
+        <div class="card-body">
             <form method="POST" enctype="multipart/form-data" action="/upload-plain-text" target="_blank">
-                <p class="lead">Log to upload: <textarea name="text"></textarea><input type="submit" value="Submit"/></p>
+                <div class="mb-3">
+                    <textarea name="text" class="form-control" placeholder="Copy gc logs here" rows="5"></textarea>
+                </div>
+                <input type="submit" value="Submit logs" class="btn btn-primary"/>
             </form>
         </div>
-        <div>
-            <h2>Unified logger, changing logs at runtime example:</h2>
-            sudo -u JVM_USER jcmd `pgrep -x java` VM.log <br>
-                output="file=/PATH/TO/gc.log" <br>
-                output_options="filesize=104857600,filecount=5" <br>
-                what="codecache+sweep*=trace,class+unload,class+load,os+thread,safepoint,gc*,gc+stringdedup=debug,gc+ergo=trace,gc+age=trace,gc+phases=trace,gc+humongous=trace,jit+compilation=debug" <br>
-                decorators="level,tags,time,uptime,pid <br>
-        </div>
-        <table>
-            <tr>
-                <td>
-                    <p class="lead">
-                        <span class="font-weight-bold">
-                            VM Args that I use <br>
-                        </span>
-                        -Xlog:codecache+sweep*=trace, <br>
-                        class+unload, <br>
-                        class+load, <br>
-                        os+thread, <br>
-                        safepoint, <br>
-                        gc*, <br>
-                        gc+stringdedup=debug, <br>
-                        gc+ergo=trace, <br>
-                        gc+age=trace, <br>
-                        gc+phases=trace, <br>
-                        gc+humongous=trace, <br>
-                        jit+compilation=debug <br>
-                        :file=/tmp/app.log <br>
-                        :level,tags,time,uptime <br>
-                        :filesize=104857600,filecount=5 <br>
-                    </p>
-                </td>
-                <td>
-                    <p class="lead">
-                        <span class="font-weight-bold">
-                        Simplest VM Args to add JDK > 8 <br>
-                        </span>
-                            -Xlog:safepoint, <br>
-                            gc*, <br>
-                            gc+heap=trace, <br>
-                            gc+age=trace, <br>
-                            gc+phases=trace, <br>
-                            gc+humongous=trace <br>
-                            :file=/tmp/app.log <br>
-                            :level,tags,time,uptime
-                    </p>
-                </td>
-                <td>
-                    <p class="lead">
-                        <span class="font-weight-bold">
-                        Simplest VM Args to add JDK <= 8 <br>
-                        </span>
-                            -XX:+PrintSafepointStatistics <br>
-                            -XX:PrintSafepointStatisticsCount=1 <br>
-                            -XX:LogFile=/tmp/app.log <br>
-                            -XX:+LogVMOutput
-                    </p>
-                </td>
-            </tr>
-        </table>
-        <br>
-        <div class="lead text-left">
-            Terms of service: Files you are going to upload will be stored on author server, and can be used by author for his purposes.
-            This page is created for author purposes, use it at your own risk.
-        </div>
-        <div class="lead text-left">
-            Author: Krzysztof Ślusarski
-            Email: ks@gclogs.com
-        </div>
+    </div>
 
-    </main>
-</div>
+    <div class="card mt-3">
+        <div class="card-body">
+            <h5 class="card-title">Recommended JVM arguments</h5>
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="mb-0">
+                        <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapse1"
+                                aria-expanded="false" aria-controls="collapse1">
+                            VM Args that I use
+                        </button>
+                    </h2>
+                </div>
+                <div id="collapse1" class="collapse">
+                    <div class="card-body">
+                        <pre><code>-Xlog:codecache+sweep*=trace,
+class+unload,
+class+load,
+os+thread,
+safepoint,
+gc*,
+gc+stringdedup=debug,
+gc+ergo=trace,
+gc+age=trace,
+gc+phases=trace,
+gc+humongous=trace,
+jit+compilation=debug
+:file=/tmp/app.log
+:level,tags,time,uptime
+:filesize=104857600,filecount=5</code></pre>
+                    </div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="mb-0">
+                        <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapse2"
+                                aria-expanded="false" aria-controls="collapse1">
+                            Simplest VM Args to add JDK > 8
+                        </button>
+                    </h2>
+                </div>
+                <div id="collapse2" class="collapse">
+                    <div class="card-body">
+                        <pre><code>-Xlog:safepoint,
+gc*,
+gc+heap=trace,
+gc+age=trace,
+gc+phases=trace,
+gc+humongous=trace
+:file=/tmp/app.log
+:level,tags,time,uptime</code></pre>
+                    </div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="mb-0">
+                        <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapse3"
+                                aria-expanded="false" aria-controls="collapse1">
+                            Simplest VM Args to add JDK <= 8
+                        </button>
+                    </h2>
+                </div>
+                <div id="collapse3" class="collapse">
+                    <div class="card-body">
+                        <pre><code>-XX:+PrintSafepointStatistics
+-XX:PrintSafepointStatisticsCount=1
+-XX:LogFile=/tmp/app.log
+-XX:+LogVMOutput</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mt-3">
+        <div class="card-body">
+            <h5 class="card-title">Unified logger, changing logs at runtime example:</h5>
+            <pre><code>sudo -u JVM_USER jcmd `pgrep -x java` VM.log
+output="file=/PATH/TO/gc.log"
+output_options="filesize=104857600,filecount=5"
+what="codecache+sweep*=trace,class+unload,class+load,os+thread,safepoint,gc*,gc+stringdedup=debug,gc+ergo=trace,gc+age=trace,gc+phases=trace,gc+humongous=trace,jit+compilation=debug"
+decorators="level,tags,time,uptime,pid</code></pre>
+        </div>
+    </div>
+
+    <div class="alert alert-success mt-3">
+        <h4 class="alert-heading">Terms of service:</h4>
+        <span>Files you are going to upload will be stored on author server, and can be used by author for his purposes.
+            This page is created for author purposes, use it at your own risk.
+        </span>
+    </div>
+</main>
+<footer class="footer mt-auto py-3">
+    <div class="container">
+        <span class="text-muted">
+        Author: Krzysztof Ślusarski
+        Email: <a href="mailto:ks@gclogs.com" class="text-muted">ks@gclogs.com</a></span>
+    </div>
+</footer>
 
 <script type="text/javascript" th:src="@{webjars/jquery/2.2.4/jquery.min.js}"></script>
 <script type="text/javascript" th:src="@{webjars/bootstrap/4.2.1/js/bootstrap.min.js}"></script>
 
 <script type="text/javascript">
     $(document).ready(function () {
-        $('.show-upload').click(function () {
-            $(".show-upload").hide();
-            $(".real-import").show();
+        $('#show-upload').click(function () {
+            console.log(this);
+            $(this).collapse("hide");
+            $("#real-import").collapse("show");
         });
     });
 
