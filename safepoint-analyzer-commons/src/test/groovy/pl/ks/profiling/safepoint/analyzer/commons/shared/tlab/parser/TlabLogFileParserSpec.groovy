@@ -55,7 +55,7 @@ class TlabLogFileParserSpec extends Specification {
         then:
         tlabsBeforeGc.tid == "0x00007fadfa299800"
         tlabsBeforeGc.nid == 3078
-        tlabsBeforeGc.size == 632 // 632KB
+        tlabsBeforeGc.sizeKb == 632 // 632KB
         tlabsBeforeGc.slowAllocs == 23
     }
 

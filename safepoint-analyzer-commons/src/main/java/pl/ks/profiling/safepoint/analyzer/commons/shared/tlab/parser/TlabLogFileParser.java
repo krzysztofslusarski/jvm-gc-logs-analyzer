@@ -79,7 +79,7 @@ public class TlabLogFileParser implements FileParser<TlabLogFile> {
         return ThreadTlabBeforeGC.builder()
                 .tid(threadId)
                 .nid(nid)
-                .size(size)
+                .sizeKb(size)
                 .slowAllocs(slowAllocs)
                 .build();
     }
