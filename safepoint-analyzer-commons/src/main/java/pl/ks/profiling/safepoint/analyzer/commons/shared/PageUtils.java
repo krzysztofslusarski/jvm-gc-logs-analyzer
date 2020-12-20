@@ -21,6 +21,8 @@ import java.util.List;
 import java.util.function.Function;
 
 public class PageUtils {
+    private static final int ROW_FOR_HEADER = 1;
+
     public static <T> Object[][] toMatrix(Collection<T> elements, List<String> columnNames, List<Function<T, Object>> valueExtractors) {
         int numberOfColumns = columnNames.size();
         if(numberOfColumns != valueExtractors.size()) {
@@ -34,7 +36,7 @@ public class PageUtils {
     }
 
     private static <T> Object[][] initiateMatrix(Collection<T> elements, int numberOfColumns) {
-        return new Object[elements.size() + 1][numberOfColumns];
+        return new Object[elements.size() + ROW_FOR_HEADER][numberOfColumns];
     }
 
     private static <T> void setRows(Object[][] stats, Collection<T> elements, List<Function<T, Object>> valueExtractors) {
