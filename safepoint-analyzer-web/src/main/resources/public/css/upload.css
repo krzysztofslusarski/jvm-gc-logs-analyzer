@@ -1,7 +1,13 @@
+:root {
+    --background-gray: #f1f0ed;
+    --background-white: #fff;
+    --text-default-color: 000;
+}
+
 a,
 a:focus,
 a:hover {
-    color: #000;
+    color: var(--text-default-color);
     text-decoration: underline;
 }
 
@@ -14,20 +20,13 @@ a:hover {
     border: .05rem solid #fff;
 }
 
-html,
 body {
-    height: 100%;
-    background-color: #ddd;
+    background-color: var(--background-gray);
+    color: var(--text-default-color);
 }
 
-body {
-    display: -ms-flexbox;
-    display: -webkit-box;
-    display: flex;
-    -ms-flex-pack: center;
-    -webkit-box-pack: center;
-    justify-content: center;
-    color: #000;
+main {
+    background-color: var(--background-white)
 }
 
 .cover-container {
@@ -81,23 +80,4 @@ body {
 .cover .btn-lg {
     padding: .75rem 1.25rem;
     font-weight: 700;
-}
-
-.mastfoot {
-    color: rgba(0, 0, 0, .5);
-}
-
-.real-import {
-    display: none;
-}
-
-.must-read {
-    color: #d60d0d;
-    font-weight: bold;
-}
-
-.show-upload {
-    font-weight: bold;
-    font-size: 3em;
-    color: #d60d0d;
 }

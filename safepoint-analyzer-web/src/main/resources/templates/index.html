@@ -7,46 +7,39 @@
     <link href="/css/upload.css" rel="stylesheet">
 </head>
 
-<body class="text-center">
-
-<div class="cover-container d-flex h-100 p-3 mx-auto flex-column">
-    <main role="main" class="inner cover">
-        <img src="img/back.png" width="800px"/>
-        <br>
-        <br>
-        <div class="lead text-left">
-            <div>
-                <h2>Online Safepoint/GC log analyzer:</h2>
-                <div>
-                        <span>
-                            If you want to use online viewer simply follow
-                            <a href="/upload" class="must-read">link</a>.
-                        </span>
-                    <br>
-                </div>
-            </div>
-            <br>
-            <div>
-                <h2>Standalone JVM log analyzer:</h2>
-                <div>
-                    <span>
-                        Open source on <a class="must-read" href="https://github.com/krzysztofslusarski/jvm-gc-logs-analyzer">GitHub.</a>
-                    </span>
-                </div>
-            </div>
-            <br>
-            <div>
-                <h2>JVM performance articles and other open source projects:</h2>
-                <a class="must-read" href="https://krzysztofslusarski.github.io/">GitHub.</a>
-            </div>
+<body>
+<main role="main" class="container pb-3">
+    <h1 class="display-3 text-center">Online Safepoint/GC log analyzer</h1>
+    <div class="card mb-3">
+        <div class="card-body">
+            <h5 class="card-title">Online analysis</h5>
+            <p>If you need quick analysis of <= 10Mb file (after compression).</p>
+            <a class="btn btn-outline-primary" href="/upload" role="button">Try online</a>
         </div>
-        <br>
-        <div class="lead text-left">
-            Author: Krzysztof Ślusarski
-            Email: ks@gclogs.com
+    </div>
+    <div class="card mb-3">
+        <div class="card-body">
+            <h5 class="card-title">Standalone JVM log analyzer:</h5>
+            <p>For analysis of big files build standalone version from source.</p>
+            <a class="btn btn-outline-primary" href="https://github.com/krzysztofslusarski/jvm-gc-logs-analyzer"
+               role="button" target="_blank">GitHub repository</a>
         </div>
-    </main>
-</div>
+    </div>
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">Other stuff</h5>
+            <p>If you are looking for interesting cases and tips regarding garbage collection and JVM performance.</p>
+            <a class="btn btn-outline-primary" href="https://krzysztofslusarski.github.io/" role="button"
+               target="_blank">Blog</a>
+        </div>
+    </div>
+</main>
+<footer class="footer mt-auto py-3">
+    <div class="container text-center">
+        <span class="text-muted">
+        This tool is provided to you by <a href="mailto:ks@gclogs.com" class="text-muted">Krzysztof Ślusarski</a></span>
+    </div>
+</footer>
 
 </body>
 </html>
