@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Krzysztof Slusarski
+ * Copyright 2020 Krzysztof Slusarski, Artur Owczarek
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,13 @@ package pl.ks.profiling.safepoint.analyzer.commons.shared.tlab.page;
 
 import java.text.DecimalFormat;
 import java.util.List;
+import java.util.function.Function;
+
 import pl.ks.profiling.gui.commons.Chart;
 import pl.ks.profiling.gui.commons.Page;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.JvmLogFile;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.PageCreator;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.PageUtils;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.tlab.parser.TlabSummaryInfo;
 
 public class TlabSummary implements PageCreator {
@@ -58,59 +61,51 @@ public class TlabSummary implements PageCreator {
                 .build();
     }
 
-    private static Object[][] getAllocatingThreadsChart(List<TlabSummaryInfo> tlabSummaries) {
-        Object[][] stats = new Object[tlabSummaries.size() + 1][2];
-        stats[0][0] = "Time";
-        stats[0][1] = "Allocation threads";
-        int i = 1;
-        for (TlabSummaryInfo tlabSummary : tlabSummaries) {
-            stats[i][0] = tlabSummary.getTimeStamp();
-            stats[i][1] = tlabSummary.getThreadCount();
-            i++;
-        }
-        return stats;
+    private static final List<String> allocatingThreadsChartColumns = List.of(
+            "Time",
+            "Allocation threads");
+    private static final List<Function<TlabSummaryInfo, Object>> allocatingThreadsChartExtractors = List.of(
+            TlabSummaryInfo::getTimeStamp,
+            TlabSummaryInfo::getThreadCount);
+
+    private static Object[][] getAllocatingThreadsChart(List<TlabSummaryInfo> entries) {
+        return PageUtils.toMatrix(entries, allocatingThreadsChartColumns, allocatingThreadsChartExtractors);
     }
 
-    private static Object[][] getSlowAllocationChart(List<TlabSummaryInfo> tlabSummaries) {
-        Object[][] stats = new Object[tlabSummaries.size() + 1][3];
-        stats[0][0] = "Time";
-        stats[0][1] = "Slow allocations";
-        stats[0][2] = "One thread max slow allocations";
-        int i = 1;
-        for (TlabSummaryInfo tlabSummary : tlabSummaries) {
-            stats[i][0] = tlabSummary.getTimeStamp();
-            stats[i][1] = tlabSummary.getSlowAllocs();
-            stats[i][2] = tlabSummary.getMaxSlowAllocs();
-            i++;
-        }
-        return stats;
+    private static final List<String> slowAllocationChartColumns = List.of(
+            "Time",
+            "Slow allocations",
+            "One thread max slow allocations");
+    private static final List<Function<TlabSummaryInfo, Object>> slowAllocationChartExtractors = List.of(
+            TlabSummaryInfo::getTimeStamp,
+            TlabSummaryInfo::getSlowAllocs,
+            TlabSummaryInfo::getMaxSlowAllocs);
+
+    private static Object[][] getSlowAllocationChart(List<TlabSummaryInfo> entries) {
+        return PageUtils.toMatrix(entries, slowAllocationChartColumns, slowAllocationChartExtractors);
     }
 
-    private static Object[][] getRefillsChart(List<TlabSummaryInfo> tlabSummaries) {
-        Object[][] stats = new Object[tlabSummaries.size() + 1][3];
-        stats[0][0] = "Time";
-        stats[0][1] = "Refills";
-        stats[0][2] = "One thread max refills";
-        int i = 1;
-        for (TlabSummaryInfo tlabSummary : tlabSummaries) {
-            stats[i][0] = tlabSummary.getTimeStamp();
-            stats[i][1] = tlabSummary.getRefills();
-            stats[i][2] = tlabSummary.getMaxRefills();
-            i++;
-        }
-        return stats;
+    private static final List<String> refillsChartColumns = List.of(
+            "Time",
+            "Refills",
+            "One thread max refills");
+    private static final List<Function<TlabSummaryInfo, Object>> refillsChartExtractors = List.of(
+            TlabSummaryInfo::getTimeStamp,
+            TlabSummaryInfo::getRefills,
+            TlabSummaryInfo::getMaxRefills);
+
+    private static Object[][] getRefillsChart(List<TlabSummaryInfo> entries) {
+        return PageUtils.toMatrix(entries, refillsChartColumns, refillsChartExtractors);
     }
 
-    private static Object[][] getWasteChart(List<TlabSummaryInfo> tlabSummaries) {
-        Object[][] stats = new Object[tlabSummaries.size() + 1][2];
-        stats[0][0] = "Time";
-        stats[0][1] = "Waste %";
-        int i = 1;
-        for (TlabSummaryInfo tlabSummary : tlabSummaries) {
-            stats[i][0] = tlabSummary.getTimeStamp();
-            stats[i][1] = tlabSummary.getWastePercent();
-            i++;
-        }
-        return stats;
+    private static final List<String> wasteChartColumns = List.of(
+            "Time",
+            "Waste %");
+    private static final List<Function<TlabSummaryInfo, Object>> wasteChartExtractors = List.of(
+            TlabSummaryInfo::getTimeStamp,
+            TlabSummaryInfo::getWastePercent);
+
+    private static Object[][] getWasteChart(List<TlabSummaryInfo> entries) {
+        return PageUtils.toMatrix(entries, wasteChartColumns, wasteChartExtractors);
     }
 }

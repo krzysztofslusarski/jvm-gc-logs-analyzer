@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Krzysztof Slusarski
+ * Copyright 2020 Krzysztof Slusarski, Artur Owczarek
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,13 @@ package pl.ks.profiling.safepoint.analyzer.commons.shared.jit.page;
 
 import java.text.DecimalFormat;
 import java.util.List;
+import java.util.function.Function;
+
 import pl.ks.profiling.gui.commons.Chart;
 import pl.ks.profiling.gui.commons.Page;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.JvmLogFile;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.PageCreator;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.PageUtils;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.jit.parser.CompilationStatus;
 
 public class JitCompilationCount implements PageCreator {
@@ -43,17 +46,15 @@ public class JitCompilationCount implements PageCreator {
                 .build();
     }
 
-    private static Object[][] getCurrentCountChart(List<CompilationStatus> compilationStatuses) {
-        Object[][] stats = new Object[compilationStatuses.size() + 1][2];
-        stats[0][0] = "Time";
-        stats[0][1] = "Count";
-        int i = 1;
-        for (CompilationStatus status : compilationStatuses) {
-            stats[i][0] = status.getTimeStamp();
-            stats[i][1] = status.getCurrentCount();
-            i++;
-        }
-        return stats;
+    private static final List<String> currentCountChartColumns = List.of(
+            "Time",
+            "Count");
+    private static final List<Function<CompilationStatus, Object>> currentCountChartExtractors = List.of(
+            CompilationStatus::getTimeStamp,
+            CompilationStatus::getCurrentCount);
+
+    private static Object[][] getCurrentCountChart(List<CompilationStatus> entries) {
+        return PageUtils.toMatrix(entries, currentCountChartColumns, currentCountChartExtractors);
     }
 
 }

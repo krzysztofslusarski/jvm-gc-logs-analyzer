@@ -50,7 +50,7 @@ public class JitCodeCacheSweeperActivity implements PageCreator {
         int i = 1;
         for (CodeCacheSweeperActivity activity : codeCacheSweeperActivities) {
             stats[i][0] = activity.getTimeStamp();
-            stats[i][1] = i;
+            stats[i][1] = i; // TODO Why here i?
             i++;
         }
         return stats;
