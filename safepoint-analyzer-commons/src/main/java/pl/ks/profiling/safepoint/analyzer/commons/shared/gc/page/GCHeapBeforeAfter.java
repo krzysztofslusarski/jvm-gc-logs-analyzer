@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Krzysztof Slusarski
+ * Copyright 2020 Krzysztof Slusarski, Artur Owczarek
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,13 @@ package pl.ks.profiling.safepoint.analyzer.commons.shared.gc.page;
 
 import java.text.DecimalFormat;
 import java.util.List;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import pl.ks.profiling.gui.commons.Chart;
 import pl.ks.profiling.gui.commons.Page;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.JvmLogFile;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.PageCreator;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.PageUtils;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.parser.GCLogCycleEntry;
 
 public class GCHeapBeforeAfter implements PageCreator {
@@ -49,87 +51,70 @@ public class GCHeapBeforeAfter implements PageCreator {
                 .build();
     }
 
+    private static final List<String> heapSizeChartColumns = List.of(
+            "Cycle",
+            "Heap before GC",
+            "Heap after GC",
+            "Heap size");
+
+    private static final List<Function<GCLogCycleEntry, Object>> heapSizeChartExtractors = List.of(
+            GCLogCycleEntry::getTimeStamp,
+            GCLogCycleEntry::getHeapBeforeGC,
+            GCLogCycleEntry::getHeapAfterGC,
+            GCLogCycleEntry::getHeapSize);
+
     private static Object[][] getHeapSizeChart(JvmLogFile jvmLogFile) {
-        List<GCLogCycleEntry> cyclesToShow = jvmLogFile.getGcLogFile().getCycleEntries()
+        return PageUtils.toMatrix(getEntries(jvmLogFile), heapSizeChartColumns, heapSizeChartExtractors);
+    }
+
+    private static List<GCLogCycleEntry> getEntries(JvmLogFile jvmLogFile) {
+        return jvmLogFile.getGcLogFile().getCycleEntries()
                 .stream()
                 .filter(GCLogCycleEntry::isGenuineCollection)
                 .collect(Collectors.toList());
-        Object[][] stats = new Object[cyclesToShow.size() + 1][4];
-        stats[0][0] = "Cycle";
-        stats[0][1] = "Heap before GC";
-        stats[0][2] = "Heap after GC";
-        stats[0][3] = "Heap size";
-        int i = 1;
-
-        for (GCLogCycleEntry gcCycleInfo : cyclesToShow) {
-            stats[i][0] = gcCycleInfo.getTimeStamp();
-            stats[i][1] = gcCycleInfo.getHeapBeforeGC();
-            stats[i][2] = gcCycleInfo.getHeapAfterGC();
-            stats[i][3] = gcCycleInfo.getHeapSize();
-            i++;
-        }
-
-        return stats;
     }
+
+    private static final List<String> reclaimedSizeChartColumns = List.of(
+            "Cycle",
+            "Reclaimed space");
+
+    private static final Function<GCLogCycleEntry, Object> reclaimedSpace = (GCLogCycleEntry gcCycleInfo) -> gcCycleInfo.getHeapBeforeGC() - gcCycleInfo.getHeapAfterGC();
+
+    private static final List<Function<GCLogCycleEntry, Object>> reclaimedSizeChartExtractors = List.of(
+            GCLogCycleEntry::getTimeStamp,
+            reclaimedSpace);
 
     private static Object[][] getReclaimedSizeChart(JvmLogFile jvmLogFile) {
-        List<GCLogCycleEntry> cyclesToShow = jvmLogFile.getGcLogFile().getCycleEntries()
-                .stream()
-                .filter(GCLogCycleEntry::isGenuineCollection)
-                .collect(Collectors.toList());
-        Object[][] stats = new Object[cyclesToShow.size() + 1][2];
-        stats[0][0] = "Cycle";
-        stats[0][1] = "Reclaimed space";
-        int i = 1;
-
-        for (GCLogCycleEntry gcCycleInfo : cyclesToShow) {
-            stats[i][0] = gcCycleInfo.getTimeStamp();
-            stats[i][1] = gcCycleInfo.getHeapBeforeGC() - gcCycleInfo.getHeapAfterGC();
-            i++;
-        }
-
-        return stats;
+        return PageUtils.toMatrix(getEntries(jvmLogFile), reclaimedSizeChartColumns, reclaimedSizeChartExtractors);
     }
 
+    private static final List<String> heapBeforeGcSizeChartColumns = List.of(
+            "Cycle",
+            "Heap before GC",
+            "Heap size");
+
+    private static final List<Function<GCLogCycleEntry, Object>> heapBeforeGcSizeChartExtractors = List.of(
+            GCLogCycleEntry::getTimeStamp,
+            GCLogCycleEntry::getHeapBeforeGC,
+            GCLogCycleEntry::getHeapSize);
+
+    // TODO not used
     private static Object[][] getHeapBeforeGCSizeChart(JvmLogFile jvmLogFile) {
-        List<GCLogCycleEntry> cyclesToShow = jvmLogFile.getGcLogFile().getCycleEntries()
-                .stream()
-                .filter(GCLogCycleEntry::isGenuineCollection)
-                .collect(Collectors.toList());
-        Object[][] stats = new Object[cyclesToShow.size() + 1][3];
-        stats[0][0] = "Cycle";
-        stats[0][1] = "Heap before GC";
-        stats[0][2] = "Heap size";
-        int i = 1;
-
-        for (GCLogCycleEntry gcCycleInfo : cyclesToShow) {
-            stats[i][0] = gcCycleInfo.getTimeStamp();
-            stats[i][1] = gcCycleInfo.getHeapBeforeGC();
-            stats[i][2] = gcCycleInfo.getHeapSize();
-            i++;
-        }
-
-        return stats;
+        return PageUtils.toMatrix(getEntries(jvmLogFile), heapBeforeGcSizeChartColumns, heapBeforeGcSizeChartExtractors);
     }
 
+    private static final List<String> heapAfterGcSizeChartColumns = List.of(
+            "Cycle",
+            "Heap after GC",
+            "Heap size");
+
+    private static final List<Function<GCLogCycleEntry, Object>> heapAfterGcSizeChartExtractors = List.of(
+            GCLogCycleEntry::getTimeStamp,
+            GCLogCycleEntry::getHeapAfterGC,
+            GCLogCycleEntry::getHeapSize);
+
+    // TODO not used
     private static Object[][] getHeapAfterGCSizeChart(JvmLogFile jvmLogFile) {
-        List<GCLogCycleEntry> cyclesToShow = jvmLogFile.getGcLogFile().getCycleEntries()
-                .stream()
-                .filter(GCLogCycleEntry::isGenuineCollection)
-                .collect(Collectors.toList());
-        Object[][] stats = new Object[cyclesToShow.size() + 1][3];
-        stats[0][0] = "Cycle";
-        stats[0][1] = "Heap after GC";
-        stats[0][2] = "Heap size";
-        int i = 1;
-
-        for (GCLogCycleEntry gcCycleInfo : cyclesToShow) {
-            stats[i][0] = gcCycleInfo.getTimeStamp();
-            stats[i][1] = gcCycleInfo.getHeapAfterGC();
-            stats[i][2] = gcCycleInfo.getHeapSize();
-            i++;
-        }
-
-        return stats;
+        return PageUtils.toMatrix(getEntries(jvmLogFile), heapAfterGcSizeChartColumns, heapAfterGcSizeChartExtractors);
     }
 }

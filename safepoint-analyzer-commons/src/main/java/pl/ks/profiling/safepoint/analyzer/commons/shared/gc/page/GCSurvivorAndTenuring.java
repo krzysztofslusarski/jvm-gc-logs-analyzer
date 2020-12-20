@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Krzysztof Slusarski
+ * Copyright 2020 Krzysztof Slusarski, Artur Owczarek
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,13 @@ package pl.ks.profiling.safepoint.analyzer.commons.shared.gc.page;
 
 import java.text.DecimalFormat;
 import java.util.List;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import pl.ks.profiling.gui.commons.Chart;
 import pl.ks.profiling.gui.commons.Page;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.JvmLogFile;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.PageCreator;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.PageUtils;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.parser.GCLogCycleEntry;
 
 public class GCSurvivorAndTenuring implements PageCreator {
@@ -54,42 +56,35 @@ public class GCSurvivorAndTenuring implements PageCreator {
                 .build();
     }
 
+    private static final List<String> desiredSurvivorSizeChartColumns = List.of(
+            "Cycle",
+            "Size");
+
+    private static final List<Function<GCLogCycleEntry, Object>> desiredSurvivorSizeChartExtractors = List.of(
+            GCLogCycleEntry::getTimeStamp,
+            GCLogCycleEntry::getNewTenuringThreshold);
 
     private static Object[][] getDesiredSurvivorSize(JvmLogFile jvmLogFile) {
         List<GCLogCycleEntry> cyclesToShow = jvmLogFile.getGcLogFile().getCycleEntries()
                 .stream()
                 .filter(gcLogCycleEntry -> gcLogCycleEntry.getDesiredSurvivorSize() > 0)
                 .collect(Collectors.toList());
-        Object[][] stats = new Object[cyclesToShow.size() + 1][2];
-        stats[0][0] = "Cycle";
-        stats[0][1] = "Size";
-        int i = 1;
-
-        for (GCLogCycleEntry gcCycleInfo : cyclesToShow) {
-            stats[i][0] = gcCycleInfo.getTimeStamp();
-            stats[i][1] = gcCycleInfo.getDesiredSurvivorSize();
-            i++;
-        }
-
-        return stats;
+        return PageUtils.toMatrix(cyclesToShow, desiredSurvivorSizeChartColumns, desiredSurvivorSizeChartExtractors);
     }
+
+    private static final List<String> tenuringThresholdChartColumns = List.of(
+            "Cycle",
+            "Calculated size");
+
+    private static final List<Function<GCLogCycleEntry, Object>> tenuringThresholdChartExtractors = List.of(
+            GCLogCycleEntry::getTimeStamp,
+            GCLogCycleEntry::getNewTenuringThreshold);
 
     private static Object[][] getTenuringThreshold(JvmLogFile jvmLogFile) {
         List<GCLogCycleEntry> cyclesToShow = jvmLogFile.getGcLogFile().getCycleEntries()
                 .stream()
                 .filter(gcLogCycleEntry -> gcLogCycleEntry.getNewTenuringThreshold() > 0)
                 .collect(Collectors.toList());
-        Object[][] stats = new Object[cyclesToShow.size() + 1][2];
-        stats[0][0] = "Cycle";
-        stats[0][1] = "Calculated size";
-        int i = 1;
-
-        for (GCLogCycleEntry gcCycleInfo : cyclesToShow) {
-            stats[i][0] = gcCycleInfo.getTimeStamp();
-            stats[i][1] = gcCycleInfo.getNewTenuringThreshold();
-            i++;
-        }
-
-        return stats;
+        return PageUtils.toMatrix(cyclesToShow, tenuringThresholdChartColumns, tenuringThresholdChartExtractors);
     }
 }

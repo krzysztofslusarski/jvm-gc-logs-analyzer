@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Krzysztof Slusarski
+ * Copyright 2020 Krzysztof Slusarski, Artur Owczarek
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,16 +15,19 @@
  */
 package pl.ks.profiling.safepoint.analyzer.commons.shared.gc.page;
 
-import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.List;
 import pl.ks.profiling.gui.commons.Chart;
 import pl.ks.profiling.gui.commons.Page;
 import pl.ks.profiling.gui.commons.PageContent;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.JvmLogFile;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.PageCreator;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.PageUtils;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.parser.GCPhaseStats;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.parser.GCStats;
+
+import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Function;
 
 public class GCPhaseTime implements PageCreator {
     @Override
@@ -54,31 +57,20 @@ public class GCPhaseTime implements PageCreator {
                 .build();
     }
 
+    private static final List<String> heapAfterGcSizeChartColumns = List.of(
+            "Phase name",
+            "Total time");
+
+    private static final Function<GCPhaseStats, Object> totalTime = (GCPhaseStats stat) -> stat.getTime().getTotal();
+    private static final List<Function<GCPhaseStats, Object>> heapAfterGcSizeChartExtractors = List.of(
+            GCPhaseStats::getName,
+            totalTime);
+
     private static Object[][] getGcAggregatedPhaseTimeChart(GCStats gcStats) {
-        List<GCPhaseStats> gcPhaseStats = gcStats.getGcAggregatedPhaseStats();
-        Object[][] stats = new Object[gcPhaseStats.size() + 1][2];
-        stats[0][0] = "Phase name";
-        stats[0][1] = "Total time";
-        int i = 1;
-        for (GCPhaseStats stat : gcPhaseStats) {
-            stats[i][0] = stat.getName();
-            stats[i][1] = stat.getTime().getTotal();
-            i++;
-        }
-        return stats;
+        return PageUtils.toMatrix(gcStats.getGcAggregatedPhaseStats(), heapAfterGcSizeChartColumns, heapAfterGcSizeChartExtractors);
     }
 
     private static Object[][] getGcPhaseTimeChart(GCStats gcStats) {
-        List<GCPhaseStats> gcPhaseStats = gcStats.getGcPhaseStats();
-        Object[][] stats = new Object[gcPhaseStats.size() + 1][2];
-        stats[0][0] = "Phase name";
-        stats[0][1] = "Total time";
-        int i = 1;
-        for (GCPhaseStats stat : gcPhaseStats) {
-            stats[i][0] = stat.getName();
-            stats[i][1] = stat.getTime().getTotal();
-            i++;
-        }
-        return stats;
+        return PageUtils.toMatrix(gcStats.getGcPhaseStats(), heapAfterGcSizeChartColumns, heapAfterGcSizeChartExtractors);
     }
 }
