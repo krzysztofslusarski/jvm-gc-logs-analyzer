@@ -41,7 +41,7 @@ public class TlabLogFile {
                     .nid(threadTlabsBeforeGC.get(0).getNid())
                     .size(OneFiledAllStatsUtil.create(
                             threadTlabsBeforeGC.stream()
-                                    .mapToDouble(threadTlabBeforeGC -> (double) threadTlabBeforeGC.getSize())
+                                    .mapToDouble(threadTlabBeforeGC -> (double) threadTlabBeforeGC.getSizeKb())
                                     .toArray())
                     )
                     .slowAllocs(OneFiledAllStatsUtil.create(

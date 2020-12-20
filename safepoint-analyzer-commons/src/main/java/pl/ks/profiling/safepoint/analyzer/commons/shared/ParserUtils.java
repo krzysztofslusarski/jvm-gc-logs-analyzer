@@ -77,4 +77,23 @@ public class ParserUtils {
         }
         return BigDecimal.ZERO;
     }
+
+    public String parseFirstHexadecimalNumber(String line, int pos) {
+        int beginning = line.indexOf("0x", pos);
+        int end = indexOfFirstNonHexadecimalCharacter(line, beginning + 2);
+        return line.substring(beginning, end);
+    }
+
+    private int indexOfFirstNonHexadecimalCharacter(String line, int pos) {
+        int nonHexadecimalPos = pos;
+        while (isHexadecimalCharacter(line, nonHexadecimalPos)) {
+            nonHexadecimalPos++;
+        }
+        return nonHexadecimalPos;
+    }
+
+    private boolean isHexadecimalCharacter(String line, int pos) {
+        char character = line.charAt(pos);
+        return (character >= '0' && character <= '9') || (character >= 'a' && character <= 'f') || (character >= 'A' && character <= 'F');
+    }
 }
