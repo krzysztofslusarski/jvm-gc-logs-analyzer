@@ -30,7 +30,7 @@ public class PageUtils {
         }
 
         Object[][] matrix = initiateMatrix(elements, numberOfColumns);
-        setHeaders(matrix, columnNames);
+        setHeader(matrix, columnNames);
         setRows(matrix, elements, valueExtractors);
         return matrix;
     }
@@ -47,7 +47,7 @@ public class PageUtils {
         }
     }
 
-    private static void setHeaders(Object[][] stats, List<String> columnNames) {
+    private static void setHeader(Object[][] stats, List<String> columnNames) {
         int columnIndex = 0;
         for(String column: columnNames) {
             stats[0][columnIndex] = column;
