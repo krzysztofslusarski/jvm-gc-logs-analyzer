@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Krzysztof Slusarski
+ * Copyright 2020 Krzysztof Slusarski, Artur Owczarek
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,16 +15,18 @@
  */
 package pl.ks.profiling.safepoint.analyzer.commons.shared.safepoint.page;
 
-import java.math.BigDecimal;
-import java.text.DecimalFormat;
-import java.util.List;
-import java.util.Set;
 import pl.ks.profiling.gui.commons.Chart;
 import pl.ks.profiling.gui.commons.Page;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.JvmLogFile;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.PageCreator;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.PageUtils;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.safepoint.parser.SafepointOperationStats;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.safepoint.parser.SafepointOperationStatsByName;
+
+import java.math.BigDecimal;
+import java.text.DecimalFormat;
+import java.util.List;
+import java.util.function.Function;
 
 public class SafepoinOperationTime implements PageCreator {
     @Override
@@ -45,18 +47,18 @@ public class SafepoinOperationTime implements PageCreator {
                 .build();
     }
 
+    private static final List<String> chartColumns = List.of(
+            "Operation name",
+            "Time with TTS");
+
     private static Object[][] getChart(SafepointOperationStats safepointOperationStats) {
-        Set<SafepointOperationStatsByName> statsByName = safepointOperationStats.getStatsByNames();
-        Object[][] stats = new Object[statsByName.size() + 1][2];
-        stats[0][0] = "Operation name";
-        stats[0][1] = "Time with TTS";
-        int i = 1;
-        for (SafepointOperationStatsByName statByName : statsByName) {
-            stats[i][0] = statByName.getOperationName();
-            stats[i][1] = statByName.getOperationTime().getTotal()
-                    .add(safepointOperationStats.getTts().getAverage().multiply(new BigDecimal(statByName.getCount())));
-            i++;
-        }
-        return stats;
+        Function<SafepointOperationStatsByName, Object> getTimeWithTts = (SafepointOperationStatsByName statByName) ->
+                statByName.getOperationTime().getTotal()
+                        .add(safepointOperationStats.getTts().getAverage().multiply(new BigDecimal(statByName.getCount())));
+
+        List<Function<SafepointOperationStatsByName, Object>> chartExtractors = List.of(
+                SafepointOperationStatsByName::getOperationName,
+                getTimeWithTts);
+        return PageUtils.toMatrix(safepointOperationStats.getStatsByNames(), chartColumns, chartExtractors);
     }
 }

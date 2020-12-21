@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Krzysztof Slusarski
+ * Copyright 2020 Krzysztof Slusarski, Artur Owczarek
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,16 @@
  */
 package pl.ks.profiling.safepoint.analyzer.commons.shared.classloader.page;
 
-import java.text.DecimalFormat;
-import java.util.List;
 import pl.ks.profiling.gui.commons.Chart;
 import pl.ks.profiling.gui.commons.Page;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.JvmLogFile;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.PageCreator;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.PageUtils;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.classloader.parser.ClassStatus;
+
+import java.text.DecimalFormat;
+import java.util.List;
+import java.util.function.Function;
 
 public class ClassCount implements PageCreator {
     @Override
@@ -48,29 +51,25 @@ public class ClassCount implements PageCreator {
                 .build();
     }
 
-    private static Object[][] getCurrentCountChart(List<ClassStatus> classStatuses) {
-        Object[][] stats = new Object[classStatuses.size() + 1][2];
-        stats[0][0] = "Time";
-        stats[0][1] = "Count";
-        int i = 1;
-        for (ClassStatus status : classStatuses) {
-            stats[i][0] = status.getTimeStamp();
-            stats[i][1] = status.getCurrentCount();
-            i++;
-        }
-        return stats;
+    private static final List<String> currentCountChartColumns = List.of(
+            "Time",
+            "Count");
+    private static final List<Function<ClassStatus, Object>> currentCountChartExtractors = List.of(
+            ClassStatus::getTimeStamp,
+            ClassStatus::getCurrentCount);
+
+    private static Object[][] getCurrentCountChart(List<ClassStatus> entries) {
+        return PageUtils.toMatrix(entries, currentCountChartColumns, currentCountChartExtractors);
     }
 
-    private static Object[][] getCreatedChart(List<ClassStatus> classStatuses) {
-        Object[][] stats = new Object[classStatuses.size() + 1][2];
-        stats[0][0] = "Time";
-        stats[0][1] = "Loaded";
-        int i = 1;
-        for (ClassStatus status : classStatuses) {
-            stats[i][0] = status.getTimeStamp();
-            stats[i][1] = status.getLoadedCount();
-            i++;
-        }
-        return stats;
+    private static final List<String> createdChartColumns = List.of(
+            "Time",
+            "Used");
+    private static final List<Function<ClassStatus, Object>> createdChartExtractors = List.of(
+            ClassStatus::getTimeStamp,
+            ClassStatus::getLoadedCount);
+
+    private static Object[][] getCreatedChart(List<ClassStatus> entries) {
+        return PageUtils.toMatrix(entries, createdChartColumns, createdChartExtractors);
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Krzysztof Slusarski
+ * Copyright 2020 Krzysztof Slusarski, Artur Owczarek
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,12 @@ package pl.ks.profiling.safepoint.analyzer.commons.shared.stringdedup.page;
 
 import java.text.DecimalFormat;
 import java.util.List;
+import java.util.function.Function;
 import pl.ks.profiling.gui.commons.Chart;
 import pl.ks.profiling.gui.commons.Page;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.JvmLogFile;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.PageCreator;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.PageUtils;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.stringdedup.parser.StringDedupLogEntry;
 
 public class StringDedupTotal implements PageCreator {
@@ -75,46 +77,40 @@ public class StringDedupTotal implements PageCreator {
         return stats;
     }
 
+    private static final List<String> countChartColumns = List.of(
+            "Time",
+            "Total count",
+            "Young count",
+            "Old count");
+    private static final List<Function<StringDedupLogEntry, Object>> countChartExtractors = List.of(
+            StringDedupLogEntry::getTimeStamp,
+            StringDedupLogEntry::getTotalCount,
+            StringDedupLogEntry::getTotalCountYoung,
+            StringDedupLogEntry::getTotalCountOld);
+
     private static Object[][] getCountChart(List<StringDedupLogEntry> entries) {
-        Object[][] stats = new Object[entries.size() + 1][4];
-        stats[0][0] = "Time";
-        stats[0][1] = "Total count";
-        stats[0][2] = "Young count";
-        stats[0][3] = "Old count";
-        int i = 1;
-        for (StringDedupLogEntry status : entries) {
-            stats[i][0] = status.getTimeStamp();
-            stats[i][1] = status.getTotalCount();
-            stats[i][2] = status.getTotalCountYoung();
-            stats[i][3] = status.getTotalCountOld();
-            i++;
-        }
-        return stats;
+        return PageUtils.toMatrix(entries, countChartColumns, countChartExtractors);
     }
+
+    private static final List<String> newCountChartColumns = List.of(
+            "Time",
+            "New strings count");
+    private static final List<Function<StringDedupLogEntry, Object>> newCountChartExtractors = List.of(
+            StringDedupLogEntry::getTimeStamp,
+            StringDedupLogEntry::getTotalCountNew);
 
     private static Object[][] getNewCountChart(List<StringDedupLogEntry> entries) {
-        Object[][] stats = new Object[entries.size() + 1][2];
-        stats[0][0] = "Time";
-        stats[0][1] = "New strings count";
-        int i = 1;
-        for (StringDedupLogEntry status : entries) {
-            stats[i][0] = status.getTimeStamp();
-            stats[i][1] = status.getTotalCountNew();
-            i++;
-        }
-        return stats;
+        return PageUtils.toMatrix(entries, newCountChartColumns, newCountChartExtractors);
     }
 
+    private static final List<String> newSizeChartColumns = List.of(
+            "Time",
+            "New strings size");
+    private static final List<Function<StringDedupLogEntry, Object>> newSizeChartExtractors = List.of(
+            StringDedupLogEntry::getTimeStamp,
+            StringDedupLogEntry::getTotalSizeNew);
+
     private static Object[][] getNewSizeChart(List<StringDedupLogEntry> entries) {
-        Object[][] stats = new Object[entries.size() + 1][2];
-        stats[0][0] = "Time";
-        stats[0][1] = "New strings size";
-        int i = 1;
-        for (StringDedupLogEntry status : entries) {
-            stats[i][0] = status.getTimeStamp();
-            stats[i][1] = status.getTotalSizeNew();
-            i++;
-        }
-        return stats;
+        return PageUtils.toMatrix(entries, newSizeChartColumns, newSizeChartExtractors);
     }
 }

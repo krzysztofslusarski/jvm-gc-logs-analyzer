@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Krzysztof Slusarski
+ * Copyright 2020 Krzysztof Slusarski, Artur Owczarek
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,17 @@
  */
 package pl.ks.profiling.safepoint.analyzer.commons.shared.gc.page;
 
-import java.text.DecimalFormat;
-import java.util.List;
-import java.util.stream.Collectors;
 import pl.ks.profiling.gui.commons.Chart;
 import pl.ks.profiling.gui.commons.Page;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.JvmLogFile;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.PageCreator;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.PageUtils;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.parser.GCLogCycleEntry;
+
+import java.text.DecimalFormat;
+import java.util.List;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class GCHeapAfter implements PageCreator {
     @Override
@@ -43,24 +46,22 @@ public class GCHeapAfter implements PageCreator {
                 .build();
     }
 
+    private static final List<String> chartColumns = List.of(
+            "Cycle",
+            "Heap after GC",
+            "Heap size");
+
+    private static final List<Function<GCLogCycleEntry, Object>> chartExtractors = List.of(
+            GCLogCycleEntry::getTimeStamp,
+            GCLogCycleEntry::getHeapAfterGC,
+            GCLogCycleEntry::getHeapSize);
+
     private static Object[][] getHeapAfterGCSizeChart(JvmLogFile jvmLogFile) {
         List<GCLogCycleEntry> cyclesToShow = jvmLogFile.getGcLogFile().getCycleEntries()
                 .stream()
                 .filter(GCLogCycleEntry::isGenuineCollection)
                 .collect(Collectors.toList());
-        Object[][] stats = new Object[cyclesToShow.size() + 1][3];
-        stats[0][0] = "Cycle";
-        stats[0][1] = "Heap after GC";
-        stats[0][2] = "Heap size";
-        int i = 1;
 
-        for (GCLogCycleEntry gcCycleInfo : cyclesToShow) {
-            stats[i][0] = gcCycleInfo.getTimeStamp();
-            stats[i][1] = gcCycleInfo.getHeapAfterGC();
-            stats[i][2] = gcCycleInfo.getHeapSize();
-            i++;
-        }
-
-        return stats;
+        return PageUtils.toMatrix(cyclesToShow, chartColumns, chartExtractors);
     }
 }
