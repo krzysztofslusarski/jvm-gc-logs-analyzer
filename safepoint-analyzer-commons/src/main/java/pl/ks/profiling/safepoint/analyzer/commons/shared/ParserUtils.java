@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Krzysztof Slusarski
+ * Copyright 2020 Krzysztof Slusarski, Artur Owczarek
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,19 +15,19 @@
  */
 package pl.ks.profiling.safepoint.analyzer.commons.shared;
 
+import lombok.experimental.UtilityClass;
+
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import lombok.experimental.UtilityClass;
 
 @UtilityClass
 public class ParserUtils {
     public BigDecimal getTimeStamp(String line) {
-        Pattern pattern = Pattern.compile("\\[\\d+.\\d+s]");
-        Matcher matcher = pattern.matcher(line);
-        matcher.find();
-        return new BigDecimal(matcher.group().replace(',', '.').replace("[", "").replace("s]", "").trim());
+        int endBracketIndex = line.indexOf("s]");
+        String lineUntilEndBracket = line.substring(0, endBracketIndex);
+        int startBracketIndex = lineUntilEndBracket.lastIndexOf("[");
+        String timestampString = line.substring(startBracketIndex + 1, endBracketIndex);
+        return new BigDecimal(timestampString);
     }
 
     public long parseFirstNumber(String line, int pos) {
