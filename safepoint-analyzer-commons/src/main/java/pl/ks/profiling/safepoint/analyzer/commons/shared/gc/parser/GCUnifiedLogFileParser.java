@@ -39,7 +39,7 @@ public class GCUnifiedLogFileParser implements FileParser<GCLogFile> {
 
         gcLogFile.newLine(sequenceId, line);
         if (line.contains("gc,start")) {
-            gcLogFile.newPhase(sequenceId, getPhase(line), getTimeStamp(line));
+            gcLogFile.newPhase(sequenceId, getPhase(line), ParserUtils.getTimeStamp(line));
         } else if (line.contains("gc ") && line.contains("Concurrent Cycle") && line.contains("ms")) {
             addConcurrentCycleDataIfPresent(line);
         } else if (line.contains("gc,phases") && line.contains("ms") && line.contains(")   ") && !line.contains(")       ") &&
@@ -83,13 +83,6 @@ public class GCUnifiedLogFileParser implements FileParser<GCLogFile> {
         Matcher matcher = pattern.matcher(line);
         matcher.find();
         return Long.valueOf(matcher.group().replace("(", "").replace(")", "").trim());
-    }
-
-    private BigDecimal getTimeStamp(String line) {
-        Pattern pattern = Pattern.compile("\\[\\d+.\\d+s]");
-        Matcher matcher = pattern.matcher(line);
-        matcher.find();
-        return new BigDecimal(matcher.group().replace(',', '.').replace("[", "").replace("s]", "").trim());
     }
 
     private void addPhaseConcurrentSTW(Long sequenceId, String line) {
