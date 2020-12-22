@@ -23,11 +23,18 @@ import java.math.RoundingMode;
 @UtilityClass
 public class ParserUtils {
     public BigDecimal getTimeStamp(String line) {
-        int endBracketIndex = line.indexOf("s]");
-        String lineUntilEndBracket = line.substring(0, endBracketIndex);
-        int startBracketIndex = lineUntilEndBracket.lastIndexOf("[");
-        String timestampString = line.substring(startBracketIndex + 1, endBracketIndex);
-        return new BigDecimal(timestampString);
+        return new BigDecimal(denationalizeFloatString(getContentBetweenMarkers(line, "[", "s]")));
+    }
+
+    private static String getContentBetweenMarkers(String line, String startMarker, String endMarker) {
+        int endMarkerIndex = line.indexOf(endMarker);
+        String lineUntilEndMarker = line.substring(0, endMarkerIndex);
+        int startMarkerIndex = lineUntilEndMarker.lastIndexOf(startMarker);
+        return line.substring(startMarkerIndex + 1, endMarkerIndex);
+    }
+
+    private static String denationalizeFloatString(String floatString) {
+        return floatString.replace(",", ".");
     }
 
     public long parseFirstNumber(String line, int pos) {
