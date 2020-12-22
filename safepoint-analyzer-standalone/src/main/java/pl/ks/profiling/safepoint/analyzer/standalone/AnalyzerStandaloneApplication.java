@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Krzysztof Slusarski
+ * Copyright 2020 Krzysztof Slusarski, Artur Owczarek
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,18 +15,6 @@
  */
 package pl.ks.profiling.safepoint.analyzer.standalone;
 
-import java.awt.EventQueue;
-import java.awt.FlowLayout;
-import java.awt.event.ActionEvent;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import javax.swing.JButton;
-import javax.swing.JComponent;
-import javax.swing.JFileChooser;
-import javax.swing.JFrame;
-import javax.swing.UIManager;
-import javax.swing.UnsupportedLookAndFeelException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -34,6 +22,13 @@ import org.springframework.boot.builder.SpringApplicationBuilder;
 import pl.ks.profiling.io.InputUtils;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.JvmLogFile;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.StatsService;
+import java.util.List;
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 
 @Slf4j
 @SpringBootApplication
@@ -60,6 +55,7 @@ public class AnalyzerStandaloneApplication extends JFrame {
         JButton quitButton = new JButton("Quit");
         JButton loadButton = new JButton("Load file (JDK >= 9)");
         JButton loadOldButton = new JButton("Load file (JDK 8)");
+        JButton concatLogsButton = new JButton("Concatenate rotated logs");
 
         loadButton.addActionListener((ActionEvent event) -> {
             try {
@@ -91,16 +87,73 @@ public class AnalyzerStandaloneApplication extends JFrame {
             }
         });
 
+        concatLogsButton.addActionListener(this::onConcatLogsButtonClick);
+
         quitButton.addActionListener((ActionEvent event) -> {
             System.exit(0);
         });
 
-        createLayout(loadButton, loadOldButton, quitButton);
+        createLayout(loadButton, loadOldButton, concatLogsButton, quitButton);
 
         setTitle("Safepoint/GC log file analyzer");
         setSize(300, 200);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
+    }
+
+    private void onConcatLogsButtonClick(ActionEvent event) {
+        File[] filesForConcatenation = pickFilesForConcatenation();
+        if (filesForConcatenation != null) {
+            List<File> sortedFiles = sortFilesByTimestamp(filesForConcatenation);
+            if (sortedFiles != null) {
+                File saveFile = pickFileForConcatenationOutput();
+                if (saveFile != null) {
+                    concatenateFiles(sortedFiles, saveFile);
+                }
+            }
+        }
+    }
+
+    private File[] pickFilesForConcatenation() {
+        JFileChooser filesToConcatenateChooser = new JFileChooser();
+        filesToConcatenateChooser.setMultiSelectionEnabled(true);
+        filesToConcatenateChooser.setDialogTitle("Select logs files for concatenation");
+        int ret = filesToConcatenateChooser.showOpenDialog(null);
+        if (ret == JFileChooser.APPROVE_OPTION) {
+            return filesToConcatenateChooser.getSelectedFiles();
+        } else {
+            return null;
+        }
+    }
+
+    private List<File> sortFilesByTimestamp(File[] files) {
+        try {
+            return FilesConcatenation.sortByTimestamp(files);
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(null, "Error while checking files for concatenation", "Error", JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    private File pickFileForConcatenationOutput() {
+        JFileChooser outputFileChooser = new JFileChooser();
+        int outputFileResult = outputFileChooser.showSaveDialog(null);
+        if (outputFileResult == JFileChooser.APPROVE_OPTION) {
+            return outputFileChooser.getSelectedFile();
+        } else {
+            return null;
+        }
+    }
+
+    private void concatenateFiles(List<File> sortedFiles, File saveFile) {
+        try {
+            FilesConcatenation.concatenate(sortedFiles, saveFile);
+        } catch (IOException e) {
+            JOptionPane.showMessageDialog(null, "Error while concatenating files", "Error", JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
+        }
+        JOptionPane.showMessageDialog(null, String.format("%d files has been successfully concatenated into %s", sortedFiles.size(), saveFile.getAbsolutePath()));
     }
 
     private void createLayout(JComponent... arg) {
