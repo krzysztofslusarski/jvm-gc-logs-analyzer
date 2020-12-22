@@ -15,6 +15,7 @@
  */
 package pl.ks.profiling.safepoint.analyzer.standalone;
 
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -22,13 +23,20 @@ import org.springframework.boot.builder.SpringApplicationBuilder;
 import pl.ks.profiling.io.InputUtils;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.JvmLogFile;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.StatsService;
-import java.util.List;
+import pl.ks.profiling.safepoint.analyzer.standalone.concatenation.ConcatenationProgress;
+import pl.ks.profiling.safepoint.analyzer.standalone.concatenation.FilesConcatenation;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.text.DecimalFormat;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 @Slf4j
 @SpringBootApplication
@@ -38,6 +46,10 @@ public class AnalyzerStandaloneApplication extends JFrame {
 
     @Autowired
     private PresentationFontProvider presentationFontProvider;
+
+    private JButton concatLogsButton;
+    private final String CONCAT_LOGS_BUTTON_LABEL = "Concatenate rotated logs";
+    private final DecimalFormat TWO_DECIMAL_DIGITS_FORMAT = new DecimalFormat("##.#");
 
     public AnalyzerStandaloneApplication() {
     }
@@ -55,7 +67,7 @@ public class AnalyzerStandaloneApplication extends JFrame {
         JButton quitButton = new JButton("Quit");
         JButton loadButton = new JButton("Load file (JDK >= 9)");
         JButton loadOldButton = new JButton("Load file (JDK 8)");
-        JButton concatLogsButton = new JButton("Concatenate rotated logs");
+        concatLogsButton = new JButton(CONCAT_LOGS_BUTTON_LABEL);
 
         loadButton.addActionListener((ActionEvent event) -> {
             try {
@@ -152,14 +164,94 @@ public class AnalyzerStandaloneApplication extends JFrame {
         return new File(parentDirectory.getAbsolutePath() + "/" + parentDirectory.getName() + ".combined.log");
     }
 
-    private void concatenateFiles(List<File> sortedFiles, File saveFile) {
-        try {
-            FilesConcatenation.concatenate(sortedFiles, saveFile);
-        } catch (IOException e) {
-            JOptionPane.showMessageDialog(null, "Error while concatenating files", "Error", JOptionPane.ERROR_MESSAGE);
-            e.printStackTrace();
+    @AllArgsConstructor
+    private class ConcatenatingWorker extends SwingWorker<Boolean, ConcatenationProgress> {
+        private final List<java.io.File> sortedFiles;
+        private final File saveFile;
+
+        @Override
+        protected Boolean doInBackground() throws Exception {
+            FilesConcatenation.concatenate(sortedFiles, saveFile, this::publish);
+            return true;
         }
+
+        @Override
+        protected void process(List<ConcatenationProgress> chunks) {
+            notifyConcatenationChange(chunks.get(chunks.size() - 1));
+        }
+    }
+
+
+    private void concatenateFiles(List<File> sortedFiles, File saveFile) {
+        ConcatenatingWorker concatenatingWorker = new ConcatenatingWorker(sortedFiles, saveFile);
+        concatenatingWorker.addPropertyChangeListener(
+                onWorkerComplete(
+                        this::concatenationStarted,
+                        () -> successConcatenation(sortedFiles, saveFile),
+                        this::concatenationFailed));
+        concatenatingWorker.execute();
+    }
+
+    private void concatenationStarted() {
+        concatLogsButton.setEnabled(false);
+    }
+
+    private void successConcatenation(List<File> sortedFiles, File saveFile) {
         JOptionPane.showMessageDialog(null, String.format("%d files has been successfully concatenated into %s", sortedFiles.size(), saveFile.getAbsolutePath()));
+        concatLogsButton.setText(CONCAT_LOGS_BUTTON_LABEL);
+        concatLogsButton.setEnabled(true);
+    }
+
+    private void concatenationFailed() {
+        concatLogsButton.setText(CONCAT_LOGS_BUTTON_LABEL);
+        concatLogsButton.setEnabled(true);
+        JOptionPane.showMessageDialog(null, "Error while concatenating files", "Error", JOptionPane.ERROR_MESSAGE);
+    }
+
+    private PropertyChangeListener onWorkerComplete(Runnable started, Runnable success, Runnable failure) {
+        return (PropertyChangeEvent evt) -> {
+            if ("state".equals(evt.getPropertyName())) {
+                switch ((SwingWorker.StateValue) evt.getNewValue()) {
+                    case STARTED:
+                        started.run();
+                        break;
+                    case DONE:
+                        try {
+                            Boolean jobSucceeded = ((ConcatenatingWorker) evt.getSource()).get();
+                            if (jobSucceeded) {
+                                success.run();
+                            } else {
+                                failure.run();
+                            }
+                        } catch (InterruptedException | ExecutionException e) {
+                            e.printStackTrace();
+                            failure.run();
+                        }
+                        break;
+                }
+            }
+        };
+    }
+
+    private void notifyConcatenationChange(ConcatenationProgress progress) {
+        String response = String.format("Processing file %d/%d. %s %s",
+                progress.getCurrentFileNumber(),
+                progress.getNumberOfFiles(),
+                percent(progress.getAllFilesSizeBytes(), progress.getProcessedBytes()),
+                formatProcessedBytes(progress.getAllFilesSizeBytes(), progress.getProcessedBytes()));
+        concatLogsButton.setText(response);
+    }
+
+    private String percent(Long total, Long share) {
+        return TWO_DECIMAL_DIGITS_FORMAT.format((share.doubleValue() / total.doubleValue()) * 100.0) + "%";
+    }
+
+    private String formatProcessedBytes(Long total, Long share) {
+        return toMb(share) + "/" + toMb(total);
+    }
+
+    private String toMb(Long bytes) {
+        return TWO_DECIMAL_DIGITS_FORMAT.format(bytes.doubleValue() / 1024 / 1024) + "Mb";
     }
 
     private void createLayout(JComponent... arg) {

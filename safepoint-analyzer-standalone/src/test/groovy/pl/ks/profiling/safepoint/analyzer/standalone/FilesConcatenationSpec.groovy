@@ -16,6 +16,7 @@
  */
 package pl.ks.profiling.safepoint.analyzer.standalone
 
+import pl.ks.profiling.safepoint.analyzer.standalone.concatenation.FilesConcatenation
 import spock.lang.Specification
 
 import java.nio.file.Files
@@ -96,7 +97,7 @@ some next file"""
     private static String concatenateFiles(String... filesPath) {
         File outputFile = createTemporaryFile()
         List<File> files = (filesPath as List<String>).collect{getFile(it)}
-        FilesConcatenation.concatenate(files, outputFile)
+        FilesConcatenation.concatenate(files, outputFile, null)
         return Files.lines(outputFile.toPath()).collect(Collectors.toList()).join("\n")
     }
 }

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package pl.ks.profiling.safepoint.analyzer.standalone;
+package pl.ks.profiling.safepoint.analyzer.standalone.concatenation;
 
 import org.apache.commons.math3.util.Pair;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.ParserUtils;
@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class FilesConcatenation {
@@ -56,17 +57,42 @@ public class FilesConcatenation {
         return filesList.stream().map(FilesConcatenation::getFirstRowTimestamp).collect(Collectors.toList());
     }
 
-    public static void concatenate(List<File> files, File selectedFile) throws IOException {
+    public static void concatenate(List<File> files, File selectedFile, Consumer<ConcatenationProgress> callback) throws IOException {
         FileOutputStream fileOutputStream = new FileOutputStream(selectedFile);
-        int fileNumber = 0;
+        int numberOfFiles = files.size();
+        long allFilesSize = filesSize(files);
+        long processedFilesSize = 0;
+
+        int fileNumber = 1;
+        if (callback != null) {
+            callback.accept(new ConcatenationProgress(
+                    fileNumber,
+                    numberOfFiles,
+                    allFilesSize,
+                    processedFilesSize
+            ));
+        }
         for (File f : files) {
-            if (fileNumber > 0) {
+            if (fileNumber > 1) {
                 fileOutputStream.write(NEW_LINE_BYTES);
             }
             FileInputStream fileInputStream = new FileInputStream(f);
             fileInputStream.transferTo(fileOutputStream);
+            processedFilesSize += f.length();
+            if (callback != null) {
+                callback.accept(new ConcatenationProgress(
+                        fileNumber,
+                        numberOfFiles,
+                        allFilesSize,
+                        processedFilesSize
+                ));
+            }
             fileNumber++;
         }
+    }
+
+    private static long filesSize(List<File> files) {
+        return files.stream().mapToLong(File::length).sum();
     }
 
     private static BigDecimal getFirstRowTimestamp(File logsFile) {
