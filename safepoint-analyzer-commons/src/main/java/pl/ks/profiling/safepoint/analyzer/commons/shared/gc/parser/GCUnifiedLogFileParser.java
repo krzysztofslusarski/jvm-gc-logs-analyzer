@@ -22,7 +22,7 @@ import pl.ks.profiling.safepoint.analyzer.commons.FileParser;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.ParserUtils;
 
 public class GCUnifiedLogFileParser implements FileParser<GCLogFile> {
-    private GCLogFile gcLogFile = new GCLogFile();
+    private final GCLogFile gcLogFile = new GCLogFile();
     private String lastRegion;
 
     public GCUnifiedLogFileParser() {
@@ -39,9 +39,9 @@ public class GCUnifiedLogFileParser implements FileParser<GCLogFile> {
 
         gcLogFile.newLine(sequenceId, line);
         if (line.contains("gc,start")) {
-            gcLogFile.newPhase(sequenceId, getPhase(line), ParserUtils.getTimeStamp(line));
+            gcStart(sequenceId, line);
         } else if (line.contains("gc ") && line.contains("Concurrent Cycle") && line.contains("ms")) {
-            addConcurrentCycleDataIfPresent(line);
+            addConcurrentCycleDataIfPresent(sequenceId, line);
         } else if (line.contains("gc,phases") && line.contains("ms") && line.contains(")   ") && !line.contains(")       ") &&
                 !line.contains("Queue Fixup") && !line.contains("Table Fixup")) {
             addPhaseYoungAndMixed(sequenceId, line);
@@ -50,9 +50,9 @@ public class GCUnifiedLogFileParser implements FileParser<GCLogFile> {
         } else if (line.contains("gc ") && line.contains("->")) {
             addSizesAndTime(sequenceId, line);
         } else if (line.contains("regions") && line.contains("gc,heap") && line.contains("info")) {
-            lastRegion = addRegionsCounts(sequenceId, line, gcLogFile);
+            addRegionsCounts(sequenceId, line);
         } else if (line.contains("gc,heap") && line.contains("trace")) {
-            addRegionsSizes(sequenceId, line, lastRegion);
+            addRegionsSizes(sequenceId, line);
         } else if (line.contains("gc,humongous") && line.contains("debug")) {
             addHumongous(sequenceId, line);
         } else if (line.contains("- age")) {
@@ -60,11 +60,15 @@ public class GCUnifiedLogFileParser implements FileParser<GCLogFile> {
         } else if (line.contains("gc,age") && line.contains("debug")) {
             addSurvivorStats(sequenceId, line);
         } else if (line.contains("To-space exhausted")) {
-            gcLogFile.toSpaceExhausted(sequenceId);
+            toSpaceExhausted(sequenceId, line);
         }
     }
 
-    private void addConcurrentCycleDataIfPresent(String line) {
+    private void gcStart(Long sequenceId, String line) {
+        gcLogFile.newPhase(sequenceId, getPhase(line), ParserUtils.getTimeStamp(line));
+    }
+
+    private void addConcurrentCycleDataIfPresent(Long sequenceId, String line) {
         Pattern pattern = Pattern.compile("\\d+.\\d+ms");
         Matcher matcher = pattern.matcher(line);
         matcher.find();
@@ -135,6 +139,10 @@ public class GCUnifiedLogFileParser implements FileParser<GCLogFile> {
         gcLogFile.addSurvivorStats(sequenceId, desiredSize, newThreshold, maxThreshold);
     }
 
+    private void toSpaceExhausted(Long sequenceId, String line) {
+        gcLogFile.toSpaceExhausted(sequenceId);
+    }
+
     private void addHumongous(Long sequenceId, String line) {
         boolean live = line.contains("Live");
         String size = line
@@ -146,6 +154,10 @@ public class GCUnifiedLogFileParser implements FileParser<GCLogFile> {
         } else {
             gcLogFile.addDeadHumongous(sequenceId, Long.valueOf(size));
         }
+    }
+
+    private void addRegionsSizes(Long sequenceId, String line) {
+        addRegionsSizes(sequenceId, line, lastRegion);
     }
 
     private void addRegionsSizes(Long sequenceId, String line, String regionName) {
@@ -160,7 +172,7 @@ public class GCUnifiedLogFileParser implements FileParser<GCLogFile> {
         gcLogFile.addRegionSizes(sequenceId, regionName, Integer.valueOf(size), Integer.valueOf(wasted));
     }
 
-    private String addRegionsCounts(Long sequenceId, String line, GCLogFile gcLogFile) {
+    private void addRegionsCounts(Long sequenceId, String line) {
         String regionInfo = line
                 .replaceFirst(".* GC", "")
                 .replaceFirst(".*\\) ", "")
@@ -180,7 +192,7 @@ public class GCUnifiedLogFileParser implements FileParser<GCLogFile> {
         }
         gcLogFile.addRegionCount(sequenceId, regionName, Integer.valueOf(before), Integer.valueOf(after), maxRegions);
 
-        return regionName;
+        lastRegion = regionName;
     }
 
     private String getPhase(String line) {
