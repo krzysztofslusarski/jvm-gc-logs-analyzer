@@ -106,7 +106,8 @@ public class AnalyzerStandaloneApplication extends JFrame {
         if (filesForConcatenation != null) {
             List<File> sortedFiles = sortFilesByTimestamp(filesForConcatenation);
             if (sortedFiles != null) {
-                File saveFile = pickFileForConcatenationOutput();
+                File parent = sortedFiles.get(0).getParentFile();
+                File saveFile = pickFileForConcatenationOutput(parent);
                 if (saveFile != null) {
                     concatenateFiles(sortedFiles, saveFile);
                 }
@@ -136,14 +137,19 @@ public class AnalyzerStandaloneApplication extends JFrame {
         }
     }
 
-    private File pickFileForConcatenationOutput() {
+    private File pickFileForConcatenationOutput(File parentDirectory) {
         JFileChooser outputFileChooser = new JFileChooser();
+        outputFileChooser.setSelectedFile(proposedFileForConcatenation(parentDirectory));
         int outputFileResult = outputFileChooser.showSaveDialog(null);
         if (outputFileResult == JFileChooser.APPROVE_OPTION) {
             return outputFileChooser.getSelectedFile();
         } else {
             return null;
         }
+    }
+
+    private File proposedFileForConcatenation(File parentDirectory) {
+        return new File(parentDirectory.getAbsolutePath() + "/" + parentDirectory.getName() + ".combined.log");
     }
 
     private void concatenateFiles(List<File> sortedFiles, File saveFile) {
