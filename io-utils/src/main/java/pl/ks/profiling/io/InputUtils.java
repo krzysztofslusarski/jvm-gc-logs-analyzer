@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Krzysztof Slusarski
+ * Copyright 2020 Krzysztof Slusarski, Artur Owczarek
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,38 +15,85 @@
  */
 package pl.ks.profiling.io;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Enumeration;
-import java.util.zip.GZIPInputStream;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 import lombok.experimental.UtilityClass;
 import org.apache.commons.compress.archivers.sevenz.SevenZArchiveEntry;
 import org.apache.commons.compress.archivers.sevenz.SevenZFile;
 import org.apache.commons.compress.utils.IOUtils;
 import org.tukaani.xz.XZInputStream;
 
+import java.io.*;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
+
 @UtilityClass
 public class InputUtils {
-    public static InputStream getInputStream(String fileName, String filePath) throws IOException {
-        InputStream inputStream = null;
-        if (fileName.endsWith(".7z")) {
-            inputStream = get7ZipInputStream(filePath);
-        } else if (fileName.endsWith(".zip")) {
-            inputStream = getZipInputStream(filePath);
-        } else if (fileName.endsWith(".xz")) {
-            inputStream = getXZInputStream(filePath);
-        } else if (fileName.endsWith(".gz") || fileName.endsWith(".gzip")) {
-            inputStream = getGZipInputStream(filePath);
-        } else {
-            inputStream = new FileInputStream(filePath);
+    public static <U extends Comparable<? super U>> InputStream getInputStream(List<File> files, Function<String, U> extractCompareObject) throws IOException {
+        if (files.size() == 1) {
+            File firstFile = files.get(0);
+            String fileName = firstFile.getName();
+            String filePath = firstFile.getAbsolutePath();
+            if (fileName.endsWith(".7z")) {
+                return get7ZipInputStream(filePath);
+            } else if (fileName.endsWith(".zip")) {
+                return getZipInputStream(filePath);
+            } else if (fileName.endsWith(".xz")) {
+                return getXZInputStream(filePath);
+            } else if (fileName.endsWith(".gz") || fileName.endsWith(".gzip")) {
+                return getGZipInputStream(filePath);
+            }
         }
-        return inputStream;
+        return getConcatenatedInputStream(files, extractCompareObject);
+    }
+
+    private static <U extends Comparable<? super U>> InputStream getConcatenatedInputStream(List<File> files, Function<String, U> extractCompareObject) {
+        List<InputStream> streamOfFiles;
+        if (extractCompareObject != null) {
+            streamOfFiles = toStreams(FilesConcatenation.sortByFirstLine(files, extractCompareObject));
+        } else {
+            streamOfFiles = toStreams(files);
+        }
+        List<InputStream> withNewLinesBetween = intertwineWithNewLineStreams(streamOfFiles);
+        return mergeInputStreams(withNewLinesBetween);
+    }
+
+    private static InputStream mergeInputStreams(Collection<InputStream> streams) {
+        return new SequenceInputStream(new Vector<>(streams).elements());
+    }
+
+    private static List<InputStream> intertwineWithNewLineStreams(List<InputStream> inputStreams) {
+        int numberOfStreams = inputStreams.size();
+        int numberOfNewLinesBetween = numberOfStreams - 1;
+        List<InputStream> result = new ArrayList<>(numberOfStreams + numberOfNewLinesBetween);
+        int lastStreamIndex = numberOfStreams - 1;
+        int currentStreamIndex = 0;
+        for (InputStream stream : inputStreams) {
+            result.add(stream);
+            if (currentStreamIndex < lastStreamIndex) {
+                result.add(newLineInputStream());
+            }
+            currentStreamIndex++;
+        }
+
+        return result;
+    }
+
+    private static InputStream newLineInputStream() {
+        return new ByteArrayInputStream("\n".getBytes());
+    }
+
+    private static List<InputStream> toStreams(List<File> files) {
+        return files.stream().map(w -> {
+            try {
+                return new FileInputStream(w);
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+                throw new RuntimeException(e);
+            }
+        }).collect(Collectors.toList());
     }
 
     private static InputStream getXZInputStream(String saveFileName) throws IOException {
