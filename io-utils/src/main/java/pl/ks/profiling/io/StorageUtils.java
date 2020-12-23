@@ -26,7 +26,6 @@ public class StorageUtils {
     public InputStream createCopy(String dir, String originalFilename, InputStream inputStream) throws IOException {
         String savedFileName = dir + UUID.randomUUID().toString() + originalFilename;
         IOUtils.copy(inputStream, new FileOutputStream(savedFileName));
-        ;
         return InputUtils.getInputStream(List.of(new File(savedFileName)), null);
     }
 
