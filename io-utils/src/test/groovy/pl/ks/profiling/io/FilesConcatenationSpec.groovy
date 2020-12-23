@@ -19,6 +19,8 @@ import spock.lang.Specification
 
 import java.nio.file.Files
 import java.util.stream.Collectors
+import static pl.ks.profiling.io.TestFileUtils.getFile
+import static pl.ks.profiling.io.TestFileUtils.createTemporaryFile
 
 class FilesConcatenationSpec extends Specification {
 
@@ -36,9 +38,9 @@ class FilesConcatenationSpec extends Specification {
         def approach3 = [file6, file5, file4, file3, file2, file1]
 
         when:
-        def sorted1 = FilesConcatenation.sortByFirstLine(approach1, TimestampTestUtils.&getTimeStamp)
-        def sorted2 = FilesConcatenation.sortByFirstLine(approach2, TimestampTestUtils.&getTimeStamp)
-        def sorted3 = FilesConcatenation.sortByFirstLine(approach3, TimestampTestUtils.&getTimeStamp)
+        def sorted1 = FilesConcatenation.sortBy(approach1, TimestampTestUtils.&firstLineTimestamp)
+        def sorted2 = FilesConcatenation.sortBy(approach2, TimestampTestUtils.&firstLineTimestamp)
+        def sorted3 = FilesConcatenation.sortBy(approach3, TimestampTestUtils.&firstLineTimestamp)
 
         then:
         sorted1[0] == file1
@@ -82,18 +84,8 @@ some next file"""
 some next file"""
     }
 
-    private static File getFile(String filePath) {
-        return new File(FilesConcatenationSpec.class.getClassLoader().getResource(filePath).toURI())
-    }
-
-    private static File createTemporaryFile() {
-        File file = File.createTempFile("jvm-gc-logs-analyzer-tests-", "-filesConcatenationSpec.tmp")
-        file.deleteOnExit()
-        return file;
-    }
-
     private static String concatenateFiles(String... filesPath) {
-        File outputFile = createTemporaryFile()
+        File outputFile = createTemporaryFile("filesConcatenationSpec")
         List<File> files = (filesPath as List<String>).collect{getFile(it)}
         FilesConcatenation.concatenate(files, outputFile, null)
         return Files.lines(outputFile.toPath()).collect(Collectors.toList()).join("\n")

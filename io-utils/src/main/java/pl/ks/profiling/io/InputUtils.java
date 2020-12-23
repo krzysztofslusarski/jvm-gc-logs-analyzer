@@ -22,6 +22,7 @@ import org.apache.commons.compress.utils.IOUtils;
 import org.tukaani.xz.XZInputStream;
 
 import java.io.*;
+import java.nio.file.Files;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -37,7 +38,7 @@ public class InputUtils {
             String fileName = firstFile.getName();
             String filePath = firstFile.getAbsolutePath();
             if (fileName.endsWith(".7z")) {
-                return get7ZipInputStream(filePath);
+                return get7ZipInputStream(firstFile, extractCompareObject);
             } else if (fileName.endsWith(".zip")) {
                 return getZipInputStream(filePath);
             } else if (fileName.endsWith(".xz")) {
@@ -52,11 +53,15 @@ public class InputUtils {
     private static <U extends Comparable<? super U>> InputStream getConcatenatedInputStream(List<File> files, Function<String, U> extractCompareObject) {
         List<InputStream> streamOfFiles;
         if (extractCompareObject != null) {
-            streamOfFiles = toStreams(FilesConcatenation.sortByFirstLine(files, extractCompareObject));
+            streamOfFiles = toStreams(FilesConcatenation.sortBy(files, file -> firstLineExtractor(file, extractCompareObject)));
         } else {
             streamOfFiles = toStreams(files);
         }
-        List<InputStream> withNewLinesBetween = intertwineWithNewLineStreams(streamOfFiles);
+        return mergeIntertwined(streamOfFiles);
+    }
+
+    private static InputStream mergeIntertwined(Collection<InputStream> streams) {
+        List<InputStream> withNewLinesBetween = intertwineWithNewLineStreams(streams);
         return mergeInputStreams(withNewLinesBetween);
     }
 
@@ -64,7 +69,7 @@ public class InputUtils {
         return new SequenceInputStream(new Vector<>(streams).elements());
     }
 
-    private static List<InputStream> intertwineWithNewLineStreams(List<InputStream> inputStreams) {
+    private static List<InputStream> intertwineWithNewLineStreams(Collection<InputStream> inputStreams) {
         int numberOfStreams = inputStreams.size();
         int numberOfNewLinesBetween = numberOfStreams - 1;
         List<InputStream> result = new ArrayList<>(numberOfStreams + numberOfNewLinesBetween);
@@ -133,23 +138,53 @@ public class InputUtils {
         return inputStream;
     }
 
-    private static InputStream get7ZipInputStream(String saveFileName) throws IOException {
-        SevenZFile sevenZFile = new SevenZFile(new File(saveFileName));
-        SevenZArchiveEntry entry = sevenZFile.getNextEntry();
+    public static <U extends Comparable<? super U>> InputStream get7ZipInputStream(File file, Function<String, U> extractCompareObject) throws IOException {
+        SevenZFile sevenZFile = new SevenZFile(file);
+        return mergeIntertwined(getSortedEntriesInputStreams(sevenZFile, extractCompareObject));
+    }
 
-        InputStream inputStream = null;
-        while (entry != null && entry.isDirectory()) {
-            entry = sevenZFile.getNextEntry();
+    private static <U extends Comparable<? super U>> List<InputStream> getSortedEntriesInputStreams(SevenZFile sevenZFile, Function<String, U> extractCompareObject) {
+        List<SevenZArchiveEntry> entries = (List<SevenZArchiveEntry>) (sevenZFile.getEntries());
+        List<SevenZArchiveEntry> sorted = FilesConcatenation.sortBy(entries, e -> extractCompareObject.apply(readFirstLine(sevenZFile, e)));
+        return sorted.stream().map(e -> new LazyInputStream(sevenZFile, e)).collect(Collectors.toList());
+    }
+
+    static class LazyInputStream extends InputStream {
+        private final SevenZArchiveEntry entry;
+        private final SevenZFile sevenZFile;
+        private InputStream innerInputStream;
+
+        public LazyInputStream(SevenZFile sevenZFile, SevenZArchiveEntry entry) {
+            this.entry = entry;
+            this.sevenZFile = sevenZFile;
         }
 
-        if (entry != null) {
-            byte[] content = new byte[(int) entry.getSize()];
-            sevenZFile.read(content, 0, content.length);
-            sevenZFile.close();
-            inputStream = new ByteArrayInputStream(content);
+        @Override
+        public int read() throws IOException {
+            if (innerInputStream == null) {
+                innerInputStream = sevenZFile.getInputStream(entry);
+            }
+            return innerInputStream.read();
         }
+    }
 
-        sevenZFile.close();
-        return inputStream;
+    private static String readFirstLine(SevenZFile sevenZFile, SevenZArchiveEntry entry) {
+        try {
+            return readFirstLine(sevenZFile.getInputStream(entry));
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
+    private static String readFirstLine(InputStream inputStream) {
+        return new Scanner(inputStream).nextLine();
+    }
+
+    private static <U extends Comparable<? super U>> U firstLineExtractor(File file, Function<String, U> extractCompareObject) {
+        try {
+            return Files.lines(file.toPath()).map(extractCompareObject).findFirst().get();
+        } catch (IOException exception) {
+            throw new RuntimeException(exception);
+        }
     }
 }

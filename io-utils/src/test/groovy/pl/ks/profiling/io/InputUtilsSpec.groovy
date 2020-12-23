@@ -15,7 +15,7 @@
  */
 package pl.ks.profiling.io
 
-
+import static pl.ks.profiling.io.TestFileUtils.getFile
 import spock.lang.Specification
 import java.nio.charset.StandardCharsets
 
@@ -52,9 +52,19 @@ class InputUtilsSpec extends Specification {
 
 [2020-12-21T01:04:49.436+0000][30.123s][info ][gc,heap              ] file.log.0"""
     }
+    
+    def "should load sorted files from 7z file"() {
+        given:
+        InputStream stream = InputUtils.getInputStream([getFile("loading/file.log.7z")], TimestampTestUtils.&getTimeStamp)
 
-    private static File getFile(String filePath) {
-        return new File(InputUtilsSpec.class.getClassLoader().getResource(filePath).toURI())
+        when:
+        String streamContent = readStream(stream)
+
+        then:
+        streamContent == """[2020-12-21T01:04:59.827+0000][10.234s][debug][gc,humongous         ] file.log.1
+[2020-12-21T01:05:19.416+0000][15.0s][info ][gc,phases            ] file.log.2
+
+[2020-12-21T01:04:49.436+0000][30.123s][info ][gc,heap              ] file.log.0"""
     }
 
     private static String readStream(InputStream stream) {
