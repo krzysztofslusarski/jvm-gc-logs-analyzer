@@ -16,7 +16,6 @@
 package pl.ks.profiling.safepoint.analyzer.commons.shared;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.math.BigDecimal;
@@ -111,8 +110,8 @@ public class StatsService {
         StringDedupLogFileParser stringDedupLogFileParser = new StringDedupLogFileParser();
 
         try {
-            while (reader.ready()) {
-                String line = reader.readLine();
+            String line = reader.readLine();
+            while (line != null) {
                 safepointUnifiedLogFileParser.parseLine(line);
                 gcUnifiedLogFileParser.parseLine(line);
                 threadLogFileParser.parseLine(line);
@@ -120,6 +119,7 @@ public class StatsService {
                 jitLogFileParser.parseLine(line);
                 tlabLogFileParser.parseLine(line);
                 stringDedupLogFileParser.parseLine(line);
+                line = reader.readLine();
             }
         } catch (Exception ex) {
             throw new RuntimeException(ex);
