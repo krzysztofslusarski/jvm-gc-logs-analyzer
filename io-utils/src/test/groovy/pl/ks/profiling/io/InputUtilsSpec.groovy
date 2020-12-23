@@ -67,6 +67,20 @@ class InputUtilsSpec extends Specification {
 [2020-12-21T01:04:49.436+0000][30.123s][info ][gc,heap              ] file.log.0"""
     }
 
+    def "should load sorted files from zip file"() {
+        given:
+        InputStream stream = InputUtils.getInputStream([getFile("loading/file.log.zip")], TimestampTestUtils.&getTimeStamp)
+
+        when:
+        String streamContent = readStream(stream)
+
+        then:
+        streamContent == """[2020-12-21T01:04:59.827+0000][10.234s][debug][gc,humongous         ] file.log.1
+[2020-12-21T01:05:19.416+0000][15.0s][info ][gc,phases            ] file.log.2
+
+[2020-12-21T01:04:49.436+0000][30.123s][info ][gc,heap              ] file.log.0"""
+    }
+
     private static String readStream(InputStream stream) {
         return String.join("\n", new InputStreamReader(stream, StandardCharsets.UTF_8).readLines())
     }

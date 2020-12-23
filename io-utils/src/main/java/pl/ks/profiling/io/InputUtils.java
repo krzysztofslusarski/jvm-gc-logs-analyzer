@@ -18,6 +18,8 @@ package pl.ks.profiling.io;
 import lombok.experimental.UtilityClass;
 import org.apache.commons.compress.archivers.sevenz.SevenZArchiveEntry;
 import org.apache.commons.compress.archivers.sevenz.SevenZFile;
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
+import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.apache.commons.compress.utils.IOUtils;
 import org.tukaani.xz.XZInputStream;
 
@@ -27,8 +29,6 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 
 @UtilityClass
 public class InputUtils {
@@ -40,7 +40,7 @@ public class InputUtils {
             if (fileName.endsWith(".7z")) {
                 return get7ZipInputStream(firstFile, extractCompareObject);
             } else if (fileName.endsWith(".zip")) {
-                return getZipInputStream(filePath);
+                return getZipInputStream(filePath, extractCompareObject);
             } else if (fileName.endsWith(".xz")) {
                 return getXZInputStream(filePath);
             } else if (fileName.endsWith(".gz") || fileName.endsWith(".gzip")) {
@@ -117,25 +117,9 @@ public class InputUtils {
         return new ByteArrayInputStream(byteArrayOutputStream.toByteArray());
     }
 
-    private static InputStream getZipInputStream(String saveFileName) throws IOException {
+    private static <U extends Comparable<? super U>> InputStream getZipInputStream(String saveFileName, Function<String, U> extractCompareObject) throws IOException {
         ZipFile zipFile = new ZipFile(saveFileName);
-        Enumeration<? extends ZipEntry> entries = zipFile.entries();
-        ZipEntry entry = entries.nextElement();
-
-        while (entries.hasMoreElements() && entry.isDirectory()) {
-            entry = entries.nextElement();
-        }
-
-        InputStream inputStream = null;
-        if (entry != null && !entry.isDirectory()) {
-            inputStream = zipFile.getInputStream(entry);
-            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-            IOUtils.copy(inputStream, byteArrayOutputStream);
-            inputStream = new ByteArrayInputStream(byteArrayOutputStream.toByteArray());
-        }
-
-        zipFile.close();
-        return inputStream;
+        return mergeIntertwined(getSortedEntriesInputStreams(zipFile, extractCompareObject));
     }
 
     public static <U extends Comparable<? super U>> InputStream get7ZipInputStream(File file, Function<String, U> extractCompareObject) throws IOException {
@@ -143,28 +127,61 @@ public class InputUtils {
         return mergeIntertwined(getSortedEntriesInputStreams(sevenZFile, extractCompareObject));
     }
 
-    private static <U extends Comparable<? super U>> List<InputStream> getSortedEntriesInputStreams(SevenZFile sevenZFile, Function<String, U> extractCompareObject) {
-        List<SevenZArchiveEntry> entries = (List<SevenZArchiveEntry>) (sevenZFile.getEntries());
-        List<SevenZArchiveEntry> sorted = FilesConcatenation.sortBy(entries, e -> extractCompareObject.apply(readFirstLine(sevenZFile, e)));
-        return sorted.stream().map(e -> new LazyInputStream(sevenZFile, e)).collect(Collectors.toList());
+    private static <U extends Comparable<? super U>> List<InputStream> getSortedEntriesInputStreams(ZipFile archiveFile, Function<String, U> extractCompareObject) {
+        List<ZipArchiveEntry> entries = Collections.list(archiveFile.getEntries());
+        List<ZipArchiveEntry> sorted = FilesConcatenation.sortBy(entries, e -> extractCompareObject.apply(readFirstLine(archiveFile, e)));
+        return sorted.stream().map(e -> new LazyZipInputStream(archiveFile, e)).collect(Collectors.toList());
     }
 
-    static class LazyInputStream extends InputStream {
+    private static <U extends Comparable<? super U>> List<InputStream> getSortedEntriesInputStreams(SevenZFile archiveFile, Function<String, U> extractCompareObject) {
+        List<SevenZArchiveEntry> entries = (List<SevenZArchiveEntry>) (archiveFile.getEntries());
+        List<SevenZArchiveEntry> sorted = FilesConcatenation.sortBy(entries, e -> extractCompareObject.apply(readFirstLine(archiveFile, e)));
+        return sorted.stream().map(e -> new LazySevenZInputStream(archiveFile, e)).collect(Collectors.toList());
+    }
+
+    static class LazySevenZInputStream extends InputStream {
         private final SevenZArchiveEntry entry;
-        private final SevenZFile sevenZFile;
+        private final SevenZFile file;
         private InputStream innerInputStream;
 
-        public LazyInputStream(SevenZFile sevenZFile, SevenZArchiveEntry entry) {
+        public LazySevenZInputStream(SevenZFile file, SevenZArchiveEntry entry) {
             this.entry = entry;
-            this.sevenZFile = sevenZFile;
+            this.file = file;
         }
 
         @Override
         public int read() throws IOException {
             if (innerInputStream == null) {
-                innerInputStream = sevenZFile.getInputStream(entry);
+                innerInputStream = file.getInputStream(entry);
             }
             return innerInputStream.read();
+        }
+    }
+
+    static class LazyZipInputStream extends InputStream {
+        private final ZipArchiveEntry entry;
+        private final ZipFile file;
+        private InputStream innerInputStream;
+
+        public LazyZipInputStream(ZipFile file, ZipArchiveEntry entry) {
+            this.entry = entry;
+            this.file = file;
+        }
+
+        @Override
+        public int read() throws IOException {
+            if (innerInputStream == null) {
+                innerInputStream = file.getInputStream(entry);
+            }
+            return innerInputStream.read();
+        }
+    }
+
+    private static String readFirstLine(ZipFile archive, ZipArchiveEntry entry) {
+        try {
+            return readFirstLine(archive.getInputStream(entry));
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
         }
     }
 
