@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Krzysztof Slusarski
+ * Copyright 2020 Krzysztof Slusarski, Artur Owczarek
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,10 +30,10 @@ public class GCLogCycleEntry {
     private String phase;
     private String aggregatedPhase;
 
-    private int heapBeforeGC;
-    private int heapAfterGC;
-    private int heapSize;
-    private BigDecimal time;
+    private int heapBeforeGCMb;
+    private int heapAfterGCMb;
+    private int heapSizeMb;
+    private BigDecimal timeMs;
 
     private Map<String, BigDecimal> subPhasesTime = new LinkedHashMap<>();
 
@@ -57,6 +57,42 @@ public class GCLogCycleEntry {
     private long maxTenuringThreshold;
 
     private boolean wasToSpaceExhausted;
+
+    public static final String PRE_EVACUATE = "Pre Evacuate Collection Set";
+    public static final String PRE_PREPARE_TLABS = "Prepare TLABs";
+    public static final String PRE_CHOOSE_COLLECTION_SET = "Choose Collection Set";
+    public static final String PRE_HUMONGOUS_REGISTER = "Humongous Register";
+    public static final String PRE_CLEAR_CLAIMED_MARKS = "Clear Claimed Marks";
+    public static final String EVACUATE = "Evacuate Collection Set";
+    public static final String EVACUATE_EXT_ROOT_SCANNING = "Ext Root Scanning";
+    public static final String EVACUATE_UPDATE_RS = "Update RS";
+    public static final String EVACUATE_SCAN_RS = "Scan RS";
+    public static final String EVACUATE_CODE_ROOT_SCANNING = "Code Root Scanning";
+    public static final String EVACUATE_AOT_ROOT_SCANNING = "AOT Root Scanning";
+    public static final String EVACUATE_OBJECT_COPY = "Object Copy";
+    public static final String EVACUATE_TERMINATION = "Termination";
+    public static final String EVACUATE_GC_WORKER_OTHER = "GC Worker Other";
+    public static final String EVACUATE_GC_WORKER_TOTAL = "GC Worker Total";
+    public static final String POST_EVACUATE = "Post Evacuate Collection Set";
+    public static final String POST_CODE_ROOTS_FIXUP = "Code Roots Fixup";
+    public static final String POST_CLEAR_CARD_TABLE = "Clear Card Table";
+    public static final String POST_REFERENCE_PROCESSING = "Reference Processing";
+    public static final String POST_WEAK_PROCESSING = "Weak Processing";
+    public static final String POST_MERGE_PER_THREAD_STATE = "Merge Per-Thread State";
+    public static final String POST_CODE_ROOTS_PURGE = "Code Roots Purge";
+    public static final String POST_REDIRTY_CARDS = "Redirty Cards";
+    public static final String POST_DERIVED_POINTER_TABLE_UPDATE = "DerivedPointerTable Update";
+    public static final String POST_FREE_COLLECTION_SET = "Free Collection Set";
+    public static final String POST_HUMONGOUS_RECLAIM = "Humongous Reclaim";
+    public static final String POST_START_NEW_COLLECTION_SET = "Start New Collection Set";
+    public static final String POST_RESIZE_TLABS = "Resize TLABs";
+    public static final String POST_EXPAND_HEAP = "Expand Heap After Collection";
+    public static final String PHASE_OTHER = "Other";
+
+    public static final String REGIONS_EDEN = "Eden regions";
+    public static final String REGIONS_SURVIVOR = "Survivor regions";
+    public static final String REGIONS_OLD = "Old regions";
+    public static final String REGIONS_HUMONGOUS = "Humongous regions";
 
     GCLogCycleEntry(Long sequenceId, String phase, BigDecimal timeStamp) {
         this.sequenceId = sequenceId;
@@ -102,16 +138,16 @@ public class GCLogCycleEntry {
     }
 
     void addSizesAndTime(int heapBeforeGC, int heapAfterGC, int heapSize, BigDecimal time) {
-        this.heapBeforeGC = heapBeforeGC;
-        this.heapAfterGC = heapAfterGC;
-        this.heapSize = heapSize;
-        this.time = time;
+        this.heapBeforeGCMb = heapBeforeGC;
+        this.heapAfterGCMb = heapAfterGC;
+        this.heapSizeMb = heapSize;
+        this.timeMs = time;
     }
 
-    void addSizes(int heapBeforeGC, int heapAfterGC, int heapSize) {
-        this.heapBeforeGC = heapBeforeGC;
-        this.heapAfterGC = heapAfterGC;
-        this.heapSize = heapSize;
+    void addSizes(int heapBeforeGCMb, int heapAfterGCMb, int heapSizeMb) {
+        this.heapBeforeGCMb = heapBeforeGCMb;
+        this.heapAfterGCMb = heapAfterGCMb;
+        this.heapSizeMb = heapSizeMb;
     }
 
     void addRegionCount(String regionName, Integer beforeGC, Integer afterGC, Integer maxRegions) {
@@ -150,6 +186,6 @@ public class GCLogCycleEntry {
     }
 
     void addTime(BigDecimal phaseTime) {
-        this.time = phaseTime;
+        this.timeMs = phaseTime;
     }
 }

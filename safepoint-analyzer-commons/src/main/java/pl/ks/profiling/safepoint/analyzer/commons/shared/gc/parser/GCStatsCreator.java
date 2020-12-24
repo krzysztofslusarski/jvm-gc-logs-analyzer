@@ -177,7 +177,7 @@ public class GCStatsCreator {
                     }
                     gcPhaseStats.setSubPhaseTimes(subPhasesStats);
                     gcPhaseStats.setCount((long) cycles.size());
-                    gcPhaseStats.setTime(createAllStats(cycles, cycleInfo -> cycleInfo.getTime().doubleValue()));
+                    gcPhaseStats.setTime(createAllStats(cycles, cycleInfo -> cycleInfo.getTimeMs().doubleValue()));
                     return gcPhaseStats;
                 })
                 .sorted(Comparator.comparing(GCPhaseStats::getName))
@@ -205,7 +205,7 @@ public class GCStatsCreator {
                     }
                     gcPhaseStats.setSubPhaseTimes(subPhasesStats);
                     gcPhaseStats.setCount((long) cycles.size());
-                    gcPhaseStats.setTime(createAllStats(cycles, cycleInfo -> cycleInfo.getTime().doubleValue()));
+                    gcPhaseStats.setTime(createAllStats(cycles, cycleInfo -> cycleInfo.getTimeMs().doubleValue()));
                     return gcPhaseStats;
                 })
                 .sorted(Comparator.comparing(GCPhaseStats::getName))

@@ -2,8 +2,10 @@ package pl.ks.profiling.safepoint.analyzer.commons.shared.gc.parser
 
 import spock.lang.Specification
 
+import static pl.ks.profiling.safepoint.analyzer.commons.shared.gc.parser.GCLogCycleEntry.*
+
 class GCUnifiedLogFileParserSpec extends Specification {
-    def rows = """[2020-12-21T01:04:47.091+0000][1778483.410s][debug][gc,ergo              ] GC(597760) Initiate concurrent cycle (concurrent cycle initiation requested)
+    def gcLogs = """[2020-12-21T01:04:47.091+0000][1778483.410s][debug][gc,ergo              ] GC(597760) Initiate concurrent cycle (concurrent cycle initiation requested)
 [2020-12-21T01:04:47.091+0000][1778483.410s][info ][gc,start             ] GC(597760) Pause Young (Concurrent Start) (G1 Humongous Allocation)
 [2020-12-21T01:04:47.091+0000][1778483.410s][info ][gc,task              ] GC(597760) Using 8 workers of 8 for evacuation
 [2020-12-21T01:04:47.091+0000][1778483.410s][debug][gc,age               ] GC(597760) Desired survivor size 192937984 bytes, new threshold 15 (max threshold 15)
@@ -182,17 +184,100 @@ class GCUnifiedLogFileParserSpec extends Specification {
 [2020-12-21T01:04:47.098+0000][1778483.417s][info ][gc                   ] GC(597760) Pause Young (Concurrent Start) (G1 Humongous Allocation) 1338M->1324M(5120M) 6.363ms
 [2020-12-21T01:04:47.098+0000][1778483.417s][info ][gc,cpu               ] GC(597760) User=0.02s Sys=0.01s Real=0.01s"""
 
-    def "ff"() {
+    def "should parse gc log"() {
         given:
         GCUnifiedLogFileParser parser = new GCUnifiedLogFileParser();
 
         when:
-        rows.split("\n").each {
+        gcLogs.split("\n").each {
             parser.parseLine(it)
         }
-        def data = parser.fetchData()
+        GCLogCycleEntry gcEntry = parser.fetchData().cycleEntries.head()
 
         then:
-        data != null
+        gcEntry.timeStamp == 1778483.410G
+        gcEntry.sequenceId == 597760
+        gcEntry.phase == "Pause Young (Concurrent Start) (G1 Humongous Allocation)"
+        gcEntry.aggregatedPhase == "Young collection - piggybacks"
+        gcEntry.heapBeforeGCMb == 1338
+        gcEntry.heapAfterGCMb == 1324
+        gcEntry.heapSizeMb == 5120
+        gcEntry.timeMs == 6.363
+        phaseTimeMax(gcEntry, PRE_EVACUATE) == 0.4G
+        subphaseTimeMax(gcEntry, PRE_PREPARE_TLABS) == 0.0G
+        subphaseTimeMax(gcEntry, PRE_CHOOSE_COLLECTION_SET) == 0.0G
+        subphaseTimeMax(gcEntry, PRE_HUMONGOUS_REGISTER) == 0.2G
+        subphaseTimeMax(gcEntry, PRE_CLEAR_CLAIMED_MARKS) == 0.3G
+        phaseTimeMax(gcEntry, EVACUATE) == 2.3G
+        subphaseTimeMax(gcEntry, EVACUATE_EXT_ROOT_SCANNING) == 1.2G
+        subphaseTimeMax(gcEntry, EVACUATE_UPDATE_RS) == 1.1G
+        subphaseTimeMax(gcEntry, EVACUATE_SCAN_RS) == 0.2G
+        subphaseTimeMax(gcEntry, EVACUATE_CODE_ROOT_SCANNING) == 0.0G
+        subphaseTimeMax(gcEntry, EVACUATE_AOT_ROOT_SCANNING) == 0.0G
+        subphaseTimeMax(gcEntry, EVACUATE_OBJECT_COPY) == 0.4G
+        subphaseTimeMax(gcEntry, EVACUATE_TERMINATION) == 0.2G
+        subphaseTimeMax(gcEntry, EVACUATE_GC_WORKER_OTHER) == 0.0G
+        subphaseTimeMax(gcEntry, EVACUATE_GC_WORKER_TOTAL) == 2.2G
+        phaseTimeMax(gcEntry, POST_EVACUATE) == 1.9G
+        subphaseTimeMax(gcEntry, POST_CODE_ROOTS_FIXUP) == 0.0G
+        subphaseTimeMax(gcEntry, POST_CLEAR_CARD_TABLE) == 0.4G
+        subphaseTimeMax(gcEntry, POST_REFERENCE_PROCESSING) == 0.1G
+        subphaseTimeMax(gcEntry, POST_WEAK_PROCESSING) == 0.1G
+        subphaseTimeMax(gcEntry, POST_MERGE_PER_THREAD_STATE) == 0.0G
+        subphaseTimeMax(gcEntry, POST_CODE_ROOTS_PURGE) == 0.0G
+        subphaseTimeMax(gcEntry, POST_REDIRTY_CARDS) == 0.0G
+        subphaseTimeMax(gcEntry, POST_DERIVED_POINTER_TABLE_UPDATE) == 0.0G
+        subphaseTimeMax(gcEntry, POST_FREE_COLLECTION_SET) == 0.4G
+        subphaseTimeMax(gcEntry, POST_HUMONGOUS_RECLAIM) == 0.9G
+        subphaseTimeMax(gcEntry, POST_START_NEW_COLLECTION_SET) == 0.0G
+        subphaseTimeMax(gcEntry, POST_RESIZE_TLABS) == 0.0G
+        subphaseTimeMax(gcEntry, POST_EXPAND_HEAP) == 0.0G
+        phaseTimeMax(gcEntry, PHASE_OTHER) == 1.0G
+        gcEntry.regionsBeforeGC[REGIONS_EDEN] == 7
+        gcEntry.regionsBeforeGC[REGIONS_SURVIVOR] == 1
+        gcEntry.regionsBeforeGC[REGIONS_OLD] == 526
+        gcEntry.regionsBeforeGC[REGIONS_HUMONGOUS] == 137
+        gcEntry.regionsAfterGC[REGIONS_EDEN] == 0
+        gcEntry.regionsAfterGC[REGIONS_SURVIVOR] == 1
+        gcEntry.regionsAfterGC[REGIONS_OLD] == 526
+        gcEntry.regionsAfterGC[REGIONS_HUMONGOUS] == 136
+        gcEntry.regionsMax[REGIONS_EDEN] == 1473
+        gcEntry.regionsMax[REGIONS_SURVIVOR] == 184
+        gcEntry.regionsMax[REGIONS_OLD] == null
+        gcEntry.regionsMax[REGIONS_HUMONGOUS] == null
+        gcEntry.regionsSizeAfterGC == null
+        gcEntry.regionsWastedAfterGC == null
+        gcEntry.liveHumongousSizes.size() == 87
+        gcEntry.deadHumongousSizes.size() == 1
+        !gcEntry.genuineCollection
+        gcEntry.bytesInAges[1] == 94368
+        gcEntry.bytesInAges[2] == 688
+        gcEntry.bytesInAges[3] == 2768
+        gcEntry.bytesInAges[4] == 24752
+        gcEntry.bytesInAges[5] == 53688
+        gcEntry.bytesInAges[6] == 456
+        gcEntry.bytesInAges[7] == 288
+        gcEntry.bytesInAges[8] == 640
+        gcEntry.bytesInAges[9] == 288
+        gcEntry.bytesInAges[10] == 288
+        gcEntry.bytesInAges[11] == 288
+        gcEntry.bytesInAges[12] == 312
+        gcEntry.bytesInAges[13] == 312
+        gcEntry.bytesInAges[14] == 336
+        gcEntry.bytesInAges[15] == 336
+        gcEntry.maxAge == 15
+        gcEntry.desiredSurvivorSize == 192937984
+        gcEntry.newTenuringThreshold == 15
+        gcEntry.maxTenuringThreshold == 15
+        !gcEntry.wasToSpaceExhausted
     }
+
+    BigDecimal phaseTimeMax(GCLogCycleEntry gcEntry, String phase) {
+        return gcEntry.subPhasesTime[phase]
+    }
+
+    BigDecimal subphaseTimeMax(GCLogCycleEntry gcEntry, String subphase) {
+        return gcEntry.subPhasesTime["|______${subphase}" as String]
+    }
+
 }

@@ -59,9 +59,9 @@ public class GCHeapBeforeAfter implements PageCreator {
 
     private static final List<Function<GCLogCycleEntry, Object>> heapSizeChartExtractors = List.of(
             GCLogCycleEntry::getTimeStamp,
-            GCLogCycleEntry::getHeapBeforeGC,
-            GCLogCycleEntry::getHeapAfterGC,
-            GCLogCycleEntry::getHeapSize);
+            GCLogCycleEntry::getHeapBeforeGCMb,
+            GCLogCycleEntry::getHeapAfterGCMb,
+            GCLogCycleEntry::getHeapSizeMb);
 
     private static Object[][] getHeapSizeChart(JvmLogFile jvmLogFile) {
         return PageUtils.toMatrix(getEntries(jvmLogFile), heapSizeChartColumns, heapSizeChartExtractors);
@@ -78,7 +78,7 @@ public class GCHeapBeforeAfter implements PageCreator {
             "Cycle",
             "Reclaimed space");
 
-    private static final Function<GCLogCycleEntry, Object> reclaimedSpace = (GCLogCycleEntry gcCycleInfo) -> gcCycleInfo.getHeapBeforeGC() - gcCycleInfo.getHeapAfterGC();
+    private static final Function<GCLogCycleEntry, Object> reclaimedSpace = (GCLogCycleEntry gcCycleInfo) -> gcCycleInfo.getHeapBeforeGCMb() - gcCycleInfo.getHeapAfterGCMb();
 
     private static final List<Function<GCLogCycleEntry, Object>> reclaimedSizeChartExtractors = List.of(
             GCLogCycleEntry::getTimeStamp,
@@ -95,8 +95,8 @@ public class GCHeapBeforeAfter implements PageCreator {
 
     private static final List<Function<GCLogCycleEntry, Object>> heapBeforeGcSizeChartExtractors = List.of(
             GCLogCycleEntry::getTimeStamp,
-            GCLogCycleEntry::getHeapBeforeGC,
-            GCLogCycleEntry::getHeapSize);
+            GCLogCycleEntry::getHeapBeforeGCMb,
+            GCLogCycleEntry::getHeapSizeMb);
 
     // TODO not used
     private static Object[][] getHeapBeforeGCSizeChart(JvmLogFile jvmLogFile) {
@@ -110,8 +110,8 @@ public class GCHeapBeforeAfter implements PageCreator {
 
     private static final List<Function<GCLogCycleEntry, Object>> heapAfterGcSizeChartExtractors = List.of(
             GCLogCycleEntry::getTimeStamp,
-            GCLogCycleEntry::getHeapAfterGC,
-            GCLogCycleEntry::getHeapSize);
+            GCLogCycleEntry::getHeapAfterGCMb,
+            GCLogCycleEntry::getHeapSizeMb);
 
     // TODO not used
     private static Object[][] getHeapAfterGCSizeChart(JvmLogFile jvmLogFile) {
