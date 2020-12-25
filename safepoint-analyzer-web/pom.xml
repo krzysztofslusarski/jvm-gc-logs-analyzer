@@ -40,10 +40,6 @@
             <artifactId>spring-boot-devtools</artifactId>
             <optional>true</optional>
         </dependency>
-        <dependency>
-            <groupId>com.github.krzysztofslusarski</groupId>
-            <artifactId>continuous-async-profiler-spring-starter</artifactId>
-        </dependency>
     </dependencies>
 
     <build>
