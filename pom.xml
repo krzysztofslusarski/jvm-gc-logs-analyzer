@@ -86,6 +86,11 @@
                 <version>${spock.version}</version>
                 <scope>test</scope>
             </dependency>
+            <dependency>
+                <groupId>com.github.krzysztofslusarski</groupId>
+                <artifactId>continuous-async-profiler-spring-starter</artifactId>
+                <version>1.0</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
