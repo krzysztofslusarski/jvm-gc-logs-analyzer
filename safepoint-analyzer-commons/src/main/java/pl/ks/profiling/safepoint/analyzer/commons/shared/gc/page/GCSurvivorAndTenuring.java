@@ -62,7 +62,7 @@ public class GCSurvivorAndTenuring implements PageCreator {
 
     private static final List<Function<GCLogCycleEntry, Object>> desiredSurvivorSizeChartExtractors = List.of(
             GCLogCycleEntry::getTimeStamp,
-            GCLogCycleEntry::getNewTenuringThreshold);
+            GCLogCycleEntry::getDesiredSurvivorSize);
 
     private static Object[][] getDesiredSurvivorSize(JvmLogFile jvmLogFile) {
         List<GCLogCycleEntry> cyclesToShow = jvmLogFile.getGcLogFile().getCycleEntries()
