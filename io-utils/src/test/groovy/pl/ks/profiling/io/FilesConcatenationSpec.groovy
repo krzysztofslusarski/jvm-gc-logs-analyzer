@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2020 Artur Owczarek
  *
@@ -14,33 +13,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package pl.ks.profiling.safepoint.analyzer.standalone
+package pl.ks.profiling.io;
 
-import pl.ks.profiling.safepoint.analyzer.standalone.concatenation.FilesConcatenation
 import spock.lang.Specification
 
 import java.nio.file.Files
 import java.util.stream.Collectors
+import static pl.ks.profiling.io.TestFileUtils.getFile
+import static pl.ks.profiling.io.TestFileUtils.createTemporaryFile
 
 class FilesConcatenationSpec extends Specification {
 
     def "should sort files with first timestamp in file"() {
         given:
-        File file1 = getFile("./concatFile.3.log")
-        File file2 = getFile("./concatFile.4.log")
-        File file3 = getFile("./concatFile.0.log")
-        File file4 = getFile("./concatFile.1.log")
-        File file5 = getFile("./concatFile.2.log")
-        File file6 = getFile("./concatFile.log")
+        File file1 = getFile("concatenation/concatFile.3.log")
+        File file2 = getFile("concatenation/concatFile.4.log")
+        File file3 = getFile("concatenation/concatFile.0.log")
+        File file4 = getFile("concatenation/concatFile.1.log")
+        File file5 = getFile("concatenation/concatFile.2.log")
+        File file6 = getFile("concatenation/concatFile.log")
 
-        def approach1 = [file1, file2, file3, file4, file5, file6] as File[]
-        def approach2 = [file6, file5, file4, file3, file2, file1] as File[]
-        def approach3 = [file6, file5, file4, file3, file2, file1] as File[]
+        def approach1 = [file1, file2, file3, file4, file5, file6]
+        def approach2 = [file6, file5, file4, file3, file2, file1]
+        def approach3 = [file6, file5, file4, file3, file2, file1]
 
         when:
-        def sorted1 = FilesConcatenation.sortByTimestamp(approach1)
-        def sorted2 = FilesConcatenation.sortByTimestamp(approach2)
-        def sorted3 = FilesConcatenation.sortByTimestamp(approach3)
+        def sorted1 = FilesConcatenation.sortBy(approach1, TimestampTestUtils.&firstLineTimestamp)
+        def sorted2 = FilesConcatenation.sortBy(approach2, TimestampTestUtils.&firstLineTimestamp)
+        def sorted3 = FilesConcatenation.sortBy(approach3, TimestampTestUtils.&firstLineTimestamp)
 
         then:
         sorted1[0] == file1
@@ -84,18 +84,8 @@ some next file"""
 some next file"""
     }
 
-    private static File getFile(String s) {
-        return new File(FilesConcatenationSpec.class.getClassLoader().getResource(s).toURI())
-    }
-
-    private static File createTemporaryFile() {
-        File file = File.createTempFile("jvm-gc-logs-analyzer-tests-", "-filesConcatenationSpec.tmp")
-        file.deleteOnExit()
-        return file;
-    }
-
     private static String concatenateFiles(String... filesPath) {
-        File outputFile = createTemporaryFile()
+        File outputFile = createTemporaryFile("filesConcatenationSpec")
         List<File> files = (filesPath as List<String>).collect{getFile(it)}
         FilesConcatenation.concatenate(files, outputFile, null)
         return Files.lines(outputFile.toPath()).collect(Collectors.toList()).join("\n")

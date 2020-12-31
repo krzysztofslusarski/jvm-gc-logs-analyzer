@@ -16,7 +16,6 @@
 package pl.ks.profiling.safepoint.analyzer.commons.shared;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.math.BigDecimal;
@@ -71,20 +70,24 @@ import pl.ks.profiling.safepoint.analyzer.commons.shared.tlab.parser.TlabLogFile
 public class StatsService {
     private DecimalFormat decimalFormat = new DecimalFormat("#,##0.00", DecimalFormatSymbols.getInstance(Locale.US));
 
-    public JvmLogFile createAllStatsJdk8(InputStream inputStream, String originalFilename) throws IOException {
+    public JvmLogFile createAllStatsJdk8(InputStream inputStream, String originalFilename) {
         BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
         SafepointJdk8LogFileParser safepointJdk8LogFileParser = new SafepointJdk8LogFileParser();
         GCJdk8LogFileParser gcJdk8LogFileParser = new GCJdk8LogFileParser();
 
-        while (reader.ready()) {
-            String line = reader.readLine();
-            if (reader.ready()) {
-                // last line may be broken in Java 8 format
-                safepointJdk8LogFileParser.parseLine(line);
-                gcJdk8LogFileParser.parseLine(line);
-            } else {
-                break;
+        try {
+            while (reader.ready()) {
+                String line = reader.readLine();
+                if (reader.ready()) {
+                    // last line may be broken in Java 8 format
+                    safepointJdk8LogFileParser.parseLine(line);
+                    gcJdk8LogFileParser.parseLine(line);
+                } else {
+                    break;
+                }
             }
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
         }
 
         JvmLogFile jvmLogFile = new JvmLogFile();
@@ -96,7 +99,7 @@ public class StatsService {
 
     }
 
-    public JvmLogFile createAllStatsUnifiedLogger(InputStream inputStream, String originalFilename) throws IOException {
+    public JvmLogFile createAllStatsUnifiedLogger(InputStream inputStream, String originalFilename) {
         BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
         SafepointUnifiedLogFileParser safepointUnifiedLogFileParser = new SafepointUnifiedLogFileParser();
         GCUnifiedLogFileParser gcUnifiedLogFileParser = new GCUnifiedLogFileParser();
@@ -106,15 +109,20 @@ public class StatsService {
         TlabLogFileParser tlabLogFileParser = new TlabLogFileParser();
         StringDedupLogFileParser stringDedupLogFileParser = new StringDedupLogFileParser();
 
-        while (reader.ready()) {
+        try {
             String line = reader.readLine();
-            safepointUnifiedLogFileParser.parseLine(line);
-            gcUnifiedLogFileParser.parseLine(line);
-            threadLogFileParser.parseLine(line);
-            classLoaderLogFileParser.parseLine(line);
-            jitLogFileParser.parseLine(line);
-            tlabLogFileParser.parseLine(line);
-            stringDedupLogFileParser.parseLine(line);
+            while (line != null) {
+                safepointUnifiedLogFileParser.parseLine(line);
+                gcUnifiedLogFileParser.parseLine(line);
+                threadLogFileParser.parseLine(line);
+                classLoaderLogFileParser.parseLine(line);
+                jitLogFileParser.parseLine(line);
+                tlabLogFileParser.parseLine(line);
+                stringDedupLogFileParser.parseLine(line);
+                line = reader.readLine();
+            }
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
         }
 
         JvmLogFile jvmLogFile = new JvmLogFile();

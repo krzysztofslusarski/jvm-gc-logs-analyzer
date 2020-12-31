@@ -13,48 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package pl.ks.profiling.safepoint.analyzer.standalone.concatenation;
+package pl.ks.profiling.io;
 
 import org.apache.commons.math3.util.Pair;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.ParserUtils;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.math.BigDecimal;
-import java.nio.file.Files;
-import java.util.*;
+import java.util.Comparator;
+import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class FilesConcatenation {
     private static final byte[] NEW_LINE_BYTES = "\n".getBytes();
 
-    public static List<File> sortByTimestamp(File[] files) throws Exception {
-        List<File> filesList = Arrays.asList(files);
-        List<BigDecimal> firstLinesTimestamps = filesTimestamps(filesList);
-        return sortBySecond(filesList, firstLinesTimestamps);
-    }
-
-    private static <T> List<T> sortBySecond(List<T> filesList, List<BigDecimal> orderObjectsList) {
-        List<Pair<T, BigDecimal>> zip = zip(filesList, orderObjectsList);
-        zip.sort(Comparator.comparing(Pair::getSecond));
-        return zip.stream().map(Pair::getFirst).collect(Collectors.toList());
-    }
-
-    private static <T, U> List<Pair<T, U>> zip(List<T> ts, List<U> us) {
-        Iterator<T> t = ts.iterator();
-        Iterator<U> u = us.iterator();
-        List<Pair<T, U>> zipped = new ArrayList<>(Math.min(ts.size(), us.size()));
-        while (t.hasNext() && u.hasNext()) {
-            zipped.add(new Pair<T, U>(t.next(), u.next()));
+    public static <T, U extends Comparable<? super U>> List<T> sortBy(List<T> items, Function<T, U> extractCompareObject) {
+        if (extractCompareObject != null) {
+            return sortBySecond(items, extractCompareObjects(items, extractCompareObject));
+        } else {
+            return items;
         }
-        return zipped;
-    }
-
-    private static List<BigDecimal> filesTimestamps(List<File> filesList) {
-        return filesList.stream().map(FilesConcatenation::getFirstRowTimestamp).collect(Collectors.toList());
     }
 
     public static void concatenate(List<File> files, File selectedFile, Consumer<ConcatenationProgress> callback) throws IOException {
@@ -91,15 +72,17 @@ public class FilesConcatenation {
         }
     }
 
-    private static long filesSize(List<File> files) {
-        return files.stream().mapToLong(File::length).sum();
+    private static <T, U extends Comparable<? super U>> List<T> sortBySecond(List<T> filesList, List<U> orderObjectsList) {
+        List<Pair<T, U>> paired = Zipper.zip(filesList, orderObjectsList);
+        paired.sort(Comparator.comparing(Pair::getSecond));
+        return paired.stream().map(Pair::getFirst).collect(Collectors.toList());
     }
 
-    private static BigDecimal getFirstRowTimestamp(File logsFile) {
-        try {
-            return Files.lines(logsFile.toPath()).map(ParserUtils::getTimeStamp).findFirst().get();
-        } catch (IOException exception) {
-            throw new RuntimeException(exception);
-        }
+    private static <T, U extends Comparable<? super U>> List<U> extractCompareObjects(List<T> items, Function<T, U> extractComparisonObject) {
+        return items.stream().map(extractComparisonObject).collect(Collectors.toList());
+    }
+
+    private static long filesSize(List<File> files) {
+        return files.stream().mapToLong(File::length).sum();
     }
 }
