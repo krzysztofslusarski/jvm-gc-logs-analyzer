@@ -122,7 +122,7 @@ public class GCAllocationRateInTime implements PageCreator {
                 continue;
             }
 
-            BigDecimal rate = new BigDecimal(current.getHeapBeforeGC() - prev.getHeapAfterGC()).divide(current.getTimeStamp().subtract(prev.getTimeStamp()), 2, RoundingMode.HALF_EVEN);
+            BigDecimal rate = new BigDecimal(current.getHeapBeforeGCMb() - prev.getHeapAfterGCMb()).divide(current.getTimeStamp().subtract(prev.getTimeStamp()), 2, RoundingMode.HALF_EVEN);
 
             long prevCycleMinute = prev.getTimeStamp().divide(minuteCount, 2, RoundingMode.HALF_EVEN).longValue();
             long currentCycleMinute = current.getTimeStamp().divide(minuteCount, 2, RoundingMode.HALF_EVEN).longValue();

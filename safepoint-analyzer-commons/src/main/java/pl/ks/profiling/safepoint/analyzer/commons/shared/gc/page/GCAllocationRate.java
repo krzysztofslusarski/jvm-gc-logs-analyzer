@@ -63,7 +63,7 @@ public class GCAllocationRate implements PageCreator {
                 continue;
             }
 
-            allocationRate[i++] = new BigDecimal(current.getHeapBeforeGC() - prev.getHeapAfterGC()).divide(current.getTimeStamp().subtract(prev.getTimeStamp()), 2, RoundingMode.HALF_EVEN);
+            allocationRate[i++] = new BigDecimal(current.getHeapBeforeGCMb() - prev.getHeapAfterGCMb()).divide(current.getTimeStamp().subtract(prev.getTimeStamp()), 2, RoundingMode.HALF_EVEN);
         }
 
         Object[][] stats = new Object[cycles.size()][2];

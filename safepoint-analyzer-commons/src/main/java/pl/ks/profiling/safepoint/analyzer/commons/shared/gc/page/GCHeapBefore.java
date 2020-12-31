@@ -53,8 +53,8 @@ public class GCHeapBefore implements PageCreator {
 
     private static final List<Function<GCLogCycleEntry, Object>> chartExtractors = List.of(
             GCLogCycleEntry::getTimeStamp,
-            GCLogCycleEntry::getHeapBeforeGC,
-            GCLogCycleEntry::getHeapSize);
+            GCLogCycleEntry::getHeapBeforeGCMb,
+            GCLogCycleEntry::getHeapSizeMb);
 
     private static Object[][] getHeapBeforeGCSizeChart(JvmLogFile jvmLogFile) {
         List<GCLogCycleEntry> cyclesToShow = jvmLogFile.getGcLogFile().getCycleEntries()
