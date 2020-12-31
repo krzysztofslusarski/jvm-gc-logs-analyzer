@@ -15,7 +15,18 @@
  */
 package pl.ks.profiling.io
 
+import java.nio.file.Files
+
 class TimestampTestUtils {
+
+    static BigDecimal firstLineTimestamp(File file) {
+        try {
+            return Files.lines(file.toPath()).map(TimestampTestUtils.&getTimeStamp).findFirst().get();
+        } catch (IOException exception) {
+            throw new RuntimeException(exception);
+        }
+    }
+
     static BigDecimal getTimeStamp(String line) {
         return new BigDecimal(getContentBetweenMarkers(line, "[", "s]"));
     }

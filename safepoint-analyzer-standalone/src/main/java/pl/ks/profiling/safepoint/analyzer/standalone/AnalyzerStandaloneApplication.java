@@ -35,11 +35,13 @@ import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
 import java.text.DecimalFormat;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 
 @Slf4j
 @SpringBootApplication
@@ -168,11 +170,19 @@ public class AnalyzerStandaloneApplication extends JFrame {
 
     private List<File> sortFilesByTimestamp(List<File> files) {
         try {
-            return FilesConcatenation.sortByFirstLine(files, ParserUtils::getTimeStamp);
+            return FilesConcatenation.sortBy(files, f -> firstLineExtractor(f, ParserUtils::getTimeStamp));
         } catch (Exception e) {
             JOptionPane.showMessageDialog(null, "Error while checking files for concatenation", "Error", JOptionPane.ERROR_MESSAGE);
             e.printStackTrace();
             return null;
+        }
+    }
+
+    static <U extends Comparable<? super U>> U firstLineExtractor(File file, Function<String, U> extractCompareObject) {
+        try {
+            return Files.lines(file.toPath()).map(extractCompareObject).findFirst().get();
+        } catch (IOException exception) {
+            throw new RuntimeException(exception);
         }
     }
 

@@ -21,7 +21,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.util.Comparator;
 import java.util.List;
 import java.util.function.Consumer;
@@ -31,11 +30,11 @@ import java.util.stream.Collectors;
 public class FilesConcatenation {
     private static final byte[] NEW_LINE_BYTES = "\n".getBytes();
 
-    public static <U extends Comparable<? super U>> List<File> sortByFirstLine(List<File> files, Function<String, U> extractCompareObject) {
+    public static <T, U extends Comparable<? super U>> List<T> sortBy(List<T> items, Function<T, U> extractCompareObject) {
         if (extractCompareObject != null) {
-            return sortBySecond(files, extractCompareObjects(files, extractCompareObject));
+            return sortBySecond(items, extractCompareObjects(items, extractCompareObject));
         } else {
-            return files;
+            return items;
         }
     }
 
@@ -79,23 +78,11 @@ public class FilesConcatenation {
         return paired.stream().map(Pair::getFirst).collect(Collectors.toList());
     }
 
-    private static <T> List<T> extractCompareObjects(List<File> filesList, Function<String, T> extractComparisonObject) {
-        return filesList.stream().map(file -> extractComparisonObjectForFile(file, extractComparisonObject)).collect(Collectors.toList());
+    private static <T, U extends Comparable<? super U>> List<U> extractCompareObjects(List<T> items, Function<T, U> extractComparisonObject) {
+        return items.stream().map(extractComparisonObject).collect(Collectors.toList());
     }
 
     private static long filesSize(List<File> files) {
         return files.stream().mapToLong(File::length).sum();
-    }
-
-    private static <T> T extractComparisonObjectForFile(File file, Function<String, T> extractComparisonObject) {
-        return applyOnFirstLine(file, extractComparisonObject);
-    }
-
-    private static <T> T applyOnFirstLine(File logsFile, Function<String, T> extractComparisonObject) {
-        try {
-            return Files.lines(logsFile.toPath()).map(extractComparisonObject).findFirst().get();
-        } catch (IOException exception) {
-            throw new RuntimeException(exception);
-        }
     }
 }
