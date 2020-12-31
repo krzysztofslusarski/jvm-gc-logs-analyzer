@@ -24,6 +24,7 @@ import java.text.DecimalFormatSymbols;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.collections4.CollectionUtils;
 import pl.ks.profiling.gui.commons.Page;
@@ -68,20 +69,22 @@ import pl.ks.profiling.safepoint.analyzer.commons.shared.tlab.parser.TlabLogFile
 
 @RequiredArgsConstructor
 public class StatsService {
-    private DecimalFormat decimalFormat = new DecimalFormat("#,##0.00", DecimalFormatSymbols.getInstance(Locale.US));
+    private final DecimalFormat decimalFormat = new DecimalFormat("#,##0.00", DecimalFormatSymbols.getInstance(Locale.US));
 
-    public JvmLogFile createAllStatsJdk8(InputStream inputStream, String originalFilename) {
+    public JvmLogFile createAllStatsJdk8(InputStream inputStream, String originalFilename, Consumer<ParsingProgress> notifyProgress) {
         BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
         SafepointJdk8LogFileParser safepointJdk8LogFileParser = new SafepointJdk8LogFileParser();
         GCJdk8LogFileParser gcJdk8LogFileParser = new GCJdk8LogFileParser();
 
         try {
+            long numberOfLine = 1;
             while (reader.ready()) {
                 String line = reader.readLine();
                 if (reader.ready()) {
                     // last line may be broken in Java 8 format
                     safepointJdk8LogFileParser.parseLine(line);
                     gcJdk8LogFileParser.parseLine(line);
+                    notifyProgress.accept(new ParsingProgress(numberOfLine++));
                 } else {
                     break;
                 }
@@ -99,7 +102,7 @@ public class StatsService {
 
     }
 
-    public JvmLogFile createAllStatsUnifiedLogger(InputStream inputStream, String originalFilename) {
+    public JvmLogFile createAllStatsUnifiedLogger(InputStream inputStream, String originalFilename, Consumer<ParsingProgress> notifyProgress) {
         BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
         SafepointUnifiedLogFileParser safepointUnifiedLogFileParser = new SafepointUnifiedLogFileParser();
         GCUnifiedLogFileParser gcUnifiedLogFileParser = new GCUnifiedLogFileParser();
@@ -110,6 +113,7 @@ public class StatsService {
         StringDedupLogFileParser stringDedupLogFileParser = new StringDedupLogFileParser();
 
         try {
+            long numberOfLine = 1;
             String line = reader.readLine();
             while (line != null) {
                 safepointUnifiedLogFileParser.parseLine(line);
@@ -120,6 +124,7 @@ public class StatsService {
                 tlabLogFileParser.parseLine(line);
                 stringDedupLogFileParser.parseLine(line);
                 line = reader.readLine();
+                notifyProgress.accept(new ParsingProgress(numberOfLine++));
             }
         } catch (Exception ex) {
             throw new RuntimeException(ex);
