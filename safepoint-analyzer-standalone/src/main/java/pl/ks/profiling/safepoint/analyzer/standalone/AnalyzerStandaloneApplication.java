@@ -23,11 +23,13 @@ import org.springframework.boot.builder.SpringApplicationBuilder;
 import pl.ks.profiling.io.ConcatenationProgress;
 import pl.ks.profiling.io.FilesConcatenation;
 import pl.ks.profiling.io.InputUtils;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.ParsingProgress;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.JvmLogFile;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.ParserUtils;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.StatsService;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeEvent;
@@ -40,7 +42,7 @@ import java.text.DecimalFormat;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
-import java.util.function.BiFunction;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 @Slf4j
@@ -52,11 +54,14 @@ public class AnalyzerStandaloneApplication extends JFrame {
     @Autowired
     private PresentationFontProvider presentationFontProvider;
 
+    private final String LOAD_BUTTON_LABEL = "Load file (JDK >= 9)";
+    private final String LOAD_OLD_BUTTON_LABEL = "Load file (JDK 8)";
+    private final String CONCAT_LOGS_BUTTON_LABEL = "Concatenate rotated logs";
     private JButton concatLogsButton;
     private JButton quitButton;
     private JButton loadButton;
     private JButton loadOldButton;
-    private final String CONCAT_LOGS_BUTTON_LABEL = "Concatenate rotated logs";
+    private JLabel parsingProgressLabel;
     private final DecimalFormat TWO_DECIMAL_DIGITS_FORMAT = new DecimalFormat("##.#");
 
     public AnalyzerStandaloneApplication() {
@@ -73,8 +78,10 @@ public class AnalyzerStandaloneApplication extends JFrame {
                 .put("defaultFont", presentationFontProvider.getDefaultFont());
 
         quitButton = new JButton("Quit");
-        loadButton = new JButton("Load file (JDK >= 9)");
-        loadOldButton = new JButton("Load file (JDK 8)");
+        loadButton = new JButton(LOAD_BUTTON_LABEL);
+        loadOldButton = new JButton(LOAD_OLD_BUTTON_LABEL);
+        parsingProgressLabel = new JLabel("Parsing in progress. Processed xxx lines");
+        parsingProgressLabel.setVisible(false);
         concatLogsButton = new JButton(CONCAT_LOGS_BUTTON_LABEL);
 
         loadButton.addActionListener(this::onLoadButtonClicked);
@@ -85,16 +92,95 @@ public class AnalyzerStandaloneApplication extends JFrame {
             System.exit(0);
         });
 
-        createLayout(loadButton, loadOldButton, concatLogsButton, quitButton);
+        createLayout();
 
         setTitle("Safepoint/GC log file analyzer");
-        setSize(300, 200);
+        pack();
+        setMinimumSize(getSize());
         setLocationRelativeTo(null);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
     }
 
+    private void createLayout() {
+        setLayout(new BorderLayout());
+
+        JPanel buttonsPanel = new JPanel();
+        buttonsPanel.setLayout(new BoxLayout(buttonsPanel, BoxLayout.Y_AXIS));
+        buttonsPanel.setBorder(new EmptyBorder(10, 30, 10, 30));
+        loadButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+        loadOldButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+        parsingProgressLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        concatLogsButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+        buttonsPanel.add(loadButton);
+        buttonsPanel.add(loadOldButton);
+        buttonsPanel.add(parsingProgressLabel);
+        buttonsPanel.add(Box.createRigidArea(new Dimension(0,10)));
+        buttonsPanel.add(concatLogsButton);
+
+        add(buttonsPanel, BorderLayout.CENTER);
+        add(quitButton, BorderLayout.PAGE_END);
+    }
+
     private void onLoadButtonClicked(ActionEvent event) {
-        JvmLogFile stats = startLogsProcessing(statsService::createAllStatsUnifiedLogger);
+        startLogsProcessing(statsService::createAllStatsUnifiedLogger);
+    }
+
+    private void onLoadOldButtonClicked(ActionEvent event) {
+        startLogsProcessing(statsService::createAllStatsJdk8);
+    }
+
+    private void startLogsProcessing(TriFunction<InputStream, String, Consumer<ParsingProgress>, JvmLogFile> logsProcessor) {
+        processFilesForLogs(selectFilesForProcessing(), logsProcessor);
+    }
+
+    private void processFilesForLogs(List<File> files, TriFunction<InputStream, String, Consumer<ParsingProgress>, JvmLogFile> logsProcessor) {
+        if (files != null) {
+            ParsingWorker worker = new ParsingWorker(files, logsProcessor);
+            worker.addPropertyChangeListener(
+                    onWorkerComplete(
+                            this::parsingStarted,
+                            this::successParsing,
+                            this::parsingFailed));
+            worker.execute();
+        }
+    }
+
+    @AllArgsConstructor
+    private class ParsingWorker extends SwingWorker<JvmLogFile, ParsingProgress> {
+        private final List<File> files;
+        private final TriFunction<InputStream, String, Consumer<ParsingProgress>, JvmLogFile> logsProcessor;
+        @Override
+        protected JvmLogFile doInBackground() {
+            try {
+                InputStream logsInputStream = InputUtils.getInputStream(files, ParserUtils::getTimeStamp);
+                JvmLogFile output = logsProcessor.apply(logsInputStream, files.get(0).getName(), this::publish);
+                logsInputStream.close();
+                return output;
+            } catch (IOException exception) {
+                exception.printStackTrace();
+            }
+            return null;
+        }
+
+        @Override
+        protected void process(List<ParsingProgress> chunks) {
+            notifyParsingChange(chunks.get(chunks.size() - 1));
+        }
+    }
+
+    private void parsingStarted() {
+        loadButton.setEnabled(false);
+        loadOldButton.setEnabled(false);
+        notifyParsingChange(new ParsingProgress(0));
+        parsingProgressLabel.setVisible(true);
+    }
+
+    private void successParsing(JvmLogFile stats) {
+        loadButton.setText(LOAD_BUTTON_LABEL);
+        loadOldButton.setText(LOAD_OLD_BUTTON_LABEL);
+        loadButton.setEnabled(true);
+        loadOldButton.setEnabled(true);
+        parsingProgressLabel.setVisible(false);
         if (stats != null) {
             new AnalyzerFrame(stats, presentationFontProvider);
         } else {
@@ -102,32 +188,12 @@ public class AnalyzerStandaloneApplication extends JFrame {
         }
     }
 
-    private void onLoadOldButtonClicked(ActionEvent event) {
-        JvmLogFile stats = startLogsProcessing(statsService::createAllStatsJdk8);
-        if (stats != null) {
-            new AnalyzerFrame(stats, presentationFontProvider);
-        } else {
-            JOptionPane.showMessageDialog(null, "Error while loading files with JVM 8 logs", "Error", JOptionPane.ERROR_MESSAGE);
-        }
-    }
-
-    private JvmLogFile startLogsProcessing(BiFunction<InputStream, String, JvmLogFile> logsProcessorr) {
-        List<File> files = selectFilesForProcessing();
-        return processFilesForLogs(files, logsProcessorr);
-    }
-
-    private JvmLogFile processFilesForLogs(List<File> files, BiFunction<InputStream, String, JvmLogFile> logsProcessor) {
-        if (files != null) {
-            try {
-                InputStream logsInputStream = InputUtils.getInputStream(files, ParserUtils::getTimeStamp);
-                JvmLogFile output = logsProcessor.apply(logsInputStream, files.get(0).getName());
-                logsInputStream.close();
-                return output;
-            } catch (IOException exception) {
-                exception.printStackTrace();
-            }
-        }
-        return null;
+    private void parsingFailed() {
+        loadButton.setText(LOAD_BUTTON_LABEL);
+        loadOldButton.setText(LOAD_OLD_BUTTON_LABEL);
+        loadButton.setEnabled(true);
+        loadOldButton.setEnabled(true);
+        JOptionPane.showMessageDialog(null, "Error while concatenating files", "Error", JOptionPane.ERROR_MESSAGE);
     }
 
     private List<File> selectFilesForProcessing() {
@@ -224,7 +290,7 @@ public class AnalyzerStandaloneApplication extends JFrame {
         concatenatingWorker.addPropertyChangeListener(
                 onWorkerComplete(
                         this::concatenationStarted,
-                        () -> successConcatenation(sortedFiles, saveFile),
+                        (success) -> successConcatenation(sortedFiles, saveFile),
                         this::concatenationFailed));
         concatenatingWorker.execute();
     }
@@ -245,7 +311,7 @@ public class AnalyzerStandaloneApplication extends JFrame {
         JOptionPane.showMessageDialog(null, "Error while concatenating files", "Error", JOptionPane.ERROR_MESSAGE);
     }
 
-    private PropertyChangeListener onWorkerComplete(Runnable started, Runnable success, Runnable failure) {
+    private <T> PropertyChangeListener onWorkerComplete(Runnable started, Consumer<T> success, Runnable failure) {
         return (PropertyChangeEvent evt) -> {
             if ("state".equals(evt.getPropertyName())) {
                 switch ((SwingWorker.StateValue) evt.getNewValue()) {
@@ -254,9 +320,9 @@ public class AnalyzerStandaloneApplication extends JFrame {
                         break;
                     case DONE:
                         try {
-                            Boolean jobSucceeded = ((ConcatenatingWorker) evt.getSource()).get();
-                            if (jobSucceeded) {
-                                success.run();
+                            T jobSucceeded = ((SwingWorker<T, ?>) evt.getSource()).get();
+                            if (jobSucceeded != null) {
+                                success.accept(jobSucceeded);
                             } else {
                                 failure.run();
                             }
@@ -279,6 +345,10 @@ public class AnalyzerStandaloneApplication extends JFrame {
         concatLogsButton.setText(response);
     }
 
+    private void notifyParsingChange(ParsingProgress progress) {
+        parsingProgressLabel.setText("Parsing in progress. Processed " + progress.getProcessedLines() + " lines...");
+    }
+
     private String percent(Long total, Long share) {
         return TWO_DECIMAL_DIGITS_FORMAT.format((share.doubleValue() / total.doubleValue()) * 100.0) + "%";
     }
@@ -289,13 +359,6 @@ public class AnalyzerStandaloneApplication extends JFrame {
 
     private String toMb(Long bytes) {
         return TWO_DECIMAL_DIGITS_FORMAT.format(bytes.doubleValue() / 1024 / 1024) + "Mb";
-    }
-
-    private void createLayout(JComponent... arg) {
-        setLayout(new FlowLayout());
-        for (JComponent jComponent : arg) {
-            add(jComponent);
-        }
     }
 
     public static void main(String[] args) {

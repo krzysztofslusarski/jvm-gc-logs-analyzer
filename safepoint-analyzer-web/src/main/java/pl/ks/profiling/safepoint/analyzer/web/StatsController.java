@@ -26,6 +26,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 import pl.ks.profiling.io.StorageUtils;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.JvmLogFile;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.ParsingProgress;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.StatsService;
 import pl.ks.profiling.web.commons.WelcomePage;
 
@@ -51,7 +52,7 @@ class StatsController {
     String upload(Model model, @RequestParam("file") MultipartFile file) throws Exception {
         String originalFilename = file.getOriginalFilename();
         InputStream inputStream = StorageUtils.createCopy(INPUTS_PATH, originalFilename, file.getInputStream());
-        JvmLogFile stats = statsService.createAllStatsUnifiedLogger(inputStream, originalFilename);
+        JvmLogFile stats = statsService.createAllStatsUnifiedLogger(inputStream, originalFilename, StatsController::ignoreParsingProgress);
         model.addAttribute("welcomePage", WelcomePage.builder()
                 .pages(stats.getPages())
                 .build());
@@ -61,10 +62,12 @@ class StatsController {
     @PostMapping("/upload-plain-text")
     String upload(Model model, String text) throws Exception {
         InputStream inputStream = StorageUtils.savePlainText(INPUTS_PATH, text);
-        JvmLogFile stats = statsService.createAllStatsUnifiedLogger(inputStream, "plain-text.log");
+        JvmLogFile stats = statsService.createAllStatsUnifiedLogger(inputStream, "plain-text.log", StatsController::ignoreParsingProgress);
         model.addAttribute("welcomePage", WelcomePage.builder()
                 .pages(stats.getPages())
                 .build());
         return "welcome";
     }
+
+    private static void ignoreParsingProgress(ParsingProgress p) {}
 }
