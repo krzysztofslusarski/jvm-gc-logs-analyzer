@@ -155,15 +155,18 @@ class ContentPanel extends JPanel {
     }
 
     private PieChart createPieChart(Chart chart, String title, int width) {
-        boolean first = true;
-        PieChart pieChart = new PieChartBuilder().width(width).height(800).title(title).build();
-        for (Object[] data : chart.getData()) {
-            if (first) {
-                first = false;
-                continue;
-            }
-            pieChart.addSeries(data[0].toString(), new BigDecimal(data[1].toString()));
+        PieChart pieChart = createEmptyPieChart(title, width);
+        for (Object[] row : chart.getRows()) {
+            String seriesName = row[0].toString();
+            BigDecimal value = new BigDecimal(row[1].toString());
+            pieChart.addSeries(seriesName, value);
         }
+
+        return pieChart;
+    }
+
+    private PieChart createEmptyPieChart(String title, int width) {
+        PieChart pieChart = new PieChartBuilder().width(width).height(800).title(title).build();
         pieChart.getStyler().setSeriesColors(SERIES_COLORS);
         pieChart.getStyler().setLegendVisible(true);
         pieChart.getStyler().setChartBackgroundColor(Color.WHITE);
@@ -175,20 +178,23 @@ class ContentPanel extends JPanel {
 
     private XYChart createXyChart(Chart chart, String title, int width) {
         XYChart xyChart = createEmptyXyChart(chart, title, width);
-        Object[][] chartData = chart.getData();
-        List<Number> xAxis = firstColumnValues(chartData);
-        Object[] columnsHeadersRow = chartData[0];
+        Object[][] chartRows = chart.getRows();
+        List<Number> xAxis = extractColumnValues(chartRows, chart.getXAxisColumnIndex(), false);
+        Object[] columnsHeadersRow = chart.getHeaders();
 
-        for (int columnIndex = 1; columnIndex < columnsHeadersRow.length; columnIndex++) {
-            addSeriesForColumn(chart, chartData, columnsHeadersRow, columnIndex, xAxis, xyChart);
+        for (int columnIndex = 0; columnIndex < columnsHeadersRow.length; columnIndex++) {
+            if (columnIndex == chart.getXAxisColumnIndex()) {
+                continue;
+            }
+            addSeriesForColumn(chart, chartRows, columnsHeadersRow, columnIndex, xAxis, xyChart);
         }
         return xyChart;
     }
 
-    private void addSeriesForColumn(Chart chart, Object[][] chartData, Object[] columnsHeadersRow, int columnIndex, List<Number> xAxis, XYChart xyChart) {
+    private void addSeriesForColumn(Chart chart, Object[][] rows, Object[] columnsHeadersRow, int columnIndex, List<Number> xAxis, XYChart xyChart) {
         String seriesName = columnsHeadersRow[columnIndex].toString();
-        List<Number> columnValues = extractColumnValues(chartData, columnIndex, true);
-        XYSeries series = xyChart.addSeries(seriesName, xAxis, columnValues);
+        List<Number> seriesValues = extractColumnValues(rows, columnIndex, false);
+        XYSeries series = xyChart.addSeries(seriesName, xAxis, seriesValues);
         if (chart.getChartType() == Chart.ChartType.POINTS ||
                 (chart.getChartType() == Chart.ChartType.POINTS_OR_LINE && chart.getSeriesTypes()[columnIndex - 1] == Chart.SeriesType.POINTS)) {
             series.setMarker(SeriesMarkers.CIRCLE);
@@ -202,6 +208,8 @@ class ContentPanel extends JPanel {
     private XYChart createEmptyXyChart(Chart chart, String title, int width) {
         XYChart xyChart = new XYChartBuilder()
                 .title(title)
+                .xAxisTitle(chart.getXAxisLabel())
+                .yAxisTitle(chart.getYAxisLabel())
                 .width(width)
                 .height(800)
                 .build();
@@ -219,10 +227,6 @@ class ContentPanel extends JPanel {
         chartStyler.setAxisTickLabelsFont(presentationFontProvider.getDefaultFont());
         chartStyler.setChartTitleFont(presentationFontProvider.getDefaultBoldFont());
         return xyChart;
-    }
-
-    private List<Number> firstColumnValues(Object[][] chartData) {
-        return extractColumnValues(chartData, 0, true);
     }
 
     private List<Number> extractColumnValues(Object[][] table, int columnIndex, boolean skipHeader) {

@@ -40,14 +40,19 @@ public class GCHeapAfter implements PageCreator {
                         Chart.builder()
                                 .chartType(Chart.ChartType.LINE)
                                 .title("Heap after GC")
+                                .xAxisLabel("ms since application start")
+                                .yAxisLabel("Mb")
+                                .xAxisColumnIndex(chartColumns.indexOf(TIMESTAMP_COLUMN))
                                 .data(getHeapAfterGCSizeChart(jvmLogFile))
                                 .build()
                 ))
                 .build();
     }
 
+    private static final String TIMESTAMP_COLUMN = "Timestamp";
+
     private static final List<String> chartColumns = List.of(
-            "Cycle",
+            TIMESTAMP_COLUMN,
             "Heap after GC",
             "Heap size");
 

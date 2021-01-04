@@ -20,13 +20,30 @@ import java.util.List;
 import java.util.UUID;
 import lombok.experimental.UtilityClass;
 import org.apache.poi.util.IOUtils;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.ParserUtils;
 
 @UtilityClass
 public class StorageUtils {
     public InputStream createCopy(String dir, String originalFilename, InputStream inputStream) throws IOException {
-        String savedFileName = dir + UUID.randomUUID().toString() + originalFilename;
+        String directoryPath = withTrailingSlash(dir);
+        makeSureDirectoryExists(directoryPath);
+        String savedFileName = directoryPath + UUID.randomUUID().toString() + originalFilename;
         IOUtils.copy(inputStream, new FileOutputStream(savedFileName));
-        return InputUtils.getInputStream(List.of(new File(savedFileName)), null);
+        return InputUtils.getInputStream(List.of(new File(savedFileName)), ParserUtils::getTimeStamp);
+    }
+
+    private void makeSureDirectoryExists(String directoryPath) {
+        File directory = new File(directoryPath);
+        if (!directory.exists()) {
+            directory.mkdirs();
+        }
+    }
+
+    private static String withTrailingSlash(String path) {
+        if (path.endsWith("/")) {
+            return path;
+        }
+        return path + "/";
     }
 
     public InputStream savePlainText(String dir, String text) throws IOException {

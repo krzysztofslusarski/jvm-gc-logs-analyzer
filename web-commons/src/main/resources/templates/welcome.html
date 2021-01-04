@@ -104,6 +104,29 @@
                                     var id = /*[[${pagesStatus.index}]]*/;
                                     var contentId = /*[[${contentStatus.index}]]*/;
                                     var data = google.visualization.arrayToDataTable(table);
+                                    const columns = table[0];
+                                    const domainColumnIndex = /*[[${content.xAxisColumnIndex}]]*/ 0;
+                                    function withDomainColumn(currentColumn, domainColumn) {
+                                        if (currentColumn === domainColumn) {
+                                            return {
+                                                sourceColumn: currentColumn,
+                                                label: columns[currentColumn],
+                                                role: 'domain'
+                                            }
+                                        } else {
+                                            return {
+                                                sourceColumn: currentColumn,
+                                                label: columns[currentColumn],
+                                                role: 'data'
+                                            }
+                                        }
+                                    }
+                                    function pickNthColumnAsDomain() {
+                                        const allColumnsIndices = [...Array(columns.length).keys()]
+                                        return allColumnsIndices.map(i => withDomainColumn(i, domainColumnIndex))
+                                    }
+                                    const view = new google.visualization.DataView(data);
+                                    view.setColumns(pickNthColumnAsDomain())
 
                                     // Optional; add a title and set the width and height of the chart
                                     var options = {
@@ -111,11 +134,17 @@
                                         width: $(window).width() * 0.75,
                                         height: $(window).height() * 0.75,
                                         fontSize: 22,
-                                        legend: {position: 'bottom'},
+                                        legend: {position: 'right'},
+                                        hAxis: {
+                                            title: /*[[${content.xAxisLabel}]]*/
+                                        },
+                                        vAxis: {
+                                            title: /*[[${content.yAxisLabel}]]*/
+                                        }
                                     };
 
                                     var chart = new google.visualization.LineChart(document.getElementById('content' + id + '-' + contentId));
-                                    chart.draw(data, options);
+                                    chart.draw(view, options);
                                 }
                             </script>
                             <script th:if="${content.chartType.name() == 'POINTS'}" type="text/javascript" th:inline="javascript">
@@ -128,6 +157,26 @@
                                     var id = /*[[${pagesStatus.index}]]*/;
                                     var contentId = /*[[${contentStatus.index}]]*/;
                                     var data = google.visualization.arrayToDataTable(table);
+                                    const columns = table[0];
+                                    const domainColumnIndex = /*[[${content.xAxisColumnIndex}]]*/ 0;
+                                    const allColumnsIndices = [...Array(columns.length).keys()]
+                                    function withDomainColumn(currentColumn, domainColumn) {
+                                        if (currentColumn === domainColumn) {
+                                            return {
+                                                sourceColumn: currentColumn,
+                                                label: columns[currentColumn],
+                                                role: 'domain'
+                                            }
+                                        } else {
+                                            return {
+                                                sourceColumn: currentColumn,
+                                                label: columns[currentColumn],
+                                                role: 'data'
+                                            }
+                                        }
+                                    }
+                                    const view = new google.visualization.DataView(data);
+                                    view.setColumns(allColumnsIndices.map(i => withDomainColumn(i, domainColumnIndex)))
 
                                     // Optional; add a title and set the width and height of the chart
                                     var options = {
@@ -141,7 +190,7 @@
                                     };
 
                                     var chart = new google.visualization.LineChart(document.getElementById('content' + id + '-' + contentId));
-                                    chart.draw(data, options);
+                                    chart.draw(view, options);
                                 }
                             </script>
                         </div>
