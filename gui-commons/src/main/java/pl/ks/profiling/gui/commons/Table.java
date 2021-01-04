@@ -24,12 +24,12 @@ import lombok.Value;
 @Value
 @Builder
 public class Table implements PageContent {
-    private List<String> header;
-    private List<String> footer;
-    private List<List<String>> table;
-    private String title;
-    private String screenWidth;
-    private String info;
+    List<String> header;
+    List<String> footer;
+    List<List<String>> table;
+    String title;
+    String screenWidth;
+    String info;
 
     @Override
     public ContentType getType() {
