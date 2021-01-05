@@ -15,6 +15,24 @@
  */
 package pl.ks.profiling.io;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.SequenceInputStream;
+import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Scanner;
+import java.util.Vector;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.zip.GZIPInputStream;
 import lombok.experimental.UtilityClass;
 import org.apache.commons.compress.archivers.sevenz.SevenZArchiveEntry;
 import org.apache.commons.compress.archivers.sevenz.SevenZFile;
@@ -22,13 +40,6 @@ import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.apache.commons.compress.utils.IOUtils;
 import org.tukaani.xz.XZInputStream;
-
-import java.io.*;
-import java.nio.file.Files;
-import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.zip.GZIPInputStream;
 
 @UtilityClass
 public class InputUtils {
@@ -135,6 +146,9 @@ public class InputUtils {
 
     private static <U extends Comparable<? super U>> List<InputStream> getSortedEntriesInputStreams(SevenZFile archiveFile, Function<String, U> extractCompareObject) {
         List<SevenZArchiveEntry> entries = (List<SevenZArchiveEntry>) (archiveFile.getEntries());
+        if (entries.size() == 1) {
+            return List.of(new LazySevenZInputStream(archiveFile, entries.get(0)));
+        }
         List<SevenZArchiveEntry> sorted = FilesConcatenation.sortBy(entries, e -> extractCompareObject.apply(readFirstLine(archiveFile, e)));
         return sorted.stream().map(e -> new LazySevenZInputStream(archiveFile, e)).collect(Collectors.toList());
     }
