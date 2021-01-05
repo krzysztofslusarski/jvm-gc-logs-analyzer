@@ -37,7 +37,7 @@ public class JitCodeCacheSweeperActivity implements PageCreator {
                                         .chartType(Chart.ChartType.LINE)
                                         .title("Current count")
                                         .xAxisLabel("Seconds since application start")
-                                        .yAxisLabel("TODO")
+                                        .yAxisLabel("Sweeper start count")
                                         .data(getCurrentCountChart(jvmLogFile.getJitLogFile().getCodeCacheSweeperActivities()))
                                         .build()
                         )
@@ -52,7 +52,7 @@ public class JitCodeCacheSweeperActivity implements PageCreator {
         int i = 1;
         for (CodeCacheSweeperActivity activity : codeCacheSweeperActivities) {
             stats[i][0] = activity.getTimeStamp();
-            stats[i][1] = i; // TODO Why here i?
+            stats[i][1] = i;
             i++;
         }
         return stats;
