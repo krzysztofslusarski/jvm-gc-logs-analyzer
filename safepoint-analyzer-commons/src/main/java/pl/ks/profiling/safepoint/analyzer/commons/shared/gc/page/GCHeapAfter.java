@@ -40,7 +40,7 @@ public class GCHeapAfter implements PageCreator {
                         Chart.builder()
                                 .chartType(Chart.ChartType.LINE)
                                 .title("Heap after GC")
-                                .xAxisLabel("ms since application start")
+                                .xAxisLabel("Seconds since application start")
                                 .yAxisLabel("Mb")
                                 .xAxisColumnIndex(chartColumns.indexOf(TIMESTAMP_COLUMN))
                                 .data(getHeapAfterGCSizeChart(jvmLogFile))
