@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Krzysztof Slusarski
+ * Copyright 2020 Krzysztof Slusarski, Artur Owczarek
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.Value;
 
+import java.util.Arrays;
+
 @Getter
 @Value
 @Builder
@@ -28,11 +30,37 @@ public class Chart implements PageContent {
     SeriesType[] seriesTypes;
     String title;
     String info;
+    String xAxisLabel;
+    String yAxisLabel;
     boolean forceZeroMinValue;
+    int xAxisColumnIndex;
 
     @Override
     public ContentType getType() {
         return ContentType.CHART;
+    }
+
+    public Object[][] getRows() {
+        return Arrays.copyOfRange(data, 1, data.length - 2);
+    }
+
+    public Object[] getHeaders() {
+        return data[0];
+    }
+
+    public String getXAxisLabel() {
+        return emptyForNull(this.xAxisLabel);
+    }
+
+    public String getYAxisLabel() {
+        return emptyForNull(this.yAxisLabel);
+    }
+
+    private String emptyForNull(String value) {
+        if (value == null) {
+            return "";
+        }
+        return value;
     }
 
     public enum ChartType {

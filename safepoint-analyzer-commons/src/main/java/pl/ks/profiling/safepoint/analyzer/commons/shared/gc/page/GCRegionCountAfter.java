@@ -43,6 +43,8 @@ public class GCRegionCountAfter implements PageCreator {
                                         .chartType(Chart.ChartType.LINE)
                                         .title(phase)
                                         .data(getChart(phase, jvmLogFile))
+                                        .xAxisLabel("Seconds since application start when collection happened")
+                                        .yAxisLabel("Number of regions after collection")
                                         .build())
                                 .filter(chart -> chart.getData() != null)
                                 .collect(Collectors.toList())

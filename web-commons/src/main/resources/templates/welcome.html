@@ -94,6 +94,44 @@
                                     chart.draw(data, options);
                                 }
                             </script>
+                            <script type="text/javascript">
+                                function withDomainColumn(columns, currentColumn, domainColumn) {
+                                    if (currentColumn === domainColumn) {
+                                        return {
+                                            sourceColumn: currentColumn,
+                                            label: columns[currentColumn],
+                                            role: 'domain'
+                                        }
+                                    } else {
+                                        return {
+                                            sourceColumn: currentColumn,
+                                            label: columns[currentColumn],
+                                            role: 'data'
+                                        }
+                                    }
+                                }
+
+                                function pickDomainColumn(columns, domainColumnIndex) {
+                                    const allColumnsIndices = [...Array(columns.length).keys()]
+                                    return allColumnsIndices.map(i => withDomainColumn(columns, i, domainColumnIndex))
+                                }
+
+                                function commonLineChartsOptions(xAxisLabel, yAxisLabel) {
+                                    return {
+                                        chartArea: {'width': '90%', 'height': '90%'},
+                                        width: $(window).width() * 0.75,
+                                        height: $(window).height() * 0.75,
+                                        fontSize: 14,
+                                        legend: {position: 'top'},
+                                        hAxis: {
+                                            title: xAxisLabel
+                                        },
+                                        vAxis: {
+                                            title: yAxisLabel
+                                        }
+                                    }
+                                }
+                            </script>
                             <script th:if="${content.chartType.name() == 'LINE' || content.chartType.name() == 'POINTS_OR_LINE'}" type="text/javascript" th:inline="javascript">
                                 google.charts.load('current', {'packages': ['corechart', 'line']});
                                 google.charts.setOnLoadCallback(drawChart);
@@ -104,18 +142,17 @@
                                     var id = /*[[${pagesStatus.index}]]*/;
                                     var contentId = /*[[${contentStatus.index}]]*/;
                                     var data = google.visualization.arrayToDataTable(table);
+                                    const columns = table[0];
+                                    const domainColumnIndex = /*[[${content.xAxisColumnIndex}]]*/ 0;
+
+                                    const view = new google.visualization.DataView(data);
+                                    view.setColumns(pickDomainColumn(columns, domainColumnIndex));
 
                                     // Optional; add a title and set the width and height of the chart
-                                    var options = {
-                                        chartArea: {'width': '90%', 'height': '90%'},
-                                        width: $(window).width() * 0.75,
-                                        height: $(window).height() * 0.75,
-                                        fontSize: 22,
-                                        legend: {position: 'bottom'},
-                                    };
+                                    var options = commonLineChartsOptions(/*[[${content.xAxisLabel}]]*/, /*[[${content.yAxisLabel}]]*/)
 
                                     var chart = new google.visualization.LineChart(document.getElementById('content' + id + '-' + contentId));
-                                    chart.draw(data, options);
+                                    chart.draw(view, options);
                                 }
                             </script>
                             <script th:if="${content.chartType.name() == 'POINTS'}" type="text/javascript" th:inline="javascript">
@@ -128,20 +165,20 @@
                                     var id = /*[[${pagesStatus.index}]]*/;
                                     var contentId = /*[[${contentStatus.index}]]*/;
                                     var data = google.visualization.arrayToDataTable(table);
+                                    const columns = table[0];
+                                    const domainColumnIndex = /*[[${content.xAxisColumnIndex}]]*/ 0;
+                                    const view = new google.visualization.DataView(data);
+                                    view.setColumns(pickDomainColumn(columns, domainColumnIndex));
 
                                     // Optional; add a title and set the width and height of the chart
                                     var options = {
-                                        chartArea: {'width': '90%', 'height': '90%'},
-                                        width: $(window).width() * 0.75,
-                                        height: $(window).height() * 0.75,
-                                        fontSize: 22,
+                                        ...commonLineChartsOptions(/*[[${content.xAxisLabel}]]*/, /*[[${content.yAxisLabel}]]*/),
                                         pointSize: 3,
                                         lineWidth: 0,
-                                        legend: {position: 'bottom'},
                                     };
 
                                     var chart = new google.visualization.LineChart(document.getElementById('content' + id + '-' + contentId));
-                                    chart.draw(data, options);
+                                    chart.draw(view, options);
                                 }
                             </script>
                         </div>

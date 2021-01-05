@@ -42,6 +42,8 @@ public class GCRegionMax implements PageCreator {
                                 .title("Max number or regions")
                                 .chartType(Chart.ChartType.POINTS)
                                 .data(getChart(jvmLogFile))
+                                .xAxisLabel("Seconds since application start when ergonomics decision happened")
+                                .yAxisLabel("New maximum number of regions available for generation")
                                 .build())
                 )
                 .build();
