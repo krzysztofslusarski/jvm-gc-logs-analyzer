@@ -36,6 +36,8 @@ public class JitCodeCacheSweeperActivity implements PageCreator {
                                 Chart.builder()
                                         .chartType(Chart.ChartType.LINE)
                                         .title("Current count")
+                                        .xAxisLabel("Seconds since application start")
+                                        .yAxisLabel("TODO")
                                         .data(getCurrentCountChart(jvmLogFile.getJitLogFile().getCodeCacheSweeperActivities()))
                                         .build()
                         )

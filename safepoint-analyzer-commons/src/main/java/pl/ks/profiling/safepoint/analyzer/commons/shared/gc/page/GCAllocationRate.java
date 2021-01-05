@@ -39,6 +39,8 @@ public class GCAllocationRate implements PageCreator {
                 .pageContents(List.of(
                         Chart.builder()
                                 .chartType(Chart.ChartType.POINTS)
+                                .xAxisLabel("Seconds since application start")
+                                .yAxisLabel("Mb/s")
                                 .data(getChart(jvmLogFile))
                                 .build())
                 )

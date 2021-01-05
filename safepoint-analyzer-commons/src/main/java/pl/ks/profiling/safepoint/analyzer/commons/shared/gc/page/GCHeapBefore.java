@@ -41,7 +41,7 @@ public class GCHeapBefore implements PageCreator {
                                 .seriesTypes(new Chart.SeriesType[] {Chart.SeriesType.POINTS, Chart.SeriesType.LINE})
                                 .title("Heap before GC")
                                 .xAxisLabel("Seconds since application start")
-                                .yAxisLabel("Mb")
+                                .yAxisLabel("MB")
                                 .xAxisColumnIndex(chartColumns.indexOf(TIMESTAMP_COLUMN))
                                 .data(getHeapBeforeGCSizeChart(jvmLogFile))
                                 .build()

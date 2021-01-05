@@ -48,11 +48,15 @@ public class GCAllocationRateInTime implements PageCreator {
                         Chart.builder()
                                 .title("Avg. of avg. allocation rate in time period")
                                 .chartType(Chart.ChartType.POINTS)
+                                .xAxisLabel("TODO What here?")
+                                .yAxisLabel("Average Mb/s in the last " + minuteCount + " minutes")
                                 .data(getChartAvg(byTimeMap))
                                 .build(),
                         Chart.builder()
                                 .title("Max. allocation rate in time period")
                                 .chartType(Chart.ChartType.POINTS)
+                                .xAxisLabel("TODO What here?")
+                                .yAxisLabel("TODO What here?")
                                 .data(getChartMax(byTimeMap))
                                 .build()
 

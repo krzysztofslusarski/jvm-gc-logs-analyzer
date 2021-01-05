@@ -41,6 +41,8 @@ public class JitCodeCacheStats implements PageCreator {
                                         Chart.builder()
                                                 .chartType(Chart.ChartType.LINE)
                                                 .title(entry.getKey())
+                                                .xAxisLabel("Seconds since application start")
+                                                .yAxisLabel("TODO")
                                                 .data(getCurrentCountChart(entry.getValue()))
                                                 .build()
                                 )

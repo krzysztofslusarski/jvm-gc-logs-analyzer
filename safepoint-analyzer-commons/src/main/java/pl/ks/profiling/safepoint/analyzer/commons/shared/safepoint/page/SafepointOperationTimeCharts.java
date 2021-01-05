@@ -43,6 +43,8 @@ public class SafepointOperationTimeCharts implements PageCreator {
                                 .title("Time in STW phases with TTS")
                                 .chartType(Chart.ChartType.POINTS)
                                 .data(getChart(jvmLogFile))
+                                .xAxisLabel("Seconds since application start when operation started")
+                                .yAxisLabel("Operation duration in ms")
                                 .build()
                 ))
                 .build();

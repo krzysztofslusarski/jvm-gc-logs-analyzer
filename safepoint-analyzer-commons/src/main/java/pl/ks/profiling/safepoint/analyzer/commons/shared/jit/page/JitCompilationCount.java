@@ -39,6 +39,8 @@ public class JitCompilationCount implements PageCreator {
                                 Chart.builder()
                                         .chartType(Chart.ChartType.LINE)
                                         .title("Current count")
+                                        .xAxisLabel("Seconds since application start")
+                                        .yAxisLabel("Number of compilations")
                                         .data(getCurrentCountChart(jvmLogFile.getJitLogFile().getCompilationStatuses()))
                                         .build()
                         )
