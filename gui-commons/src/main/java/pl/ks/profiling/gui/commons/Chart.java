@@ -15,11 +15,12 @@
  */
 package pl.ks.profiling.gui.commons;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Value;
-
-import java.util.Arrays;
 
 @Getter
 @Value
@@ -61,6 +62,37 @@ public class Chart implements PageContent {
             return "";
         }
         return value;
+    }
+
+    public Object[] getHighChartYAxisLabels() {
+        int labels = data.length - 1;
+        Object[] ret = new Object[labels];
+        for (int j = 1; j < data.length; j++) {
+            ret[j - 1] = data[j][0];
+        }
+        return ret;
+    }
+
+    public List<HighChartSeries> getHighChartSeriesData() {
+        int columns = data[0].length;
+        List<HighChartSeries> ret = new ArrayList<>(columns - 1);
+        for (int i = 1; i < columns; i++) {
+            Object[] series = new Object[data.length - 1];
+            for (int j = 1; j < data.length; j++) {
+                series[j - 1] = data[j][i];
+            }
+            ret.add(new HighChartSeries(data[0][i].toString(), series));
+        }
+        return ret;
+    }
+
+    public List<HighChartPieSeries> getHighChartPieSeriesData() {
+        int labels = data.length - 1;
+        HighChartPieData[] array = new HighChartPieData[labels];
+        for (int j = 1; j < data.length; j++) {
+            array[j - 1] = new HighChartPieData(data[j][0].toString(), data[j][1]);
+        }
+        return List.of(new HighChartPieSeries("Chart", array));
     }
 
     public enum ChartType {

@@ -7,7 +7,9 @@
     <link href="/css/welcome.css" rel="stylesheet">
     <script type="text/javascript" th:src="@{webjars/jquery/2.2.4/jquery.min.js}"></script>
     <script type="text/javascript" th:src="@{webjars/bootstrap/4.2.1/js/bootstrap.min.js}"></script>
-    <script src="https://www.gstatic.com/charts/loader.js"></script>
+    <script src="https://code.highcharts.com/highcharts.src.js"></script>
+    <script src="https://code.highcharts.com/modules/boost.js"></script>
+    <script src="https://code.highcharts.com/modules/exporting.js"></script>
 </head>
 
 <body>
@@ -55,6 +57,121 @@
                 </ul>
             </div>
         </nav>
+        <script type="text/javascript">
+            function withDomainColumn(columns, currentColumn, domainColumn) {
+                if (currentColumn === domainColumn) {
+                    return {
+                        sourceColumn: currentColumn,
+                        label: columns[currentColumn],
+                        role: 'domain'
+                    }
+                } else {
+                    return {
+                        sourceColumn: currentColumn,
+                        label: columns[currentColumn],
+                        role: 'data'
+                    }
+                }
+            }
+
+            function pickDomainColumn(columns, domainColumnIndex) {
+                const allColumnsIndices = [...Array(columns.length).keys()]
+                return allColumnsIndices.map(i => withDomainColumn(columns, i, domainColumnIndex))
+            }
+
+            function commonLineChartsOptions(xAxisLabel, yAxisLabel) {
+                return {
+                    chartArea: {'width': '90%', 'height': '90%'},
+                    width: $(window).width() * 0.75,
+                    height: $(window).height() * 0.75,
+                    fontSize: 14,
+                    legend: {position: 'top'},
+                    hAxis: {
+                        title: xAxisLabel
+                    },
+                    vAxis: {
+                        title: yAxisLabel
+                    }
+                }
+            }
+
+            function commonHighChartsPieChartsOptions() {
+                return {
+                    title: {
+                        text: ''
+                    },
+
+                    chart: {
+                        height: $(window).height() * 0.9,
+                        width: $(window).width() * 0.8,
+                        plotBackgroundColor: null,
+                        plotBorderWidth: null,
+                        plotShadow: false,
+                        type: 'pie'
+                    },
+
+                    tooltip: {
+                        pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b>'
+                    },
+
+                    accessibility: {
+                        point: {
+                            valueSuffix: '%'
+                        }
+                    },
+
+                    legend: {
+                        align: 'left',
+                        verticalAlign: 'top',
+                        borderWidth: 0
+                    },
+                }
+            }
+
+            function commonHighChartsLineChartsOptions(xAxisLabel, yAxisLabel) {
+                return {
+                    title: {
+                        text: ''
+                    },
+                    chart: {
+                        height: $(window).height() * 0.9,
+                        width: $(window).width() * 0.8,
+                        zoomType: 'x'
+                    },
+
+                    legend: {
+                        align: 'left',
+                        verticalAlign: 'top',
+                        borderWidth: 0
+                    },
+
+                    plotOptions: {
+                        series: {
+                            label: {
+                                connectorAllowed: false
+                            },
+                        },
+                        scatter: {
+                            marker: {
+                                radius: 2,
+                            },
+                        },
+                    },
+
+                    xAxis: {
+                        title: {
+                            text: xAxisLabel
+                        }
+                    },
+                    yAxis: {
+                        title: {
+                            text: yAxisLabel
+                        }
+                    }
+                }
+            }
+        </script>
+
         <main role="main" class="col-md-9 ml-sm-auto col-lg-10 pt-3 px-4">
             <div class="starter-template">
                 <div th:each="page, pagesStatus: ${welcomePage.pages}" th:class="'subpage page-' + ${pagesStatus.index}" th:inline="text">
@@ -69,118 +186,58 @@
                         </span>
                         <div th:if="${content.type.name() == 'CHART'}">
                             <div style="width: 100%; height: 100%;" th:id="'content' + ${pagesStatus.index} +  '-' + ${contentStatus.index}"></div>
+                            <figure class="highcharts-figure">
+                                <div th:id="'container-' + ${pagesStatus.index} + '-' + ${contentStatus.index}"></div>
+                            </figure>
+
                             <script th:if="${content.chartType.name() == 'PIE'}" type="text/javascript" th:inline="javascript">
-                                google.charts.load('current', {'packages': ['corechart']});
-                                google.charts.setOnLoadCallback(drawChart);
-
-                                // Draw the chart and set the chart values
-                                function drawChart() {
-                                    var table = /*[[${content.data}]]*/;
-                                    var id = /*[[${pagesStatus.index}]]*/;
-                                    var contentId = /*[[${contentStatus.index}]]*/;
-                                    var data = google.visualization.arrayToDataTable(table);
-
-                                    // Optional; add a title and set the width and height of the chart
-                                    var options = {
-                                        'titlePosition': 'none',
-                                        'pieSliceText': 'none',
-                                        width: $(window).width() * 0.75,
-                                        height: $(window).height() * 0.75,
-                                        'sliceVisibilityThreshold': 0,
-                                        'fontSize': 22
-                                    };
-
-                                    var chart = new google.visualization.PieChart(document.getElementById('content' + id + '-' + contentId));
-                                    chart.draw(data, options);
-                                }
+                                var id = /*[[${pagesStatus.index}]]*/;
+                                var contentId = /*[[${contentStatus.index}]]*/;
+                                var common = {...commonHighChartsPieChartsOptions()};
+                                Highcharts.chart('container-' + id + '-' + contentId, {
+                                    ...common,
+                                    series: /*[[${content.getHighChartPieSeriesData()}]]*/,
+                                });
                             </script>
-                            <script type="text/javascript">
-                                function withDomainColumn(columns, currentColumn, domainColumn) {
-                                    if (currentColumn === domainColumn) {
-                                        return {
-                                            sourceColumn: currentColumn,
-                                            label: columns[currentColumn],
-                                            role: 'domain'
-                                        }
-                                    } else {
-                                        return {
-                                            sourceColumn: currentColumn,
-                                            label: columns[currentColumn],
-                                            role: 'data'
-                                        }
-                                    }
-                                }
 
-                                function pickDomainColumn(columns, domainColumnIndex) {
-                                    const allColumnsIndices = [...Array(columns.length).keys()]
-                                    return allColumnsIndices.map(i => withDomainColumn(columns, i, domainColumnIndex))
-                                }
-
-                                function commonLineChartsOptions(xAxisLabel, yAxisLabel) {
-                                    return {
-                                        chartArea: {'width': '90%', 'height': '90%'},
-                                        width: $(window).width() * 0.75,
-                                        height: $(window).height() * 0.75,
-                                        fontSize: 14,
-                                        legend: {position: 'top'},
-                                        hAxis: {
-                                            title: xAxisLabel
-                                        },
-                                        vAxis: {
-                                            title: yAxisLabel
-                                        }
-                                    }
-                                }
-                            </script>
                             <script th:if="${content.chartType.name() == 'LINE' || content.chartType.name() == 'POINTS_OR_LINE'}" type="text/javascript" th:inline="javascript">
-                                google.charts.load('current', {'packages': ['corechart', 'line']});
-                                google.charts.setOnLoadCallback(drawChart);
+                                var id = /*[[${pagesStatus.index}]]*/;
+                                var contentId = /*[[${contentStatus.index}]]*/;
+                                var common = {...commonHighChartsLineChartsOptions(/*[[${content.xAxisLabel}]]*/, /*[[${content.yAxisLabel}]]*/)};
+                                Highcharts.chart('container-' + id + '-' + contentId, {
+                                    ...common,
+                                    chart: {
+                                        ...common.chart,
+                                        type: 'line',
+                                    },
 
-                                // Draw the chart and set the chart values
-                                function drawChart() {
-                                    var table = /*[[${content.data}]]*/;
-                                    var id = /*[[${pagesStatus.index}]]*/;
-                                    var contentId = /*[[${contentStatus.index}]]*/;
-                                    var data = google.visualization.arrayToDataTable(table);
-                                    const columns = table[0];
-                                    const domainColumnIndex = /*[[${content.xAxisColumnIndex}]]*/ 0;
-
-                                    const view = new google.visualization.DataView(data);
-                                    view.setColumns(pickDomainColumn(columns, domainColumnIndex));
-
-                                    // Optional; add a title and set the width and height of the chart
-                                    var options = commonLineChartsOptions(/*[[${content.xAxisLabel}]]*/, /*[[${content.yAxisLabel}]]*/)
-
-                                    var chart = new google.visualization.LineChart(document.getElementById('content' + id + '-' + contentId));
-                                    chart.draw(view, options);
-                                }
+                                    xAxis: {
+                                        ...common.xAxis,
+                                        categories:  /*[[${content.getHighChartYAxisLabels()}]]*/,
+                                    },
+                                    series: /*[[${content.getHighChartSeriesData()}]]*/,
+                                });
                             </script>
+
                             <script th:if="${content.chartType.name() == 'POINTS'}" type="text/javascript" th:inline="javascript">
-                                google.charts.load('current', {'packages': ['corechart', 'line']});
-                                google.charts.setOnLoadCallback(drawChart);
+                                var id = /*[[${pagesStatus.index}]]*/;
+                                var contentId = /*[[${contentStatus.index}]]*/;
+                                var common = {...commonHighChartsLineChartsOptions(/*[[${content.xAxisLabel}]]*/, /*[[${content.yAxisLabel}]]*/)};
+                                Highcharts.chart('container-' + id + '-' + contentId, {
+                                    ...common,
+                                    chart: {
+                                        ...common.chart,
+                                        type: 'scatter',
+                                    },
 
-                                // Draw the chart and set the chart values
-                                function drawChart() {
-                                    var table = /*[[${content.data}]]*/;
-                                    var id = /*[[${pagesStatus.index}]]*/;
-                                    var contentId = /*[[${contentStatus.index}]]*/;
-                                    var data = google.visualization.arrayToDataTable(table);
-                                    const columns = table[0];
-                                    const domainColumnIndex = /*[[${content.xAxisColumnIndex}]]*/ 0;
-                                    const view = new google.visualization.DataView(data);
-                                    view.setColumns(pickDomainColumn(columns, domainColumnIndex));
-
-                                    // Optional; add a title and set the width and height of the chart
-                                    var options = {
-                                        ...commonLineChartsOptions(/*[[${content.xAxisLabel}]]*/, /*[[${content.yAxisLabel}]]*/),
-                                        pointSize: 3,
-                                        lineWidth: 0,
-                                    };
-
-                                    var chart = new google.visualization.LineChart(document.getElementById('content' + id + '-' + contentId));
-                                    chart.draw(view, options);
-                                }
+                                    xAxis: {
+                                        ...common.xAxis,
+                                        categories:  /*[[${content.getHighChartYAxisLabels()}]]*/,
+                                    },
+                                    series: /*[[${content.getHighChartSeriesData()}]]*/,
+                                });
                             </script>
+
                         </div>
                         <div th:if="${content.type.name() == 'TABLE'}">
                             <table class="table table-striped table-bordered table-sm big-font" th:style="'width: ' + ${content.screenWidth} + ';'">
