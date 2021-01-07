@@ -36,7 +36,7 @@
                     only safepoint, charts and stas are not accurate, because log file style sucks).
                 </li>
                 <li>
-                    <mark>Max 10MB file (after compression).</mark>
+                    <mark>Max <span th:text="${maxFileSize.toMegabytes()}" />MB file (after compression).</mark>
                 </li>
                 <li><span>For JDK 11+ decorators: level,tags,time,uptime are needed, check sample Xlog configuration below.</span>
                 </li>
@@ -193,10 +193,6 @@ decorators="level,tags,time,uptime,pid</code></pre>
         return (!str || 0 === str.length);
     }
 
-    function isFileLessOrEqualThanMb(fileSize, sizeLimitMb) {
-        return fileSize <= sizeLimitMb * 1024 * 1024;
-    }
-
     $(document).ready(function () {
         $('#show-upload').click(function () {
             $(this).collapse("hide");
@@ -208,10 +204,10 @@ decorators="level,tags,time,uptime,pid</code></pre>
             var selectedFiles = inputField.prop('files');
             if (selectedFiles.length) {
                 var selectedFile = selectedFiles[0];
-                if (isFileLessOrEqualThanMb(selectedFile.size, 10)) {
+                if (selectedFile.size <= [[${maxFileSize.toBytes()}]]) {
                     return true;
                 } else {
-                    window.alert("File is too big!");
+                    window.alert("File is too big! The size " + (selectedFile.size / (1024*1024)) + "MB is more than the limit of " + [[${maxFileSize.toMegabytes()}]] + "MB");
                     return false;
                 }
             } else {
