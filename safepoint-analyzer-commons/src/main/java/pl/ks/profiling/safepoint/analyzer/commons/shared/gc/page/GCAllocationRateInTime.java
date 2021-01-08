@@ -48,15 +48,15 @@ public class GCAllocationRateInTime implements PageCreator {
                         Chart.builder()
                                 .title("Avg. of avg. allocation rate in time period")
                                 .chartType(Chart.ChartType.POINTS)
-                                .xAxisLabel("TODO What here?")
+                                .xAxisLabel("Time (number of " + minuteCount + "min from application start)")
                                 .yAxisLabel("Average Mb/s in the last " + minuteCount + " minutes")
                                 .data(getChartAvg(byTimeMap))
                                 .build(),
                         Chart.builder()
                                 .title("Max. allocation rate in time period")
                                 .chartType(Chart.ChartType.POINTS)
-                                .xAxisLabel("TODO What here?")
-                                .yAxisLabel("TODO What here?")
+                                .xAxisLabel("Time (number of " + minuteCount + "min from application start)")
+                                .yAxisLabel("Max Mb/s in the last " + minuteCount + " minutes")
                                 .data(getChartMax(byTimeMap))
                                 .build()
 
@@ -108,6 +108,7 @@ public class GCAllocationRateInTime implements PageCreator {
 
     private Map<Long, List<BigDecimal>> createByTimeMap(JvmLogFile jvmLogFile) {
         List<GCLogCycleEntry> cycles = jvmLogFile.getGcLogFile().getCycleEntries();
+        BigDecimal fromSecondsToMinute = minuteCount.multiply(new BigDecimal(60));
 
         if (cycles.size() <= 1) {
             return null;
@@ -128,8 +129,8 @@ public class GCAllocationRateInTime implements PageCreator {
 
             BigDecimal rate = new BigDecimal(current.getHeapBeforeGCMb() - prev.getHeapAfterGCMb()).divide(current.getTimeStamp().subtract(prev.getTimeStamp()), 2, RoundingMode.HALF_EVEN);
 
-            long prevCycleMinute = prev.getTimeStamp().divide(minuteCount, 2, RoundingMode.HALF_EVEN).longValue();
-            long currentCycleMinute = current.getTimeStamp().divide(minuteCount, 2, RoundingMode.HALF_EVEN).longValue();
+            long prevCycleMinute = prev.getTimeStamp().divide(fromSecondsToMinute, 2, RoundingMode.HALF_EVEN).longValue();
+            long currentCycleMinute = current.getTimeStamp().divide(fromSecondsToMinute, 2, RoundingMode.HALF_EVEN).longValue();
             for (long j = prevCycleMinute; j <= currentCycleMinute; j++) {
                 byTimeMap.computeIfAbsent(j, minute -> new ArrayList<>()).add(rate);
             }

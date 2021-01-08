@@ -10,6 +10,7 @@
     <script src="https://code.highcharts.com/highcharts.src.js"></script>
     <script src="https://code.highcharts.com/modules/boost.js"></script>
     <script src="https://code.highcharts.com/modules/exporting.js"></script>
+    <script src="https://code.highcharts.com/themes/grid.src.js"></script>
 </head>
 
 <body>
@@ -79,22 +80,6 @@
                 return allColumnsIndices.map(i => withDomainColumn(columns, i, domainColumnIndex))
             }
 
-            function commonLineChartsOptions(xAxisLabel, yAxisLabel) {
-                return {
-                    chartArea: {'width': '90%', 'height': '90%'},
-                    width: $(window).width() * 0.75,
-                    height: $(window).height() * 0.75,
-                    fontSize: 14,
-                    legend: {position: 'top'},
-                    hAxis: {
-                        title: xAxisLabel
-                    },
-                    vAxis: {
-                        title: yAxisLabel
-                    }
-                }
-            }
-
             function commonHighChartsPieChartsOptions() {
                 return {
                     title: {
@@ -110,8 +95,15 @@
                         type: 'pie'
                     },
 
+                    pie: {
+                        dataLabels: {
+                            enabled: true,
+                            format: '<b>{point.name}</b>: {point.percentage:.1f} %',
+                        }
+                    },
+
                     tooltip: {
-                        pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b>'
+                        pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b>',
                     },
 
                     accessibility: {
@@ -123,26 +115,34 @@
                     legend: {
                         align: 'left',
                         verticalAlign: 'top',
-                        borderWidth: 0
+                        borderWidth: 0,
+                        style: {
+                            fontSize: 15,
+                        },
                     },
                 }
             }
 
-            function commonHighChartsLineChartsOptions(xAxisLabel, yAxisLabel) {
+            function commonHighChartsLineChartsOptions(xAxisLabel, yAxisLabel, forceZeroMinValue) {
                 return {
                     title: {
-                        text: ''
+                        text: '',
                     },
+
                     chart: {
                         height: $(window).height() * 0.9,
                         width: $(window).width() * 0.8,
                         zoomType: 'x'
                     },
 
+                    tooltip: {
+                        pointFormat: '{series.name}: <b>{point.y}</b><br/>',
+                    },
+
                     legend: {
                         align: 'left',
                         verticalAlign: 'top',
-                        borderWidth: 0
+                        borderWidth: 0,
                     },
 
                     plotOptions: {
@@ -160,13 +160,15 @@
 
                     xAxis: {
                         title: {
-                            text: xAxisLabel
-                        }
+                            text: xAxisLabel,
+                        },
                     },
+
                     yAxis: {
                         title: {
-                            text: yAxisLabel
-                        }
+                            text: yAxisLabel,
+                        },
+                        min: forceZeroMinValue ? 0 : null,
                     }
                 }
             }
@@ -203,7 +205,8 @@
                             <script th:if="${content.chartType.name() == 'LINE' || content.chartType.name() == 'POINTS_OR_LINE'}" type="text/javascript" th:inline="javascript">
                                 var id = /*[[${pagesStatus.index}]]*/;
                                 var contentId = /*[[${contentStatus.index}]]*/;
-                                var common = {...commonHighChartsLineChartsOptions(/*[[${content.xAxisLabel}]]*/, /*[[${content.yAxisLabel}]]*/)};
+                                var common = {...commonHighChartsLineChartsOptions(/*[[${content.xAxisLabel}]]*/, /*[[${content.yAxisLabel}]]*/, /*[[${content.forceZeroMinValue}]]*/)};
+                                console.log(common);
                                 Highcharts.chart('container-' + id + '-' + contentId, {
                                     ...common,
                                     chart: {
@@ -222,7 +225,7 @@
                             <script th:if="${content.chartType.name() == 'POINTS'}" type="text/javascript" th:inline="javascript">
                                 var id = /*[[${pagesStatus.index}]]*/;
                                 var contentId = /*[[${contentStatus.index}]]*/;
-                                var common = {...commonHighChartsLineChartsOptions(/*[[${content.xAxisLabel}]]*/, /*[[${content.yAxisLabel}]]*/)};
+                                var common = {...commonHighChartsLineChartsOptions(/*[[${content.xAxisLabel}]]*/, /*[[${content.yAxisLabel}]]*/, /*[[${content.forceZeroMinValue}]]*/)};
                                 Highcharts.chart('container-' + id + '-' + contentId, {
                                     ...common,
                                     chart: {
