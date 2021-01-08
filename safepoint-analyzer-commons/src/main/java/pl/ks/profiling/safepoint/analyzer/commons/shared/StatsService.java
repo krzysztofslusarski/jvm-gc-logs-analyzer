@@ -15,34 +15,12 @@
  */
 package pl.ks.profiling.safepoint.analyzer.commons.shared;
 
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.math.BigDecimal;
-import java.text.DecimalFormat;
-import java.text.DecimalFormatSymbols;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.collections4.CollectionUtils;
 import pl.ks.profiling.gui.commons.Page;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.classloader.page.ClassCount;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.classloader.parser.ClassLoaderLogFileParser;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.page.GCAllocationRate;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.page.GCAllocationRateInTime;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.page.GCHeapAfter;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.page.GCHeapBefore;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.page.GCHeapBeforeAfter;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.page.GCPhaseTime;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.page.GCRegionCountAfter;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.page.GCRegionCountBefore;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.page.GCRegionMax;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.page.GCRegionSizeAfter;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.page.GCSubphaseStats;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.page.GCSurvivorAndTenuring;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.page.GCTableStats;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.page.*;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.parser.GCJdk8LogFileParser;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.parser.GCUnifiedLogFileParser;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.jit.page.JitCodeCacheStats;
@@ -50,12 +28,7 @@ import pl.ks.profiling.safepoint.analyzer.commons.shared.jit.page.JitCodeCacheSw
 import pl.ks.profiling.safepoint.analyzer.commons.shared.jit.page.JitCompilationCount;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.jit.page.JitTieredCompilationCount;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.jit.parser.JitLogFileParser;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.safepoint.page.SafepoinOperationCount;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.safepoint.page.SafepoinOperationTime;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.safepoint.page.SafepointApplicationTimeByTime;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.safepoint.page.SafepointOperationTimeCharts;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.safepoint.page.SafepointTableStats;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.safepoint.page.SafepointTotalTimeInPhases;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.safepoint.page.*;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.safepoint.parser.SafepointJdk8LogFileParser;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.safepoint.parser.SafepointUnifiedLogFileParser;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.stringdedup.page.StringDedupLast;
@@ -67,24 +40,35 @@ import pl.ks.profiling.safepoint.analyzer.commons.shared.tlab.page.TlabSummary;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.tlab.page.TlabThreadStats;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.tlab.parser.TlabLogFileParser;
 
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.math.BigDecimal;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.function.Consumer;
+
 @RequiredArgsConstructor
 public class StatsService {
     private final DecimalFormat decimalFormat = new DecimalFormat("#,##0.00", DecimalFormatSymbols.getInstance(Locale.US));
 
-    public JvmLogFile createAllStatsJdk8(InputStream inputStream, String originalFilename, Consumer<ParsingProgress> notifyProgress) {
+    public JvmLogFile createAllStatsJdk8(InputStream inputStream, String originalFilename, Consumer<ParsingProgress> notifyProgress, Consumer<JvmLogFile> onComplete) {
         BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
         SafepointJdk8LogFileParser safepointJdk8LogFileParser = new SafepointJdk8LogFileParser();
         GCJdk8LogFileParser gcJdk8LogFileParser = new GCJdk8LogFileParser();
 
+        long numberOfLine = 1;
         try {
-            long numberOfLine = 1;
             while (reader.ready()) {
                 String line = reader.readLine();
                 if (reader.ready()) {
                     // last line may be broken in Java 8 format
                     safepointJdk8LogFileParser.parseLine(line);
                     gcJdk8LogFileParser.parseLine(line);
-                    notifyProgress.accept(new ParsingProgress(numberOfLine++));
+                    notifyProgress.accept(new ParsingProgress(numberOfLine++, false));
                 } else {
                     break;
                 }
@@ -98,11 +82,13 @@ public class StatsService {
         jvmLogFile.setSafepointLogFile(safepointJdk8LogFileParser.fetchData());
         jvmLogFile.setGcLogFile(gcJdk8LogFileParser.fetchData());
         addPages(jvmLogFile);
+        onComplete.accept(jvmLogFile);
+        notifyProgress.accept(new ParsingProgress(numberOfLine, true));
         return jvmLogFile;
 
     }
 
-    public JvmLogFile createAllStatsUnifiedLogger(InputStream inputStream, String originalFilename, Consumer<ParsingProgress> notifyProgress) {
+    public JvmLogFile createAllStatsUnifiedLogger(InputStream inputStream, String originalFilename, Consumer<ParsingProgress> notifyProgress, Consumer<JvmLogFile> onComplete) {
         BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
         SafepointUnifiedLogFileParser safepointUnifiedLogFileParser = new SafepointUnifiedLogFileParser();
         GCUnifiedLogFileParser gcUnifiedLogFileParser = new GCUnifiedLogFileParser();
@@ -112,8 +98,8 @@ public class StatsService {
         TlabLogFileParser tlabLogFileParser = new TlabLogFileParser();
         StringDedupLogFileParser stringDedupLogFileParser = new StringDedupLogFileParser();
 
+        long numberOfLine = 1;
         try {
-            long numberOfLine = 1;
             String line = reader.readLine();
             while (line != null) {
                 safepointUnifiedLogFileParser.parseLine(line);
@@ -124,7 +110,7 @@ public class StatsService {
                 tlabLogFileParser.parseLine(line);
                 stringDedupLogFileParser.parseLine(line);
                 line = reader.readLine();
-                notifyProgress.accept(new ParsingProgress(numberOfLine++));
+                notifyProgress.accept(new ParsingProgress(numberOfLine++, false));
             }
         } catch (Exception ex) {
             throw new RuntimeException(ex);
@@ -141,6 +127,8 @@ public class StatsService {
         jvmLogFile.setStringDedupLogFile(stringDedupLogFileParser.fetchData());
 
         addPages(jvmLogFile);
+        onComplete.accept(jvmLogFile);
+        notifyProgress.accept(new ParsingProgress(numberOfLine, true));
         return jvmLogFile;
     }
 

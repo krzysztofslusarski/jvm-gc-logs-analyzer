@@ -1,0 +1,27 @@
+spring:
+  servlet:
+    multipart:
+      max-file-size: 33MB
+      max-request-size: 33MB
+
+server:
+  port: 28371
+  tomcat:
+    accesslog:
+      directory: /home/pasqal/logs
+      enabled: true
+      file-date-format: .yyyy-MM-dd
+      pattern: "%t [%h] [%{X-Forwarded-For}i] [%r] [%s] [%b bytes] [%D ms] [%{User-Agent}i] [%{Referer}i] [%I] [%S] [%{Content-Type}o]"
+      prefix: access_log
+      rename-on-rotate: false
+      request-attributes-enabled: false
+      rotate: true
+      suffix: .log
+
+safepoint.files.dir: /home/pasqal/analyzer-inputs/
+
+parsing:
+    results:
+        expiration: 3m
+        removeAfterRead: true
+    workerThreads: 1

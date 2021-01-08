@@ -1,0 +1,21 @@
+spring:
+  thymeleaf:
+    cache: false
+  resources:
+    cache:
+      cachecontrol:
+        max-age: 1d
+
+server:
+  compression:
+    enabled: true
+    mime-types: text/html, text/xml, text/plain, text/css, text/javascript, application/javascript, application/json, application/hal+json
+    min-response-size: 1024
+
+safepoint.files.dir: /home/pasqal/analyzer-inputs/
+
+parsing:
+  results:
+    expiration: 10m
+    removeAfterRead: false
+  workerThreads: 10

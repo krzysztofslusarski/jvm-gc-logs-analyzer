@@ -3,7 +3,8 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <link rel="stylesheet" th:href="@{webjars/bootstrap/4.2.1/css/bootstrap.min.css}"/>
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap/4.2.1/css/bootstrap.min.css}"/>
+    <script type="text/javascript" th:src="@{/webjars/axios/0.21.1/dist/axios.min.js}"></script>
     <link href="/css/upload.css" rel="stylesheet">
 </head>
 
@@ -36,7 +37,7 @@
                     only safepoint, charts and stas are not accurate, because log file style sucks).
                 </li>
                 <li>
-                    <mark>Max <span th:text="${maxFileSize.toMegabytes()}" />MB file (after compression).</mark>
+                    <mark>Max <span th:text="${maxFileSize.toMegabytes()}"/>MB file (after compression).</mark>
                 </li>
                 <li><span>For JDK 11+ decorators: level,tags,time,uptime are needed, check sample Xlog configuration below.</span>
                 </li>
@@ -59,7 +60,7 @@
             Import from file...
         </h5>
         <div class="card-body">
-            <form method="POST" enctype="multipart/form-data" action="/upload" target="_blank" id="fileUploadForm">
+            <form id="fileUploadForm">
                 <div class="form-group">
                     <label for="inputFile">File to upload</label>
                     <input type="file" name="file" id="inputFile" class="form-control-file"
@@ -67,6 +68,10 @@
                     <small class="form-text text-muted">HINT: Compress logs
                         <span class="font-weight-bold">(*.zip, *.gz, *.xz, *.7z)</span> for fast uploads.
                     </small>
+                    <div class="progress" style="display: none;">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar"
+                             aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 0%"></div>
+                    </div>
                 </div>
                 <input type="submit" value="Submit file" class="btn btn-primary"/>
             </form>
@@ -75,10 +80,13 @@
             ...or paste log here:
         </h5>
         <div class="card-body">
-            <form method="POST" enctype="multipart/form-data" action="/upload-plain-text" target="_blank"
-                  id="textUploadForm">
+            <form id="textUploadForm">
                 <div class="mb-3">
                     <textarea name="text" class="form-control" placeholder="Copy gc logs here" rows="5"></textarea>
+                    <div class="progress" style="display: none;">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar"
+                             aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 0%"></div>
+                    </div>
                 </div>
                 <input type="submit" value="Submit logs" class="btn btn-primary"/>
             </form>
@@ -185,12 +193,70 @@ decorators="level,tags,time,uptime,pid</code></pre>
     </div>
 </footer>
 
-<script type="text/javascript" th:src="@{webjars/jquery/2.2.4/jquery.min.js}"></script>
-<script type="text/javascript" th:src="@{webjars/bootstrap/4.2.1/js/bootstrap.min.js}"></script>
+<script type="text/javascript" th:src="@{/webjars/jquery/2.2.4/jquery.min.js}"></script>
+<script type="text/javascript" th:src="@{/webjars/bootstrap/4.2.1/js/bootstrap.min.js}"></script>
 
 <script type="text/javascript">
     function isEmpty(str) {
         return (!str || 0 === str.length);
+    }
+
+    function uploadFile(file) {
+        let payload = new FormData()
+        payload.append('file', file)
+        uploadLogs(payload, '#fileUploadForm', '/enqueue');
+    }
+
+    function uploadTextLogs(logsText) {
+        let payload = new FormData()
+        payload.append('text', logsText)
+        uploadLogs(payload, '#textUploadForm', '/enqueue-plain-text');
+    }
+
+    function uploadLogs(payload, parentFormSelector, endpoint) {
+        const parentElement = $(parentFormSelector);
+        function toggleProgressBarVisible(visible) {
+            const element = parentElement.find('.progress');
+            if (visible) {
+                element.show();
+            } else {
+                element.hide();
+            }
+        }
+
+        function setProgressBarPercent(percent) {
+            parentElement.find('.progress-bar').css('width', percent + '%').attr('aria-valuenow', percent);
+        }
+
+        function setButtonEnabled(enabled) {
+            parentElement.find('input[type=submit]').attr("disabled", !enabled)
+        }
+
+        const config = {
+            onUploadProgress: function (progressEvent) {
+                const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total)
+                setProgressBarPercent(percentCompleted);
+            }
+        }
+
+        setProgressBarPercent(0);
+        toggleProgressBarVisible(true);
+        setButtonEnabled(false);
+
+        axios.post(endpoint, payload, config)
+            .then(res => {
+                const parsingId = res.data.parsingId;
+                window.open(`/parsings/${parsingId}/progress`);
+                toggleProgressBarVisible(false);
+                setProgressBarPercent(0);
+                setButtonEnabled(true);
+            })
+            .catch(err => {
+                toggleProgressBarVisible(false);
+                setProgressBarPercent(0);
+                setButtonEnabled(true);
+                console.log(err);
+            });
     }
 
     $(document).ready(function () {
@@ -200,14 +266,15 @@ decorators="level,tags,time,uptime,pid</code></pre>
         });
 
         $("#fileUploadForm").on("submit", function () {
-            var inputField = $(this).find("input");
-            var selectedFiles = inputField.prop('files');
+            const inputField = $(this).find("input");
+            const selectedFiles = inputField.prop('files');
             if (selectedFiles.length) {
-                var selectedFile = selectedFiles[0];
+                const selectedFile = selectedFiles[0];
                 if (selectedFile.size <= [[${maxFileSize.toBytes()}]]) {
-                    return true;
+                    uploadFile(selectedFile)
+                    return false;
                 } else {
-                    window.alert("File is too big! The size " + (selectedFile.size / (1024*1024)) + "MB is more than the limit of " + [[${maxFileSize.toMegabytes()}]] + "MB");
+                    window.alert("File is too big! The size " + (selectedFile.size / (1024 * 1024)) + "MB is more than the limit of " + [[${maxFileSize.toMegabytes()}]] + "MB");
                     return false;
                 }
             } else {
@@ -222,7 +289,8 @@ decorators="level,tags,time,uptime,pid</code></pre>
                 window.alert("The field with logs is empty!");
                 return false;
             } else {
-                return true;
+                uploadTextLogs(logs);
+                return false;
             }
         });
     });

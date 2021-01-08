@@ -1,0 +1,62 @@
+<!DOCTYPE HTML>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap/4.2.1/css/bootstrap.min.css}"/>
+    <link href="/css/welcome.css" rel="stylesheet">
+    <script type="text/javascript" th:src="@{/webjars/jquery/2.2.4/jquery.min.js}"></script>
+    <script type="text/javascript" th:src="@{/webjars/bootstrap/4.2.1/js/bootstrap.min.js}"></script>
+    <script type="text/javascript" th:src="@{/webjars/axios/0.21.1/dist/axios.min.js}"></script>
+</head>
+<body>
+<div class="jumbotron d-flex align-items-center min-vh-100">
+    <div class="container">
+
+        <div class="card">
+            <div class="card-body" style="width: 30rem;">
+                <h5 class="card-title">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="sr-only">Loading...</span>
+                    </div>
+                    Parsing in progress...
+                </h5>
+                <h6 class="card-subtitle mb-2 text-muted">Parsing id:
+                    <!--/*@thymesVar id="initialStatus" type="pl.ks.profiling.safepoint.analyzer.web.ParsingStatus"*/-->
+                    <span th:utext="${initialStatus.parsingId}"></span></h6>
+                <p class="card-text">You will be redirected automatically upon completion. You can also copy address of
+                    this page and visit it later.</p>
+                <p class="card-text" id="currentStatus">Already processed 0 lines</p>
+            </div>
+        </div>
+    </div>
+</div>
+<script type="text/javascript">
+    $(document).ready(function () {
+        const keepQuerying = setInterval(keepAskingForStatus, 1000);
+        const parsingId = "[[${initialStatus.parsingId}]]";
+
+        function keepAskingForStatus() {
+            axios.get(`/parsings/${parsingId}/status`, {})
+                .then(function (response) {
+                    console.log(response);
+                    console.log(response.finished);
+                    const responseData = response.data;
+                    if (responseData.finished) {
+                        clearInterval(keepQuerying);
+                        window.location.href = `/parsings/${parsingId}`;
+                    } else {
+                        const processedFormatted = responseData.processedLines.toLocaleString();
+                        document.getElementById("currentStatus").innerHTML = `Already processed ${processedFormatted} lines`;
+                    }
+                })
+                .catch(function (error) {
+                    console.error(error);
+                    document.getElementById("currentStatus").innerHTML = `Something really bad happened. Mail us at ks@gclogs.com to help us make this tool better.`;
+                });
+        }
+    });
+
+</script>
+</body>
+</html>

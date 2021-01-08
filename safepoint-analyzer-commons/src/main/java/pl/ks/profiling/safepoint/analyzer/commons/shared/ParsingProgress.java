@@ -22,4 +22,5 @@ import lombok.Getter;
 @Getter
 public class ParsingProgress {
     private final long processedLines;
+    private final boolean completed;
 }
