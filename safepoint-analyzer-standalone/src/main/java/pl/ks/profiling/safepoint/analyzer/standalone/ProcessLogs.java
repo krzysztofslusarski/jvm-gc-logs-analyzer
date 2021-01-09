@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Krzysztof Slusarski
+ * Copyright 2020 Artur Owczarek
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,16 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package pl.ks.profiling.safepoint.analyzer.web;
+package pl.ks.profiling.safepoint.analyzer.standalone;
 
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
-
-@ConfigurationPropertiesScan
-@SpringBootApplication
-public class AnalyzerWebApplication {
-	public static void main(String[] args) {
-		SpringApplication.run(AnalyzerWebApplication.class, args);
-	}
+@FunctionalInterface
+public interface ProcessLogs<T, U, V, W, R> {
+    R apply(T t, U u, V v, W w);
 }

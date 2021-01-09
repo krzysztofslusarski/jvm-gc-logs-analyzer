@@ -23,6 +23,11 @@
             <version>2.2.4</version>
         </dependency>
         <dependency>
+            <groupId>org.webjars.npm</groupId>
+            <artifactId>axios</artifactId>
+            <version>0.21.1</version>
+        </dependency>
+        <dependency>
             <groupId>pl.ks.profiling</groupId>
             <artifactId>gui-commons</artifactId>
             <version>${project.version}</version>

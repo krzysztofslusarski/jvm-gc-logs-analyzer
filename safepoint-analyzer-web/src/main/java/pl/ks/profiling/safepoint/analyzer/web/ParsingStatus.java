@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Krzysztof Slusarski
+ * Copyright 2020 Artur Owczarek
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,13 @@
  */
 package pl.ks.profiling.safepoint.analyzer.web;
 
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 
-@ConfigurationPropertiesScan
-@SpringBootApplication
-public class AnalyzerWebApplication {
-	public static void main(String[] args) {
-		SpringApplication.run(AnalyzerWebApplication.class, args);
-	}
+@AllArgsConstructor
+@Data
+public class ParsingStatus {
+    String parsingId;
+    long processedLines;
+    boolean finished;
 }

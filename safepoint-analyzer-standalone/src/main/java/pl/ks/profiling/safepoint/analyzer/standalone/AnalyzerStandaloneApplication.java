@@ -129,11 +129,11 @@ public class AnalyzerStandaloneApplication extends JFrame {
         startLogsProcessing(statsService::createAllStatsJdk8);
     }
 
-    private void startLogsProcessing(TriFunction<InputStream, String, Consumer<ParsingProgress>, JvmLogFile> logsProcessor) {
+    private void startLogsProcessing(ProcessLogs<InputStream, String, Consumer<ParsingProgress>, Consumer<JvmLogFile>, JvmLogFile> logsProcessor) {
         processFilesForLogs(selectFilesForProcessing(), logsProcessor);
     }
 
-    private void processFilesForLogs(List<File> files, TriFunction<InputStream, String, Consumer<ParsingProgress>, JvmLogFile> logsProcessor) {
+    private void processFilesForLogs(List<File> files, ProcessLogs<InputStream, String, Consumer<ParsingProgress>, Consumer<JvmLogFile>, JvmLogFile> logsProcessor) {
         if (files != null) {
             ParsingWorker worker = new ParsingWorker(files, logsProcessor);
             worker.addPropertyChangeListener(
@@ -148,12 +148,12 @@ public class AnalyzerStandaloneApplication extends JFrame {
     @AllArgsConstructor
     private class ParsingWorker extends SwingWorker<JvmLogFile, ParsingProgress> {
         private final List<File> files;
-        private final TriFunction<InputStream, String, Consumer<ParsingProgress>, JvmLogFile> logsProcessor;
+        private final ProcessLogs<InputStream, String, Consumer<ParsingProgress>, Consumer<JvmLogFile>, JvmLogFile> logsProcessor;
         @Override
         protected JvmLogFile doInBackground() {
             try {
                 InputStream logsInputStream = InputUtils.getInputStream(files, ParserUtils::getTimeStamp);
-                JvmLogFile output = logsProcessor.apply(logsInputStream, files.get(0).getName(), this::publish);
+                JvmLogFile output = logsProcessor.apply(logsInputStream, files.get(0).getName(), this::publish, (JvmLogFile f) -> {});
                 logsInputStream.close();
                 return output;
             } catch (IOException exception) {
@@ -171,7 +171,7 @@ public class AnalyzerStandaloneApplication extends JFrame {
     private void parsingStarted() {
         loadButton.setEnabled(false);
         loadOldButton.setEnabled(false);
-        notifyParsingChange(new ParsingProgress(0));
+        notifyParsingChange(new ParsingProgress(0, false));
         parsingProgressLabel.setVisible(true);
     }
 

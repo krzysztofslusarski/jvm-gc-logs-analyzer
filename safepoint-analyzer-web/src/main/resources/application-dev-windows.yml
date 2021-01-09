@@ -1,0 +1,12 @@
+spring:
+  thymeleaf:
+    cache: false
+  servlet:
+    multipart:
+      max-file-size: 310MB
+      max-request-size: 301MB
+server:
+  tomcat.max-http-post-size: 100MB
+  port: 8079
+
+safepoint.files.dir: C:\\Temp\\  
