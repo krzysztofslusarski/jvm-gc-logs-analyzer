@@ -3,10 +3,10 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <link rel="stylesheet" th:href="@{webjars/bootstrap/4.2.1/css/bootstrap.min.css}"/>
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap/4.2.1/css/bootstrap.min.css}"/>
     <link href="/css/welcome.css" rel="stylesheet">
-    <script type="text/javascript" th:src="@{webjars/jquery/2.2.4/jquery.min.js}"></script>
-    <script type="text/javascript" th:src="@{webjars/bootstrap/4.2.1/js/bootstrap.min.js}"></script>
+    <script type="text/javascript" th:src="@{/webjars/jquery/2.2.4/jquery.min.js}"></script>
+    <script type="text/javascript" th:src="@{/webjars/bootstrap/4.2.1/js/bootstrap.min.js}"></script>
     <script src="https://code.highcharts.com/highcharts.src.js"></script>
     <script src="https://code.highcharts.com/modules/boost.js"></script>
     <script src="https://code.highcharts.com/modules/exporting.js"></script>
@@ -59,68 +59,46 @@
             </div>
         </nav>
         <script type="text/javascript">
-            function withDomainColumn(columns, currentColumn, domainColumn) {
-                if (currentColumn === domainColumn) {
-                    return {
-                        sourceColumn: currentColumn,
-                        label: columns[currentColumn],
-                        role: 'domain'
+
+            let commonHighChartsPieChartsOptions = {
+                title: {
+                    text: ''
+                },
+
+                chart: {
+                    height: $(window).height() * 0.9,
+                    width: $(window).width() * 0.8,
+                    plotBackgroundColor: null,
+                    plotBorderWidth: null,
+                    plotShadow: false,
+                    type: 'pie'
+                },
+
+                pie: {
+                    dataLabels: {
+                        enabled: true,
+                        format: '<b>{point.name}</b>: {point.percentage:.1f} %',
                     }
-                } else {
-                    return {
-                        sourceColumn: currentColumn,
-                        label: columns[currentColumn],
-                        role: 'data'
+                },
+
+                tooltip: {
+                    pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b>',
+                },
+
+                accessibility: {
+                    point: {
+                        valueSuffix: '%'
                     }
-                }
-            }
+                },
 
-            function pickDomainColumn(columns, domainColumnIndex) {
-                const allColumnsIndices = [...Array(columns.length).keys()]
-                return allColumnsIndices.map(i => withDomainColumn(columns, i, domainColumnIndex))
-            }
-
-            function commonHighChartsPieChartsOptions() {
-                return {
-                    title: {
-                        text: ''
+                legend: {
+                    align: 'left',
+                    verticalAlign: 'top',
+                    borderWidth: 0,
+                    style: {
+                        fontSize: 15,
                     },
-
-                    chart: {
-                        height: $(window).height() * 0.9,
-                        width: $(window).width() * 0.8,
-                        plotBackgroundColor: null,
-                        plotBorderWidth: null,
-                        plotShadow: false,
-                        type: 'pie'
-                    },
-
-                    pie: {
-                        dataLabels: {
-                            enabled: true,
-                            format: '<b>{point.name}</b>: {point.percentage:.1f} %',
-                        }
-                    },
-
-                    tooltip: {
-                        pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b>',
-                    },
-
-                    accessibility: {
-                        point: {
-                            valueSuffix: '%'
-                        }
-                    },
-
-                    legend: {
-                        align: 'left',
-                        verticalAlign: 'top',
-                        borderWidth: 0,
-                        style: {
-                            fontSize: 15,
-                        },
-                    },
-                }
+                },
             }
 
             function commonHighChartsLineChartsOptions(xAxisLabel, yAxisLabel, forceZeroMinValue) {
@@ -195,7 +173,7 @@
                             <script th:if="${content.chartType.name() == 'PIE'}" type="text/javascript" th:inline="javascript">
                                 var id = /*[[${pagesStatus.index}]]*/;
                                 var contentId = /*[[${contentStatus.index}]]*/;
-                                var common = {...commonHighChartsPieChartsOptions()};
+                                var common = {...commonHighChartsPieChartsOptions};
                                 Highcharts.chart('container-' + id + '-' + contentId, {
                                     ...common,
                                     series: /*[[${content.getHighChartPieSeriesData()}]]*/,
