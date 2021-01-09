@@ -65,18 +65,18 @@ public class Chart implements PageContent {
     }
 
     public Object[] getHighChartYAxisLabels() {
-        int numberOfSeries = data.length - 1;
-        Object[] ret = new Object[numberOfSeries];
-        for (int i = 1; i < data.length; i++) {
-            ret[i - 1] = data[i][0];
+        int labels = data.length - 1;
+        Object[] ret = new Object[labels];
+        for (int j = 1; j < data.length; j++) {
+            ret[j - 1] = data[j][0];
         }
         return ret;
     }
 
     public List<HighChartSeries> getHighChartSeriesData() {
-        int numberOfSeries = data[0].length;
-        List<HighChartSeries> ret = new ArrayList<>(numberOfSeries - 1);
-        for (int i = 1; i < numberOfSeries; i++) {
+        int columns = data[0].length;
+        List<HighChartSeries> ret = new ArrayList<>(columns - 1);
+        for (int i = 1; i < columns; i++) {
             Object[] series = new Object[data.length - 1];
             for (int j = 1; j < data.length; j++) {
                 series[j - 1] = data[j][i];
@@ -87,10 +87,10 @@ public class Chart implements PageContent {
     }
 
     public List<HighChartPieSeries> getHighChartPieSeriesData() {
-        int numberOfSeries = data.length - 1;
-        HighChartPieData[] array = new HighChartPieData[numberOfSeries];
-        for (int i = 1; i < data.length; i++) {
-            array[i - 1] = new HighChartPieData(data[i][0].toString(), data[i][1]);
+        int labels = data.length - 1;
+        HighChartPieData[] array = new HighChartPieData[labels];
+        for (int j = 1; j < data.length; j++) {
+            array[j - 1] = new HighChartPieData(data[j][0].toString(), data[j][1]);
         }
         return List.of(new HighChartPieSeries("Chart", array));
     }
