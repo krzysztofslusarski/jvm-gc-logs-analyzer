@@ -27,7 +27,10 @@ import org.springframework.web.server.ResponseStatusException;
 import pl.ks.profiling.io.StorageUtils;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.JvmLogFile;
 import pl.ks.profiling.web.commons.WelcomePage;
+
+import javax.servlet.http.HttpServletRequest;
 import java.io.InputStream;
+
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 
 @Slf4j
@@ -40,6 +43,7 @@ class StatsController {
     @Value("${spring.servlet.multipart.max-file-size}")
     private DataSize maxFileSize;
 
+    private final ParsingProperties parsingProperties;
     private final StatsRepository statsRepository;
     private final ParsingExecutor parsingExecutor;
 
@@ -49,32 +53,41 @@ class StatsController {
     }
 
     @GetMapping("/upload")
-    String upload(Model model) {
+    String upload(Model model, HttpServletRequest request) {
+        String enqueueUrl = serverUrl(request) + "/enqueue";
+        model.addAttribute("enqueueUrl", enqueueUrl);
+        model.addAttribute("parsingProperties", parsingProperties);
         model.addAttribute("maxFileSize", maxFileSize);
         return "upload";
     }
 
     @PostMapping("/enqueue")
     @ResponseBody
-    ParsingStatus enqueue(@RequestParam("file") MultipartFile file) throws Exception {
+    ParsingStatus enqueue(@RequestParam("file") MultipartFile file, HttpServletRequest request) throws Exception {
         String originalFilename = file.getOriginalFilename();
         log.info("New request to enqueue file {}. Copying to persistent storage", originalFilename);
         log.debug("Copying file {} to persistent storage.", originalFilename);
         InputStream inputStream = StorageUtils.createCopy(INPUTS_PATH, originalFilename, file.getInputStream());
         log.debug("File {} has been copied. Enqueuing.", originalFilename);
-        ParsingStatus initialStatus = parsingExecutor.enqueue(inputStream, originalFilename);
+        ParsingStatus initialStatus = parsingExecutor.enqueue(
+                inputStream,
+                originalFilename,
+                (String parsingId) -> createParsingProgressUrl(request, parsingId));
         log.debug("File {} has received status {}", originalFilename, initialStatus);
         return initialStatus;
     }
 
     @PostMapping("/enqueue-plain-text")
     @ResponseBody
-    ParsingStatus enqueue(String text) throws Exception {
+    ParsingStatus enqueue(String text, HttpServletRequest request) throws Exception {
         log.info("New request to enqueue logs of length {} characters.", text.length());
         log.debug("Saving text to persistent storage");
         InputStream inputStream = StorageUtils.savePlainText(INPUTS_PATH, text);
         log.debug("Enqueuing logs for parsing.");
-        ParsingStatus initialStatus = parsingExecutor.enqueue(inputStream, "plain-text.log");
+        ParsingStatus initialStatus = parsingExecutor.enqueue(
+                inputStream,
+                "plain-text.log",
+                (String parsingId) -> createParsingProgressUrl(request, parsingId));
         log.debug("Logs have received status {}", initialStatus);
         return initialStatus;
     }
@@ -104,5 +117,13 @@ class StatsController {
                 .pages(stats.getPages())
                 .build());
         return "welcome";
+    }
+
+    private String createParsingProgressUrl(HttpServletRequest request, String parsingId) {
+        return serverUrl(request) + "/parsings/" + parsingId + "/progress";
+    }
+
+    private static String serverUrl(HttpServletRequest request) {
+        return request.getScheme() + "://" + request.getServerName() + (request.getServerPort() != 80 ? ":" + request.getServerPort() : "");
     }
 }
