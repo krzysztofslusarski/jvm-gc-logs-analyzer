@@ -27,7 +27,6 @@ import org.springframework.web.server.ResponseStatusException;
 import pl.ks.profiling.io.StorageUtils;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.JvmLogFile;
 import pl.ks.profiling.web.commons.WelcomePage;
-
 import javax.servlet.http.HttpServletRequest;
 import java.io.InputStream;
 
@@ -43,13 +42,24 @@ class StatsController {
     @Value("${spring.servlet.multipart.max-file-size}")
     private DataSize maxFileSize;
 
+    @Value("${indexPageAvailable}")
+    private boolean indexPageAvailable;
+
+    @Value("${dockerImage}")
+    private String dockerImage;
+
     private final ParsingProperties parsingProperties;
     private final StatsRepository statsRepository;
     private final ParsingExecutor parsingExecutor;
 
     @GetMapping("/")
-    String indexDefault() {
-        return "index";
+    String indexDefault(Model model, HttpServletRequest request) {
+        if (indexPageAvailable) {
+            model.addAttribute("dockerImage", dockerImage);
+            return "index";
+        } else {
+            return upload(model, request);
+        }
     }
 
     @GetMapping("/upload")
