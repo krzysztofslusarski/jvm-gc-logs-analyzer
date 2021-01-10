@@ -15,13 +15,16 @@
  */
 package pl.ks.profiling.safepoint.analyzer.web;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Value;
+import lombok.With;
 
-@AllArgsConstructor
-@Data
+@Value
 public class ParsingStatus {
     String parsingId;
+    String progressUrl;
+    long readyReportExpirationMinutes;
+    @With
     long processedLines;
+    @With
     boolean finished;
 }

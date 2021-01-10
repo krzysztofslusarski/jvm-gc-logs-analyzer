@@ -16,8 +16,9 @@
 package pl.ks.profiling.safepoint.analyzer.web;
 
 import java.io.InputStream;
+import java.util.function.Function;
 
 public interface ParsingExecutor {
-    ParsingStatus enqueue(InputStream inputStream, String originalFilename);
+    ParsingStatus enqueue(InputStream inputStream, String originalFilename, Function<String, String> resultLocationFactory);
     ParsingStatus getParsingStatus(String parsingId);
 }

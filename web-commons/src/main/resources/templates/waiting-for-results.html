@@ -33,14 +33,13 @@
 </div>
 <script type="text/javascript">
     $(document).ready(function () {
-        const keepQuerying = setInterval(keepAskingForStatus, 1000);
         const parsingId = "[[${initialStatus.parsingId}]]";
+        askForStatus();
+        const keepQuerying = setInterval(askForStatus, 1000);
 
-        function keepAskingForStatus() {
+        function askForStatus() {
             axios.get(`/parsings/${parsingId}/status`, {})
                 .then(function (response) {
-                    console.log(response);
-                    console.log(response.finished);
                     const responseData = response.data;
                     if (responseData.finished) {
                         clearInterval(keepQuerying);

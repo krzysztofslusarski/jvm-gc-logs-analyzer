@@ -110,7 +110,9 @@ public class StatsService {
                 tlabLogFileParser.parseLine(line);
                 stringDedupLogFileParser.parseLine(line);
                 line = reader.readLine();
-                notifyProgress.accept(new ParsingProgress(numberOfLine++, false));
+                if (numberOfLine / 1000 == 0) {
+                    notifyProgress.accept(new ParsingProgress(numberOfLine++, false));
+                }
             }
         } catch (Exception ex) {
             throw new RuntimeException(ex);

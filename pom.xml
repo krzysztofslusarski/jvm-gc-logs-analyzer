@@ -36,6 +36,7 @@
         <miglayout-swing.version>5.0</miglayout-swing.version>
         <spock.version>1.3-groovy-2.5</spock.version>
         <gmavenplus-plugin.version>1.6.2</gmavenplus-plugin.version>
+        <axios.version>0.21.1</axios.version>
     </properties>
 
     <dependencyManagement>
@@ -89,6 +90,11 @@
                 <groupId>com.miglayout</groupId>
                 <artifactId>miglayout-swing</artifactId>
                 <version>${miglayout-swing.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.webjars.npm</groupId>
+                <artifactId>axios</artifactId>
+                <version>${axios.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.spockframework</groupId>

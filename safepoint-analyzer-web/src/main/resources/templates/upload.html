@@ -57,7 +57,7 @@
 
     <div class="card mt-3 shadow rounded collapse" id="real-import">
         <h5 class="card-header">
-            Import from file...
+            Upload file:
         </h5>
         <div class="card-body">
             <form id="fileUploadForm">
@@ -77,7 +77,7 @@
             </form>
         </div>
         <h5 class="card-header">
-            ...or paste log here:
+            Upload logs from clipboard:
         </h5>
         <div class="card-body">
             <form id="textUploadForm">
@@ -90,6 +90,31 @@
                 </div>
                 <input type="submit" value="Submit logs" class="btn btn-primary"/>
             </form>
+        </div>
+        <h5 class="card-header">
+            Upload logs with curl:
+        </h5>
+        <div class="card-body">
+            <div class="mb-3">
+                <p>
+                    Compress your logs:<br/>
+                    <kbd>zip -r logs.zip logs_file.log*</kbd><br/>
+                    <small class="text-muted">Make sure your logs are not bigger than <span
+                            th:text="${maxFileSize.toMegabytes()}"/>MB after compression.</small>
+                </p>
+                <p>
+                    Upload logs archive to the server:<br/>
+                    <kbd>curl -X POST --form file=@./logs.zip [[${enqueueUrl}]]</kbd><br/>
+                    <small class="text-muted">In response you'll receive link to your report. The report will be available for [[${parsingProperties.results.expiration.toMinutes()}]] minutes.</small>
+                </p>
+                <h6>Kubernetes</h6>
+                <p>
+                    <kbd>kubectl exec -t &lt;pod where logs are located&gt; -- curl -X POST --form
+                        file=@/path/to/logs/logs.log [[${enqueueUrl}]]</kbd><br/>
+                    <small class="text-muted">Remember that <kbd>curl</kbd> command must be available in the
+                        container</small>
+                </p>
+            </div>
         </div>
     </div>
 
@@ -215,6 +240,7 @@ decorators="level,tags,time,uptime,pid</code></pre>
 
     function uploadLogs(payload, parentFormSelector, endpoint) {
         const parentElement = $(parentFormSelector);
+
         function toggleProgressBarVisible(visible) {
             const element = parentElement.find('.progress');
             if (visible) {
