@@ -110,7 +110,7 @@
                 <h6>Kubernetes</h6>
                 <p>
                     <kbd>kubectl exec -t &lt;pod where logs are located&gt; -- curl -X POST --form
-                        file=@/path/to/logs/logs.log [[${enqueueUrl}]]</kbd><br/>
+                        file=@&lt;path to your logs on container&gt; [[${enqueueUrl}]]</kbd><br/>
                     <small class="text-muted">Remember that <kbd>curl</kbd> command must be available in the
                         container</small>
                 </p>
