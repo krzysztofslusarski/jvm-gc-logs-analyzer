@@ -37,7 +37,7 @@
         <spock.version>1.3-groovy-2.5</spock.version>
         <gmavenplus-plugin.version>1.6.2</gmavenplus-plugin.version>
         <axios.version>0.21.1</axios.version>
-        <spring-boot.build-image.imageName>gclogs.com/${project.artifactId}:${project.version}</spring-boot.build-image.imageName>
+        <spring-boot.build-image.imageName>gclogs/${project.artifactId}:${project.version}</spring-boot.build-image.imageName>
     </properties>
 
     <dependencyManagement>
