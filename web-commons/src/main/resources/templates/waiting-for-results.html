@@ -12,9 +12,8 @@
 <body>
 <div class="jumbotron d-flex align-items-center min-vh-100">
     <div class="container">
-
-        <div class="card">
-            <div class="card-body" style="width: 30rem;">
+        <div class="card mx-auto">
+            <div class="card-body">
                 <h5 class="card-title">
                     <div class="spinner-border text-primary" role="status">
                         <span class="sr-only">Loading...</span>
@@ -51,7 +50,7 @@
                 })
                 .catch(function (error) {
                     console.error(error);
-                    document.getElementById("currentStatus").innerHTML = `Something really bad happened. Mail us at ks@gclogs.com to help us make this tool better.`;
+                    document.getElementById("currentStatus").innerHTML = `<div class="alert alert-danger" role="alert">Something really bad happened. Mail us at <a href="mailto:ks@gclogs.com">ks@gclogs.com</a> to help us make this tool better.</div>`;
                 });
         }
     });

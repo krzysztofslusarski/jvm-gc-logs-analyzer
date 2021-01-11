@@ -25,3 +25,5 @@ parsing:
         expiration: 3m
         removeAfterRead: true
     workerThreads: 1
+
+indexPageAvailable: true

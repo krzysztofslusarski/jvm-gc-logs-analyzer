@@ -19,6 +19,45 @@
     </div>
     <div class="card mb-3">
         <div class="card-body">
+            <h5 class="card-title">Run on your computer in docker</h5>
+            <p>Quickly run application on your computer</p>
+            <p>
+                <kbd>docker run -it -p 8080:8080 -v /var/uploads:/uploads
+                    [[${dockerImage}]]</kbd><br/>
+                <small class="text-muted">Create directory where your logs will be uploaded (/var/uploads) before running this
+                    command</small>
+            </p>
+            <p>Application will be available on <a class="btn btn-outline-primary btn-sm"
+                                                   href="http://localhost:8080" role="button" target="_blank">http://localhost:8080</a>
+            </p>
+
+            <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapse1"
+                    aria-expanded="false" aria-controls="collapse1">
+                Show configuration options
+            </button>
+            <div class="collapse" id="collapse1">
+                <p>You can specify the following options with multiple <kbd>-e PROPERTY=value</kbd></p>
+                <dl class="row">
+                    <dt class="col-sm-4"><kbd>SERVER_PORT=8080</kbd></dt>
+                    <dd class="col-sm-8">Port used by container to run http server.</dd>
+                    <dt class="col-sm-4"><kbd>UPLOAD_DIR=/uploads</kbd></dt>
+                    <dd class="col-sm-8">Location within container for uploaded logs.</dd>
+                    <dt class="col-sm-4"><kbd>MAX_REQUEST_SIZE=310MB</kbd></dt>
+                    <dd class="col-sm-8">Maximum size of uploaded file and request</dd>
+                    <dt class="col-sm-4"><kbd>NUMBER_OF_WORKER_THREADS=2</kbd></dt>
+                    <dd class="col-sm-8">Number of threads parsing uploaded logs. More incoming requests will be
+                        queued
+                    </dd>
+                    <dt class="col-sm-4"><kbd>REPORT_REMOVE_AFTER_READ=false</kbd></dt>
+                    <dd class="col-sm-8">Report is removed from memory after read.</dd>
+                    <dt class="col-sm-4"><kbd>REPORT_EXPIRATION=10m</kbd></dt>
+                    <dd class="col-sm-8">Time duration after report is removed from memory.</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+    <div class="card mb-3">
+        <div class="card-body">
             <h5 class="card-title">Standalone JVM log analyzer:</h5>
             <p>For analysis of big files build standalone version from source.</p>
             <a class="btn btn-outline-primary" href="https://github.com/krzysztofslusarski/jvm-gc-logs-analyzer"
@@ -40,6 +79,7 @@
         This tool is provided to you by <a href="mailto:ks@gclogs.com" class="text-muted">Krzysztof Ślusarski</a></span>
     </div>
 </footer>
-
+<script type="text/javascript" th:src="@{/webjars/jquery/2.2.4/jquery.min.js}"></script>
+<script type="text/javascript" th:src="@{/webjars/bootstrap/4.2.1/js/bootstrap.min.js}"></script>
 </body>
 </html>

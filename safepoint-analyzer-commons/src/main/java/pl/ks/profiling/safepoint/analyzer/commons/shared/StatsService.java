@@ -68,7 +68,10 @@ public class StatsService {
                     // last line may be broken in Java 8 format
                     safepointJdk8LogFileParser.parseLine(line);
                     gcJdk8LogFileParser.parseLine(line);
-                    notifyProgress.accept(new ParsingProgress(numberOfLine++, false));
+                    if (numberOfLine % 1000 == 0) {
+                        notifyProgress.accept(new ParsingProgress(numberOfLine, false));
+                    }
+                    numberOfLine++;
                 } else {
                     break;
                 }
@@ -110,9 +113,10 @@ public class StatsService {
                 tlabLogFileParser.parseLine(line);
                 stringDedupLogFileParser.parseLine(line);
                 line = reader.readLine();
-                if (numberOfLine / 1000 == 0) {
-                    notifyProgress.accept(new ParsingProgress(numberOfLine++, false));
+                if (numberOfLine % 1000 == 0) {
+                    notifyProgress.accept(new ParsingProgress(numberOfLine, false));
                 }
+                numberOfLine++;
             }
         } catch (Exception ex) {
             throw new RuntimeException(ex);

@@ -1,21 +1,31 @@
 spring:
   thymeleaf:
     cache: false
-  resources:
-    cache:
-      cachecontrol:
-        max-age: 1d
+  web:
+    resources:
+      cache:
+        cachecontrol:
+          max-age: 1d
+  servlet:
+    multipart:
+      max-file-size: ${MAX_REQUEST_SIZE:310MB}
+      max-request-size: ${MAX_REQUEST_SIZE:310MB}
 
 server:
+  port: ${SERVER_PORT:8080}
   compression:
     enabled: true
     mime-types: text/html, text/xml, text/plain, text/css, text/javascript, application/javascript, application/json, application/hal+json
     min-response-size: 1024
 
-safepoint.files.dir: /home/pasqal/analyzer-inputs/
+safepoint.files.dir: ${UPLOAD_DIR:/uploads}
 
 parsing:
   results:
-    expiration: 10m
-    removeAfterRead: false
-  workerThreads: 10
+    expiration: ${REPORT_EXPIRATION:10m}
+    removeAfterRead: ${REPORT_REMOVE_AFTER_READ:false}
+  workerThreads: ${NUMBER_OF_WORKER_THREADS:4}
+
+indexPageAvailable: false
+
+dockerImage: @spring-boot.build-image.imageName@
