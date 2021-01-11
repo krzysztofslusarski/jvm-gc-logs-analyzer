@@ -18,6 +18,8 @@ package pl.ks.profiling.safepoint.analyzer.commons.shared;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.collections4.CollectionUtils;
 import pl.ks.profiling.gui.commons.Page;
+import pl.ks.profiling.io.source.LogSourceSubfile;
+import pl.ks.profiling.io.source.LogsSource;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.classloader.page.ClassCount;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.classloader.parser.ClassLoaderLogFileParser;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.page.*;
@@ -28,21 +30,22 @@ import pl.ks.profiling.safepoint.analyzer.commons.shared.jit.page.JitCodeCacheSw
 import pl.ks.profiling.safepoint.analyzer.commons.shared.jit.page.JitCompilationCount;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.jit.page.JitTieredCompilationCount;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.jit.parser.JitLogFileParser;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.report.JvmLogFile;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.report.LogsFile;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.report.ParsingMetaData;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.safepoint.page.*;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.safepoint.parser.SafepointJdk8LogFileParser;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.safepoint.parser.SafepointUnifiedLogFileParser;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.stringdedup.page.StringDedupLast;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.stringdedup.page.StringDedupTotal;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.stringdedup.parser.StringDedupLogFileParser;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.summary.page.SummaryPageCreator;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.thread.page.ThreadCount;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.thread.parser.ThreadLogFileParser;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.tlab.page.TlabSummary;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.tlab.page.TlabThreadStats;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.tlab.parser.TlabLogFileParser;
 
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
@@ -50,49 +53,76 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 public class StatsService {
-    private final DecimalFormat decimalFormat = new DecimalFormat("#,##0.00", DecimalFormatSymbols.getInstance(Locale.US));
+    private final static DecimalFormat decimalFormat = new DecimalFormat("#,##0.00", DecimalFormatSymbols.getInstance(Locale.US));
+    private final static int PROGRESS_NOTIFICATION_THROTTLE = 1000;
 
-    public JvmLogFile createAllStatsJdk8(InputStream inputStream, String originalFilename, Consumer<ParsingProgress> notifyProgress, Consumer<JvmLogFile> onComplete) {
-        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+    public JvmLogFile createAllStatsJdk8(LogsSource logsSource, Consumer<ParsingProgress> notificationConsumer, Consumer<JvmLogFile> onComplete) {
         SafepointJdk8LogFileParser safepointJdk8LogFileParser = new SafepointJdk8LogFileParser();
         GCJdk8LogFileParser gcJdk8LogFileParser = new GCJdk8LogFileParser();
 
-        long numberOfLine = 1;
+        long startTimestamp = System.currentTimeMillis();
         try {
-            while (reader.ready()) {
-                String line = reader.readLine();
-                if (reader.ready()) {
-                    // last line may be broken in Java 8 format
-                    safepointJdk8LogFileParser.parseLine(line);
-                    gcJdk8LogFileParser.parseLine(line);
-                    if (numberOfLine % 1000 == 0) {
-                        notifyProgress.accept(new ParsingProgress(numberOfLine, false));
-                    }
-                    numberOfLine++;
-                } else {
-                    break;
-                }
+            String line = logsSource.readLine();
+            while (line != null) {
+                safepointJdk8LogFileParser.parseLine(line);
+                gcJdk8LogFileParser.parseLine(line);
+                notifyProgress(logsSource, notificationConsumer, startTimestamp);
+                line = logsSource.readLine();
             }
         } catch (Exception ex) {
             throw new RuntimeException(ex);
         }
 
         JvmLogFile jvmLogFile = new JvmLogFile();
-        jvmLogFile.setFilename(originalFilename);
+        jvmLogFile.setParsing(new ParsingMetaData(
+                logsSource.getName(),
+                getFiles(logsSource),
+                logsSource.getNumberOfLine()
+        ));
         jvmLogFile.setSafepointLogFile(safepointJdk8LogFileParser.fetchData());
         jvmLogFile.setGcLogFile(gcJdk8LogFileParser.fetchData());
         addPages(jvmLogFile);
         onComplete.accept(jvmLogFile);
-        notifyProgress.accept(new ParsingProgress(numberOfLine, true));
+        notificationConsumer.accept(parsingProgress(logsSource, true, startTimestamp));
         return jvmLogFile;
 
     }
 
-    public JvmLogFile createAllStatsUnifiedLogger(InputStream inputStream, String originalFilename, Consumer<ParsingProgress> notifyProgress, Consumer<JvmLogFile> onComplete) {
-        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+    private List<LogsFile> getFiles(LogsSource logsSource) {
+        return logsSource.getFiles()
+                .stream()
+                .map(f -> new LogsFile(
+                        f.getName(),
+                        f.getSubfiles()
+                                .stream()
+                                .map(LogSourceSubfile::getName)
+                                .collect(Collectors.toList())))
+                .collect(Collectors.toList());
+    }
+
+    private void notifyProgress(LogsSource logsSource, Consumer<ParsingProgress> notifyProgress, long startTimestamp) {
+        if (logsSource.getNumberOfLine() % PROGRESS_NOTIFICATION_THROTTLE == 0) {
+            notifyProgress.accept(parsingProgress(logsSource, false, startTimestamp));
+        }
+    }
+
+    private ParsingProgress parsingProgress(LogsSource logsSource, boolean completed, long startTimestamp) {
+        long durationInSeconds = (System.currentTimeMillis() - startTimestamp) / 1000;
+        long numberOfLine = logsSource.getNumberOfLine();
+        long linesPerSecond = numberOfLine / (durationInSeconds + 1);
+        return new ParsingProgress(
+                numberOfLine,
+                completed,
+                logsSource.getTotalNumberOfFiles(),
+                logsSource.getNumberOfFile(),
+                linesPerSecond);
+    }
+
+    public JvmLogFile createAllStatsUnifiedLogger(LogsSource logsSource, Consumer<ParsingProgress> notificationConsumer, Consumer<JvmLogFile> onComplete) {
         SafepointUnifiedLogFileParser safepointUnifiedLogFileParser = new SafepointUnifiedLogFileParser();
         GCUnifiedLogFileParser gcUnifiedLogFileParser = new GCUnifiedLogFileParser();
         ThreadLogFileParser threadLogFileParser = new ThreadLogFileParser();
@@ -100,10 +130,10 @@ public class StatsService {
         JitLogFileParser jitLogFileParser = new JitLogFileParser();
         TlabLogFileParser tlabLogFileParser = new TlabLogFileParser();
         StringDedupLogFileParser stringDedupLogFileParser = new StringDedupLogFileParser();
+        long startTimestamp = System.currentTimeMillis();
 
-        long numberOfLine = 1;
         try {
-            String line = reader.readLine();
+            String line = logsSource.readLine();
             while (line != null) {
                 safepointUnifiedLogFileParser.parseLine(line);
                 gcUnifiedLogFileParser.parseLine(line);
@@ -112,18 +142,19 @@ public class StatsService {
                 jitLogFileParser.parseLine(line);
                 tlabLogFileParser.parseLine(line);
                 stringDedupLogFileParser.parseLine(line);
-                line = reader.readLine();
-                if (numberOfLine % 1000 == 0) {
-                    notifyProgress.accept(new ParsingProgress(numberOfLine, false));
-                }
-                numberOfLine++;
+                line = logsSource.readLine();
+                notifyProgress(logsSource, notificationConsumer, startTimestamp);
             }
         } catch (Exception ex) {
             throw new RuntimeException(ex);
         }
 
         JvmLogFile jvmLogFile = new JvmLogFile();
-        jvmLogFile.setFilename(originalFilename);
+        jvmLogFile.setParsing(new ParsingMetaData(
+                logsSource.getName(),
+                getFiles(logsSource),
+                logsSource.getNumberOfLine()
+        ));
         jvmLogFile.setSafepointLogFile(safepointUnifiedLogFileParser.fetchData());
         jvmLogFile.setGcLogFile(gcUnifiedLogFileParser.fetchData());
         jvmLogFile.setThreadLogFile(threadLogFileParser.fetchData());
@@ -134,11 +165,12 @@ public class StatsService {
 
         addPages(jvmLogFile);
         onComplete.accept(jvmLogFile);
-        notifyProgress.accept(new ParsingProgress(numberOfLine, true));
+        notificationConsumer.accept(parsingProgress(logsSource, true, startTimestamp));
         return jvmLogFile;
     }
 
     private void addPages(JvmLogFile jvmLogFile) {
+        createOverviewPage(jvmLogFile);
         createSafepointPages(jvmLogFile);
         createGcPages(jvmLogFile);
         createThreadPages(jvmLogFile);
@@ -275,6 +307,15 @@ public class StatsService {
             if (page != null) {
                 jvmLogFile.getPages().add(page);
             }
+        }
+    }
+
+    private void createOverviewPage(JvmLogFile jvmLogFile) {
+        try {
+            SummaryPageCreator summaryPageCreator = new SummaryPageCreator();
+            jvmLogFile.getPages().add(summaryPageCreator.create(jvmLogFile, decimalFormat));
+        } catch (Throwable e) {
+            e.printStackTrace();
         }
     }
 

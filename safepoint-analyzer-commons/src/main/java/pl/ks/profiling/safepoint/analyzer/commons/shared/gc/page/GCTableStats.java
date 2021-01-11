@@ -25,7 +25,7 @@ import java.util.stream.IntStream;
 import pl.ks.profiling.gui.commons.Page;
 import pl.ks.profiling.gui.commons.PageContent;
 import pl.ks.profiling.gui.commons.Table;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.JvmLogFile;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.report.JvmLogFile;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.OneFiledAllStats;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.PageCreator;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.parser.GCStats;

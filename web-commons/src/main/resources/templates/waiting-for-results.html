@@ -25,7 +25,7 @@
                     <span th:utext="${initialStatus.parsingId}"></span></h6>
                 <p class="card-text">You will be redirected automatically upon completion. You can also copy address of
                     this page and visit it later.</p>
-                <p class="card-text" id="currentStatus">Already processed 0 lines</p>
+                <p class="card-text" id="currentStatus">Waiting for worker...</p>
             </div>
         </div>
     </div>
@@ -45,7 +45,10 @@
                         window.location.href = `/parsings/${parsingId}`;
                     } else {
                         const processedFormatted = responseData.processedLines.toLocaleString();
-                        document.getElementById("currentStatus").innerHTML = `Already processed ${processedFormatted} lines`;
+                        const currentFileNumber = responseData.currentFileNumber;
+                        const totalNumberOfFiles = responseData.totalNumberOfFiles;
+                        const linesPerSecond = responseData.linesPerSecond.toLocaleString();
+                        document.getElementById("currentStatus").innerHTML = `Reading file ${currentFileNumber} of ${totalNumberOfFiles}. Already processed ${processedFormatted} lines (average speed: ${linesPerSecond} lines per second)`;
                     }
                 })
                 .catch(function (error) {

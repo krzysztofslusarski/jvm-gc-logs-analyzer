@@ -21,7 +21,7 @@ import java.util.function.Function;
 
 import pl.ks.profiling.gui.commons.Chart;
 import pl.ks.profiling.gui.commons.Page;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.JvmLogFile;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.report.JvmLogFile;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.PageCreator;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.PageUtils;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.tlab.parser.TlabSummaryInfo;

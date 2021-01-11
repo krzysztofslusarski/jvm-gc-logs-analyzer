@@ -16,7 +16,7 @@
 package pl.ks.profiling.safepoint.analyzer.standalone;
 
 import pl.ks.profiling.gui.commons.Page;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.JvmLogFile;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.report.JvmLogFile;
 
 import javax.swing.*;
 import java.awt.*;
@@ -32,7 +32,7 @@ public class AnalyzerFrame extends JFrame {
         this.contentScroll = new JScrollPane(contentPanel);
 
         setLayout(new BorderLayout());
-        setTitle(stats.getFilename());
+        setTitle(stats.getParsing().getName());
         setSize(1700, 1000);
         setLocationRelativeTo(null);
 

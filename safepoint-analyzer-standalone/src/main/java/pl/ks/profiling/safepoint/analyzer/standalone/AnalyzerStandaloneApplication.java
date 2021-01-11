@@ -23,10 +23,11 @@ import org.springframework.boot.builder.SpringApplicationBuilder;
 import pl.ks.profiling.io.ConcatenationProgress;
 import pl.ks.profiling.io.FilesConcatenation;
 import pl.ks.profiling.io.InputUtils;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.ParsingProgress;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.JvmLogFile;
+import pl.ks.profiling.io.source.LogsSource;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.ParserUtils;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.ParsingProgress;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.StatsService;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.report.JvmLogFile;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -36,7 +37,6 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Files;
 import java.text.DecimalFormat;
 import java.util.Arrays;
@@ -114,7 +114,7 @@ public class AnalyzerStandaloneApplication extends JFrame {
         buttonsPanel.add(loadButton);
         buttonsPanel.add(loadOldButton);
         buttonsPanel.add(parsingProgressLabel);
-        buttonsPanel.add(Box.createRigidArea(new Dimension(0,10)));
+        buttonsPanel.add(Box.createRigidArea(new Dimension(0, 10)));
         buttonsPanel.add(concatLogsButton);
 
         add(buttonsPanel, BorderLayout.CENTER);
@@ -129,16 +129,24 @@ public class AnalyzerStandaloneApplication extends JFrame {
         startLogsProcessing(statsService::createAllStatsJdk8);
     }
 
-    private void startLogsProcessing(ProcessLogs<InputStream, String, Consumer<ParsingProgress>, Consumer<JvmLogFile>, JvmLogFile> logsProcessor) {
+    private void startLogsProcessing(ProcessLogs<LogsSource, Consumer<ParsingProgress>, Consumer<JvmLogFile>, JvmLogFile> logsProcessor) {
         processFilesForLogs(selectFilesForProcessing(), logsProcessor);
     }
 
-    private void processFilesForLogs(List<File> files, ProcessLogs<InputStream, String, Consumer<ParsingProgress>, Consumer<JvmLogFile>, JvmLogFile> logsProcessor) {
+    private void processFilesForLogs(List<File> files, ProcessLogs<LogsSource, Consumer<ParsingProgress>, Consumer<JvmLogFile>, JvmLogFile> logsProcessor) {
         if (files != null) {
-            ParsingWorker worker = new ParsingWorker(files, logsProcessor);
+            LogsSource logsSource;
+            try {
+                logsSource = InputUtils.getLogsSource(files, ParserUtils::getTimeStamp);
+            } catch (IOException exception) {
+                this.parsingFailed();
+                throw new RuntimeException("Loading files for parsing has failed");
+            }
+            ParsingWorker worker = new ParsingWorker(logsSource, logsProcessor);
+            LogsSource finalLogsSource = logsSource;
             worker.addPropertyChangeListener(
                     onWorkerComplete(
-                            this::parsingStarted,
+                            () -> this.parsingStarted(finalLogsSource),
                             this::successParsing,
                             this::parsingFailed));
             worker.execute();
@@ -147,14 +155,15 @@ public class AnalyzerStandaloneApplication extends JFrame {
 
     @AllArgsConstructor
     private class ParsingWorker extends SwingWorker<JvmLogFile, ParsingProgress> {
-        private final List<File> files;
-        private final ProcessLogs<InputStream, String, Consumer<ParsingProgress>, Consumer<JvmLogFile>, JvmLogFile> logsProcessor;
+        private final LogsSource logsSource;
+        private final ProcessLogs<LogsSource, Consumer<ParsingProgress>, Consumer<JvmLogFile>, JvmLogFile> logsProcessor;
+
         @Override
         protected JvmLogFile doInBackground() {
             try {
-                InputStream logsInputStream = InputUtils.getInputStream(files, ParserUtils::getTimeStamp);
-                JvmLogFile output = logsProcessor.apply(logsInputStream, files.get(0).getName(), this::publish, (JvmLogFile f) -> {});
-                logsInputStream.close();
+                JvmLogFile output = logsProcessor.apply(logsSource, this::publish, (JvmLogFile f) -> {
+                });
+                logsSource.close();
                 return output;
             } catch (IOException exception) {
                 exception.printStackTrace();
@@ -168,10 +177,10 @@ public class AnalyzerStandaloneApplication extends JFrame {
         }
     }
 
-    private void parsingStarted() {
+    private void parsingStarted(LogsSource logsSource) {
         loadButton.setEnabled(false);
         loadOldButton.setEnabled(false);
-        notifyParsingChange(new ParsingProgress(0, false));
+        notifyParsingChange(new ParsingProgress(0, false, logsSource.getTotalNumberOfFiles(), logsSource.getNumberOfFile(), 0));
         parsingProgressLabel.setVisible(true);
     }
 
@@ -346,7 +355,12 @@ public class AnalyzerStandaloneApplication extends JFrame {
     }
 
     private void notifyParsingChange(ParsingProgress progress) {
-        parsingProgressLabel.setText("Parsing in progress. Processed " + progress.getProcessedLines() + " lines...");
+        parsingProgressLabel.setText(String.format(
+                "Parsing in progress. \nParsing file %d of %d\n. Processed %d lines. (avg speed: %d lines per second)",
+                progress.getCurrentFileNumber(),
+                progress.getTotalFiles(),
+                progress.getProcessedLines(),
+                progress.getLinesPerSecond()));
     }
 
     private String percent(Long total, Long share) {

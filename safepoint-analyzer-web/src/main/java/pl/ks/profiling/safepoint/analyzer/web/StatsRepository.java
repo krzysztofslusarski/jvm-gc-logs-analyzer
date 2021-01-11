@@ -15,7 +15,7 @@
  */
 package pl.ks.profiling.safepoint.analyzer.web;
 
-import pl.ks.profiling.safepoint.analyzer.commons.shared.JvmLogFile;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.report.JvmLogFile;
 
 public interface StatsRepository {
     JvmLogFile get(String parsingId);

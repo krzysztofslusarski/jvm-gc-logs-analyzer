@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package pl.ks.profiling.safepoint.analyzer.commons.shared;
+package pl.ks.profiling.safepoint.analyzer.commons.shared.report;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,7 +33,7 @@ import pl.ks.profiling.safepoint.analyzer.commons.shared.tlab.parser.TlabLogFile
 @Setter
 public class JvmLogFile {
     private UUID uuid;
-    private String filename;
+    private ParsingMetaData parsing;
 
     private GCLogFile gcLogFile;
     private SafepointLogFile safepointLogFile;

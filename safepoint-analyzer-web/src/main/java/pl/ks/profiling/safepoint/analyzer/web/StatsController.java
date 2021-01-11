@@ -24,11 +24,13 @@ import org.springframework.util.unit.DataSize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
+import pl.ks.profiling.io.InputUtils;
 import pl.ks.profiling.io.StorageUtils;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.JvmLogFile;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.ParserUtils;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.report.JvmLogFile;
 import pl.ks.profiling.web.commons.WelcomePage;
+
 import javax.servlet.http.HttpServletRequest;
-import java.io.InputStream;
 
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 
@@ -77,11 +79,10 @@ class StatsController {
         String originalFilename = file.getOriginalFilename();
         log.info("New request to enqueue file {}. Copying to persistent storage", originalFilename);
         log.debug("Copying file {} to persistent storage.", originalFilename);
-        InputStream inputStream = StorageUtils.createCopy(INPUTS_PATH, originalFilename, file.getInputStream());
+        String savedLocation = StorageUtils.createCopy(INPUTS_PATH, originalFilename, file.getInputStream());
         log.debug("File {} has been copied. Enqueuing.", originalFilename);
         ParsingStatus initialStatus = parsingExecutor.enqueue(
-                inputStream,
-                originalFilename,
+                InputUtils.getLogsSource(savedLocation, originalFilename, ParserUtils::getTimeStamp),
                 (String parsingId) -> createParsingProgressUrl(request, parsingId));
         log.debug("File {} has received status {}", originalFilename, initialStatus);
         return initialStatus;
@@ -92,11 +93,10 @@ class StatsController {
     ParsingStatus enqueue(String text, HttpServletRequest request) throws Exception {
         log.info("New request to enqueue logs of length {} characters.", text.length());
         log.debug("Saving text to persistent storage");
-        InputStream inputStream = StorageUtils.savePlainText(INPUTS_PATH, text);
+        String savedLocation = StorageUtils.savePlainText(INPUTS_PATH, text);
         log.debug("Enqueuing logs for parsing.");
         ParsingStatus initialStatus = parsingExecutor.enqueue(
-                inputStream,
-                "plain-text.log",
+                InputUtils.getLogsSource(savedLocation, "plain-text.log", ParserUtils::getTimeStamp),
                 (String parsingId) -> createParsingProgressUrl(request, parsingId));
         log.debug("Logs have received status {}", initialStatus);
         return initialStatus;
@@ -123,9 +123,10 @@ class StatsController {
         if (stats == null) {
             throw new ResponseStatusException(NOT_FOUND, "Unable to find parsing " + parsingId);
         }
-        model.addAttribute("welcomePage", WelcomePage.builder()
-                .pages(stats.getPages())
-                .build());
+        model.addAttribute("welcomePage",
+                WelcomePage.builder()
+                        .pages(stats.getPages())
+                        .build());
         return "welcome";
     }
 
