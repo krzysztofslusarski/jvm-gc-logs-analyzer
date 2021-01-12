@@ -50,12 +50,17 @@ public class ParsingExecutorSimple implements ParsingExecutor {
         String parsingId = UUID.randomUUID().toString();
         executor.submit(() -> {
             log.info("Submitting parsing {} to parser", parsingId);
-            statsService.createAllStatsUnifiedLogger(
-                    logsSource,
-                    (ParsingProgress p) -> updateParsingProgress(parsingId, p),
-                    (JvmLogFile f) -> storeInRepo(parsingId, f));
+            try {
+                statsService.createAllStatsUnifiedLogger(
+                        logsSource,
+                        (ParsingProgress p) -> updateParsingProgress(parsingId, p),
+                        (JvmLogFile f) -> storeInRepo(parsingId, f));
+            } catch (Throwable t) {
+                log.error("Error while processing parsing " + parsingId, t);
+                markAsFailed(parsingId);
+            }
         });
-        ParsingStatus parsingStatus = createParsingInitialParsingStatus(resultLocationFactory, parsingId);
+        ParsingStatus parsingStatus = createParsingInitialParsingStatus(resultLocationFactory, parsingId, logsSource);
         statuses.put(parsingId, parsingStatus);
         return parsingStatus;
     }
@@ -75,20 +80,30 @@ public class ParsingExecutorSimple implements ParsingExecutor {
         }
     }
 
+    private void markAsFailed(String parsingId) {
+        ParsingStatus current = statuses.getIfPresent(parsingId);
+        if (current != null) {
+            statuses.put(parsingId, current.withFailed(true));
+        } else {
+            log.warn("Status for parsing {} is not available", parsingId);
+        }
+    }
+
     private void storeInRepo(String parsingId, JvmLogFile f) {
         log.info("Storing parsing {} in repository", parsingId);
         statsRepository.put(parsingId, f);
     }
 
-    private ParsingStatus createParsingInitialParsingStatus(Function<String, String> resultLocationFactory, String parsingId) {
+    private ParsingStatus createParsingInitialParsingStatus(Function<String, String> resultLocationFactory, String parsingId, LogsSource logsSource) {
         return ParsingStatus.builder()
                 .parsingId(parsingId)
                 .progressUrl(resultLocationFactory.apply(parsingId))
                 .readyReportExpirationMinutes(this.parsingProperties.results.expiration.toMinutes())
                 .processedLines(0)
                 .finished(false)
+                .failed(false)
                 .currentFileNumber(0)
-                .totalNumberOfFiles(0)
+                .totalNumberOfFiles(logsSource.getTotalNumberOfFiles())
                 .linesPerSecond(0)
                 .build();
     }

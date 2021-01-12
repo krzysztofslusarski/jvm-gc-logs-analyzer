@@ -311,12 +311,8 @@ public class StatsService {
     }
 
     private void createOverviewPage(JvmLogFile jvmLogFile) {
-        try {
-            SummaryPageCreator summaryPageCreator = new SummaryPageCreator();
-            jvmLogFile.getPages().add(summaryPageCreator.create(jvmLogFile, decimalFormat));
-        } catch (Throwable e) {
-            e.printStackTrace();
-        }
+        SummaryPageCreator summaryPageCreator = new SummaryPageCreator();
+        jvmLogFile.getPages().add(summaryPageCreator.create(jvmLogFile, decimalFormat));
     }
 
     private void createSafepointPages(JvmLogFile jvmLogFile) {

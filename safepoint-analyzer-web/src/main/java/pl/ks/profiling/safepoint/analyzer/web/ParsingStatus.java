@@ -30,6 +30,8 @@ public class ParsingStatus {
     @With
     boolean finished;
     @With
+    boolean failed;
+    @With
     long currentFileNumber;
     @With
     long totalNumberOfFiles;

@@ -36,6 +36,14 @@
         askForStatus();
         const keepQuerying = setInterval(askForStatus, 1000);
 
+        function setCurrentStatus(innerHtml) {
+            document.getElementById("currentStatus").innerHTML = innerHtml;
+        }
+
+        function setErrorStatus() {
+            setCurrentStatus(`<div class="alert alert-danger" role="alert">Something really bad happened. Mail us at <a href="mailto:ks@gclogs.com">ks@gclogs.com</a> to help us make this tool better.</div>`);
+        }
+
         function askForStatus() {
             axios.get(`/parsings/${parsingId}/status`, {})
                 .then(function (response) {
@@ -44,16 +52,22 @@
                         clearInterval(keepQuerying);
                         window.location.href = `/parsings/${parsingId}`;
                     } else {
-                        const processedFormatted = responseData.processedLines.toLocaleString();
-                        const currentFileNumber = responseData.currentFileNumber;
-                        const totalNumberOfFiles = responseData.totalNumberOfFiles;
-                        const linesPerSecond = responseData.linesPerSecond.toLocaleString();
-                        document.getElementById("currentStatus").innerHTML = `Reading file ${currentFileNumber} of ${totalNumberOfFiles}. Already processed ${processedFormatted} lines (average speed: ${linesPerSecond} lines per second)`;
+                        const failed = responseData.failed;
+                        if (!failed) {
+                            const processedFormatted = responseData.processedLines.toLocaleString();
+                            const currentFileNumber = responseData.currentFileNumber;
+                            const totalNumberOfFiles = responseData.totalNumberOfFiles;
+                            const linesPerSecond = responseData.linesPerSecond.toLocaleString();
+                            setCurrentStatus(`Reading file ${currentFileNumber} of ${totalNumberOfFiles}. Already processed ${processedFormatted} lines (average speed: ${linesPerSecond} lines per second)`);
+                        } else {
+                            clearInterval(keepQuerying);
+                            setErrorStatus();
+                        }
                     }
                 })
                 .catch(function (error) {
                     console.error(error);
-                    document.getElementById("currentStatus").innerHTML = `<div class="alert alert-danger" role="alert">Something really bad happened. Mail us at <a href="mailto:ks@gclogs.com">ks@gclogs.com</a> to help us make this tool better.</div>`;
+                    setErrorStatus();
                 });
         }
     });
