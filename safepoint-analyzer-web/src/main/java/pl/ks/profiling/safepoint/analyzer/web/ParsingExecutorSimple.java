@@ -20,11 +20,10 @@ import com.google.common.cache.CacheBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.concurrent.CustomizableThreadFactory;
 import org.springframework.stereotype.Component;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.JvmLogFile;
+import pl.ks.profiling.io.source.LogsSource;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.ParsingProgress;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.StatsService;
-
-import java.io.InputStream;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.report.JvmLogFile;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -47,17 +46,21 @@ public class ParsingExecutorSimple implements ParsingExecutor {
         this.executor = Executors.newFixedThreadPool(parsingProperties.workerThreads, new CustomizableThreadFactory("parsing-"));
     }
 
-    public ParsingStatus enqueue(InputStream inputStream, String originalFilename, Function<String, String> resultLocationFactory) {
+    public ParsingStatus enqueue(LogsSource logsSource, Function<String, String> resultLocationFactory) {
         String parsingId = UUID.randomUUID().toString();
         executor.submit(() -> {
             log.info("Submitting parsing {} to parser", parsingId);
-            statsService.createAllStatsUnifiedLogger(
-                    inputStream,
-                    originalFilename,
-                    (ParsingProgress p) -> updateParsingProgress(parsingId, p),
-                    (JvmLogFile f) -> storeInRepo(parsingId, f));
+            try {
+                statsService.createAllStatsUnifiedLogger(
+                        logsSource,
+                        (ParsingProgress p) -> updateParsingProgress(parsingId, p),
+                        (JvmLogFile f) -> storeInRepo(parsingId, f));
+            } catch (Throwable t) {
+                log.error("Error while processing parsing " + parsingId, t);
+                markAsFailed(parsingId);
+            }
         });
-        ParsingStatus parsingStatus = createParsingInitialParsingStatus(resultLocationFactory, parsingId);
+        ParsingStatus parsingStatus = createParsingInitialParsingStatus(resultLocationFactory, parsingId, logsSource);
         statuses.put(parsingId, parsingStatus);
         return parsingStatus;
     }
@@ -67,8 +70,20 @@ public class ParsingExecutorSimple implements ParsingExecutor {
         if (current != null) {
             ParsingStatus updated = current
                     .withFinished(progress.isCompleted())
-                    .withProcessedLines(progress.getProcessedLines());
+                    .withProcessedLines(progress.getProcessedLines())
+                    .withCurrentFileNumber(progress.getCurrentFileNumber())
+                    .withTotalNumberOfFiles(progress.getTotalFiles())
+                    .withLinesPerSecond(progress.getLinesPerSecond());
             statuses.put(parsingId, updated);
+        } else {
+            log.warn("Status for parsing {} is not available", parsingId);
+        }
+    }
+
+    private void markAsFailed(String parsingId) {
+        ParsingStatus current = statuses.getIfPresent(parsingId);
+        if (current != null) {
+            statuses.put(parsingId, current.withFailed(true));
         } else {
             log.warn("Status for parsing {} is not available", parsingId);
         }
@@ -79,13 +94,18 @@ public class ParsingExecutorSimple implements ParsingExecutor {
         statsRepository.put(parsingId, f);
     }
 
-    private ParsingStatus createParsingInitialParsingStatus(Function<String, String> resultLocationFactory, String parsingId) {
-        return new ParsingStatus(
-                parsingId,
-                resultLocationFactory.apply(parsingId),
-                this.parsingProperties.results.expiration.toMinutes(),
-                0,
-                false);
+    private ParsingStatus createParsingInitialParsingStatus(Function<String, String> resultLocationFactory, String parsingId, LogsSource logsSource) {
+        return ParsingStatus.builder()
+                .parsingId(parsingId)
+                .progressUrl(resultLocationFactory.apply(parsingId))
+                .readyReportExpirationMinutes(this.parsingProperties.results.expiration.toMinutes())
+                .processedLines(0)
+                .finished(false)
+                .failed(false)
+                .currentFileNumber(0)
+                .totalNumberOfFiles(logsSource.getTotalNumberOfFiles())
+                .linesPerSecond(0)
+                .build();
     }
 
     public ParsingStatus getParsingStatus(String parsingId) {

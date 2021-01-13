@@ -15,207 +15,49 @@
  */
 package pl.ks.profiling.io;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.SequenceInputStream;
-import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Scanner;
-import java.util.Vector;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.zip.GZIPInputStream;
 import lombok.experimental.UtilityClass;
-import org.apache.commons.compress.archivers.sevenz.SevenZArchiveEntry;
-import org.apache.commons.compress.archivers.sevenz.SevenZFile;
-import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
-import org.apache.commons.compress.archivers.zip.ZipFile;
-import org.apache.commons.compress.utils.IOUtils;
-import org.tukaani.xz.XZInputStream;
+import pl.ks.profiling.io.source.*;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.List;
+import java.util.function.Function;
 
 @UtilityClass
 public class InputUtils {
-    public static <U extends Comparable<? super U>> InputStream getInputStream(List<File> files, Function<String, U> extractCompareObject) throws IOException {
+    private static final String USE_FIRST_FILE_NAME = null;
+
+    public static <U extends Comparable<? super U>> LogsSource getLogsSource(
+            List<File> files,
+            Function<String, U> extractCompareObject) throws IOException {
+        return InputUtils.getInputStream(files, extractCompareObject, USE_FIRST_FILE_NAME);
+    }
+
+    public static <U extends Comparable<? super U>> LogsSource getLogsSource(
+            String savedLocation,
+            String name,
+            Function<String, U> extractCompareObject) throws IOException {
+        return InputUtils.getInputStream(List.of(new File(savedLocation)), extractCompareObject, name);
+    }
+
+    public static <U extends Comparable<? super U>> LogsSource getInputStream(
+            List<File> files,
+            Function<String, U> extractCompareObject,
+            String overrideName) throws IOException {
+        File firstFile = files.get(0);
         if (files.size() == 1) {
-            File firstFile = files.get(0);
-            String fileName = firstFile.getName();
-            String filePath = firstFile.getAbsolutePath();
-            if (fileName.endsWith(".7z")) {
-                return get7ZipInputStream(firstFile, extractCompareObject);
-            } else if (fileName.endsWith(".zip")) {
-                return getZipInputStream(filePath, extractCompareObject);
-            } else if (fileName.endsWith(".xz")) {
-                return getXZInputStream(filePath);
-            } else if (fileName.endsWith(".gz") || fileName.endsWith(".gzip")) {
-                return getGZipInputStream(filePath);
+            if (Z7LogsSource.supports(firstFile)) {
+                return new Z7LogsSource<>(firstFile, extractCompareObject);
+            } else if (ZipLogsSource.supports(firstFile)) {
+                return new ZipLogsSource<>(firstFile, extractCompareObject);
+            } else if (XZSource.supports(firstFile)) {
+                return new XZSource(firstFile);
+            } else if (GZipInputSource.supports(firstFile)) {
+                return new GZipInputSource(firstFile);
             }
         }
-        return getConcatenatedInputStream(files, extractCompareObject);
-    }
 
-    private static <U extends Comparable<? super U>> InputStream getConcatenatedInputStream(List<File> files, Function<String, U> extractCompareObject) {
-        List<InputStream> streamOfFiles;
-        if (extractCompareObject != null) {
-            streamOfFiles = toStreams(FilesConcatenation.sortBy(files, file -> firstLineExtractor(file, extractCompareObject)));
-        } else {
-            streamOfFiles = toStreams(files);
-        }
-        return mergeIntertwined(streamOfFiles);
-    }
-
-    private static InputStream mergeIntertwined(Collection<InputStream> streams) {
-        List<InputStream> withNewLinesBetween = intertwineWithNewLineStreams(streams);
-        return mergeInputStreams(withNewLinesBetween);
-    }
-
-    private static InputStream mergeInputStreams(Collection<InputStream> streams) {
-        return new SequenceInputStream(new Vector<>(streams).elements());
-    }
-
-    private static List<InputStream> intertwineWithNewLineStreams(Collection<InputStream> inputStreams) {
-        int numberOfStreams = inputStreams.size();
-        int numberOfNewLinesBetween = numberOfStreams - 1;
-        List<InputStream> result = new ArrayList<>(numberOfStreams + numberOfNewLinesBetween);
-        int lastStreamIndex = numberOfStreams - 1;
-        int currentStreamIndex = 0;
-        for (InputStream stream : inputStreams) {
-            result.add(stream);
-            if (currentStreamIndex < lastStreamIndex) {
-                result.add(newLineInputStream());
-            }
-            currentStreamIndex++;
-        }
-
-        return result;
-    }
-
-    private static InputStream newLineInputStream() {
-        return new ByteArrayInputStream("\n".getBytes());
-    }
-
-    private static List<InputStream> toStreams(List<File> files) {
-        return files.stream().map(w -> {
-            try {
-                return new FileInputStream(w);
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
-                throw new RuntimeException(e);
-            }
-        }).collect(Collectors.toList());
-    }
-
-    private static InputStream getXZInputStream(String saveFileName) throws IOException {
-        XZInputStream xzInputStream = new XZInputStream(new FileInputStream(saveFileName));
-        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        IOUtils.copy(xzInputStream, byteArrayOutputStream);
-        xzInputStream.close();
-        return new ByteArrayInputStream(byteArrayOutputStream.toByteArray());
-    }
-
-    private static InputStream getGZipInputStream(String saveFileName) throws IOException {
-        GZIPInputStream gzipInputStream = new GZIPInputStream(new FileInputStream(saveFileName));
-        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        IOUtils.copy(gzipInputStream, byteArrayOutputStream);
-        gzipInputStream.close();
-        return new ByteArrayInputStream(byteArrayOutputStream.toByteArray());
-    }
-
-    private static <U extends Comparable<? super U>> InputStream getZipInputStream(String saveFileName, Function<String, U> extractCompareObject) throws IOException {
-        ZipFile zipFile = new ZipFile(saveFileName);
-        return mergeIntertwined(getSortedEntriesInputStreams(zipFile, extractCompareObject));
-    }
-
-    public static <U extends Comparable<? super U>> InputStream get7ZipInputStream(File file, Function<String, U> extractCompareObject) throws IOException {
-        SevenZFile sevenZFile = new SevenZFile(file);
-        return mergeIntertwined(getSortedEntriesInputStreams(sevenZFile, extractCompareObject));
-    }
-
-    private static <U extends Comparable<? super U>> List<InputStream> getSortedEntriesInputStreams(ZipFile archiveFile, Function<String, U> extractCompareObject) {
-        List<ZipArchiveEntry> entries = Collections.list(archiveFile.getEntries());
-        List<ZipArchiveEntry> sorted = FilesConcatenation.sortBy(entries, e -> extractCompareObject.apply(readFirstLine(archiveFile, e)));
-        return sorted.stream().map(e -> new LazyZipInputStream(archiveFile, e)).collect(Collectors.toList());
-    }
-
-    private static <U extends Comparable<? super U>> List<InputStream> getSortedEntriesInputStreams(SevenZFile archiveFile, Function<String, U> extractCompareObject) {
-        List<SevenZArchiveEntry> entries = (List<SevenZArchiveEntry>) (archiveFile.getEntries());
-        if (entries.size() == 1) {
-            return List.of(new LazySevenZInputStream(archiveFile, entries.get(0)));
-        }
-        List<SevenZArchiveEntry> sorted = FilesConcatenation.sortBy(entries, e -> extractCompareObject.apply(readFirstLine(archiveFile, e)));
-        return sorted.stream().map(e -> new LazySevenZInputStream(archiveFile, e)).collect(Collectors.toList());
-    }
-
-    static class LazySevenZInputStream extends InputStream {
-        private final SevenZArchiveEntry entry;
-        private final SevenZFile file;
-        private InputStream innerInputStream;
-
-        public LazySevenZInputStream(SevenZFile file, SevenZArchiveEntry entry) {
-            this.entry = entry;
-            this.file = file;
-        }
-
-        @Override
-        public int read() throws IOException {
-            if (innerInputStream == null) {
-                innerInputStream = file.getInputStream(entry);
-            }
-            return innerInputStream.read();
-        }
-    }
-
-    static class LazyZipInputStream extends InputStream {
-        private final ZipArchiveEntry entry;
-        private final ZipFile file;
-        private InputStream innerInputStream;
-
-        public LazyZipInputStream(ZipFile file, ZipArchiveEntry entry) {
-            this.entry = entry;
-            this.file = file;
-        }
-
-        @Override
-        public int read() throws IOException {
-            if (innerInputStream == null) {
-                innerInputStream = file.getInputStream(entry);
-            }
-            return innerInputStream.read();
-        }
-    }
-
-    private static String readFirstLine(ZipFile archive, ZipArchiveEntry entry) {
-        try {
-            return readFirstLine(archive.getInputStream(entry));
-        } catch (Exception ex) {
-            throw new RuntimeException(ex);
-        }
-    }
-
-    private static String readFirstLine(SevenZFile sevenZFile, SevenZArchiveEntry entry) {
-        try {
-            return readFirstLine(sevenZFile.getInputStream(entry));
-        } catch (Exception ex) {
-            throw new RuntimeException(ex);
-        }
-    }
-
-    private static String readFirstLine(InputStream inputStream) {
-        return new Scanner(inputStream).nextLine();
-    }
-
-    private static <U extends Comparable<? super U>> U firstLineExtractor(File file, Function<String, U> extractCompareObject) {
-        try {
-            return Files.lines(file.toPath()).map(extractCompareObject).findFirst().get();
-        } catch (IOException exception) {
-            throw new RuntimeException(exception);
-        }
+        String name = overrideName != null ? overrideName : firstFile.getName();
+        return new RegularFilesSource<>(name, files, extractCompareObject);
     }
 }

@@ -42,7 +42,7 @@ public class Chart implements PageContent {
     }
 
     public Object[][] getRows() {
-        return Arrays.copyOfRange(data, 1, data.length - 2);
+        return Arrays.copyOfRange(data, 1, data.length);
     }
 
     public Object[] getHeaders() {

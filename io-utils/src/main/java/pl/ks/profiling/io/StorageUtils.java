@@ -16,20 +16,18 @@
 package pl.ks.profiling.io;
 
 import java.io.*;
-import java.util.List;
 import java.util.UUID;
 import lombok.experimental.UtilityClass;
 import org.apache.poi.util.IOUtils;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.ParserUtils;
 
 @UtilityClass
 public class StorageUtils {
-    public InputStream createCopy(String dir, String originalFilename, InputStream inputStream) throws IOException {
+    public String createCopy(String dir, String originalFilename, InputStream inputStream) throws IOException {
         String directoryPath = withTrailingSlash(dir);
         makeSureDirectoryExists(directoryPath);
         String savedFileName = directoryPath + UUID.randomUUID().toString() + originalFilename;
         IOUtils.copy(inputStream, new FileOutputStream(savedFileName));
-        return InputUtils.getInputStream(List.of(new File(savedFileName)), ParserUtils::getTimeStamp);
+        return savedFileName;
     }
 
     private void makeSureDirectoryExists(String directoryPath) {
@@ -46,11 +44,11 @@ public class StorageUtils {
         return path + "/";
     }
 
-    public InputStream savePlainText(String dir, String text) throws IOException {
+    public String savePlainText(String dir, String text) throws IOException {
         String savedFileName = dir + UUID.randomUUID().toString() + "plain-text.log";
         try (PrintWriter out = new PrintWriter(savedFileName)) {
             out.println(text);
         }
-        return new FileInputStream(savedFileName);
+        return savedFileName;
     }
 }

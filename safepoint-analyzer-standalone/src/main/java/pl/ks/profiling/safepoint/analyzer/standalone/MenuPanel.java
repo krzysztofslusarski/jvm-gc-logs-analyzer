@@ -17,7 +17,7 @@ package pl.ks.profiling.safepoint.analyzer.standalone;
 
 import net.miginfocom.swing.MigLayout;
 import pl.ks.profiling.gui.commons.Page;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.JvmLogFile;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.report.JvmLogFile;
 
 import javax.swing.*;
 import java.awt.*;

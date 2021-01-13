@@ -28,11 +28,5 @@
             <groupId>org.spockframework</groupId>
             <artifactId>spock-core</artifactId>
         </dependency>
-        <dependency>
-            <groupId>pl.ks.profiling</groupId>
-            <artifactId>safepoint-analyzer-commons</artifactId>
-            <version>1.1-SNAPSHOT</version>
-            <scope>compile</scope>
-        </dependency>
     </dependencies>
 </project>

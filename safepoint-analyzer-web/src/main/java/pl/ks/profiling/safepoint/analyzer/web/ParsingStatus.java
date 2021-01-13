@@ -15,9 +15,11 @@
  */
 package pl.ks.profiling.safepoint.analyzer.web;
 
+import lombok.Builder;
 import lombok.Value;
 import lombok.With;
 
+@Builder
 @Value
 public class ParsingStatus {
     String parsingId;
@@ -27,4 +29,12 @@ public class ParsingStatus {
     long processedLines;
     @With
     boolean finished;
+    @With
+    boolean failed;
+    @With
+    long currentFileNumber;
+    @With
+    long totalNumberOfFiles;
+    @With
+    long linesPerSecond;
 }

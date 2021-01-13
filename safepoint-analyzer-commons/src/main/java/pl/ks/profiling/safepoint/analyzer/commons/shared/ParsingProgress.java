@@ -23,4 +23,7 @@ import lombok.Getter;
 public class ParsingProgress {
     private final long processedLines;
     private final boolean completed;
+    private final int totalFiles;
+    private final int currentFileNumber;
+    private final long linesPerSecond;
 }

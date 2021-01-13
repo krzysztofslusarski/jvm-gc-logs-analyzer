@@ -24,7 +24,7 @@ import java.util.stream.Collectors;
 import pl.ks.profiling.gui.commons.Page;
 import pl.ks.profiling.gui.commons.PageContent;
 import pl.ks.profiling.gui.commons.Table;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.JvmLogFile;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.report.JvmLogFile;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.PageCreator;
 
 public class GCSubphaseStats implements PageCreator {

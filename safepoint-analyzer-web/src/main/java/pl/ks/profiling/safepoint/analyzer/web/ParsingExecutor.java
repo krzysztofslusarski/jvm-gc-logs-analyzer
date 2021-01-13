@@ -15,10 +15,12 @@
  */
 package pl.ks.profiling.safepoint.analyzer.web;
 
-import java.io.InputStream;
+import pl.ks.profiling.io.source.LogsSource;
+
 import java.util.function.Function;
 
 public interface ParsingExecutor {
-    ParsingStatus enqueue(InputStream inputStream, String originalFilename, Function<String, String> resultLocationFactory);
+    ParsingStatus enqueue(LogsSource logsSource, Function<String, String> resultLocationFactory);
+
     ParsingStatus getParsingStatus(String parsingId);
 }
