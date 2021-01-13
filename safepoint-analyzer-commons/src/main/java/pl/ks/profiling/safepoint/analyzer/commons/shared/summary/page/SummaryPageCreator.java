@@ -27,6 +27,7 @@ public class SummaryPageCreator implements PageCreator {
     private Table summaryTable(JvmLogFile jvmLogFile) {
         return Table.builder()
                 .title("Summary")
+                .header(List.of("", ""))
                 .table(List.of(
                         List.of("Parsing name", jvmLogFile.getParsing().getName()),
                         List.of("Number of lines", String.valueOf(jvmLogFile.getParsing().getNumberOfLines()))
