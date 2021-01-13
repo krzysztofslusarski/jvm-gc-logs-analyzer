@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 
-public interface LogsSource {
+public interface LogsSource extends AutoCloseable {
     InputStream getInputStream();
     String getName();
 
