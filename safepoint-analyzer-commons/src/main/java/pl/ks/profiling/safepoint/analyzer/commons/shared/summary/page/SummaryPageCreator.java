@@ -7,8 +7,11 @@ import pl.ks.profiling.safepoint.analyzer.commons.shared.report.JvmLogFile;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.report.LogsFile;
 
 import java.text.DecimalFormat;
+import java.util.Collection;
 import java.util.List;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class SummaryPageCreator implements PageCreator {
     @Override
@@ -38,11 +41,18 @@ public class SummaryPageCreator implements PageCreator {
     private Table filesTable(JvmLogFile jvmLogFile) {
         List<LogsFile> files = jvmLogFile.getParsing().getFiles();
 
-        List<List<String>> rows = files.stream().map(f -> List.of(f.getName(), String.join(", ", f.getSubfiles()))).collect(Collectors.toList());
+        List<List<String>> rows = files.stream().flatMap(this::getLogsFileListFunction).collect(Collectors.toList());
+
         return Table.builder()
                 .title("Files")
                 .header(List.of("File", "Subfiles"))
                 .table(rows)
                 .build();
+    }
+
+    private Stream<List<String>> getLogsFileListFunction(LogsFile logsFile) {
+        Stream<List<String>> first = Stream.of(List.of(logsFile.getName(), ""));
+        Stream<List<String>> subfiles = logsFile.getSubfiles().stream().map(sf -> List.of("", sf));
+        return Stream.concat(first, subfiles);
     }
 }
