@@ -64,22 +64,16 @@ public class Chart implements PageContent {
         return value;
     }
 
-    public Object[] getHighChartYAxisLabels() {
-        int numberOfSeries = data.length - 1;
-        Object[] ret = new Object[numberOfSeries];
-        for (int i = 1; i < data.length; i++) {
-            ret[i - 1] = data[i][0];
-        }
-        return ret;
-    }
-
     public List<HighChartSeries> getHighChartSeriesData() {
         int numberOfSeries = data[0].length;
         List<HighChartSeries> ret = new ArrayList<>(numberOfSeries - 1);
         for (int i = 1; i < numberOfSeries; i++) {
-            Object[] series = new Object[data.length - 1];
+            Object[][] series = new Object[data.length - 1][];
             for (int j = 1; j < data.length; j++) {
-                series[j - 1] = data[j][i];
+                Object[] seriesData = new Object[2];
+                seriesData[0] = data[j][0];
+                seriesData[1] = data[j][i];
+                series[j - 1] = seriesData;
             }
             ret.add(new HighChartSeries(data[0][i].toString(), series));
         }
