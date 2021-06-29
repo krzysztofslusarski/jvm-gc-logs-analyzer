@@ -138,7 +138,7 @@ public class GCUnifiedLogFileParser implements FileParser<GCLogFile> {
         String phaseWithTime = line.replaceFirst(".*GC\\(\\d+\\)", "").trim();
         int indexOfSpace = phaseWithTime.lastIndexOf(" ");
         String phase = phaseWithTime.substring(0, indexOfSpace);
-        String time = phaseWithTime.substring(indexOfSpace + 1).replaceAll("ms", "");
+        String time = phaseWithTime.substring(indexOfSpace + 1).replaceAll("ms", "").replaceAll(",", ".");
         gcLogFile.addSubPhaseTime(sequenceId, phase, new BigDecimal(time));
     }
 
