@@ -17,19 +17,22 @@ package pl.ks.profiling.safepoint.analyzer.commons.shared.safepoint.page;
 
 import static pl.ks.profiling.gui.commons.PageCreatorHelper.numToString;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.util.List;
 import java.util.stream.Collectors;
 import pl.ks.profiling.gui.commons.Page;
 import pl.ks.profiling.gui.commons.Table;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.report.JvmLogFile;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.PageCreator;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.report.JvmLogFile;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.safepoint.parser.SafepointOperationStats;
 
 public class SafepointTableStats implements PageCreator {
     @Override
     public Page create(JvmLogFile jvmLogFile, DecimalFormat decimalFormat) {
         SafepointOperationStats soStats = jvmLogFile.getSafepointLogFile().getSafepointOperationStats();
+        BigDecimal totalTimeD100 = soStats.getTts().getTotal().add(soStats.getOperationTime().getTotal()).add(soStats.getApplicationTime().getTotal()).divide(new BigDecimal(100), 4, RoundingMode.HALF_EVEN);
         return Page.builder()
                 .menuName("Safepoint table stats")
                 .fullName("Safepoint operation statistics")
@@ -53,7 +56,8 @@ public class SafepointTableStats implements PageCreator {
                                         List.of("99.9", numToString(soStats.getTts().getPercentile99and9(), decimalFormat), numToString(soStats.getOperationTime().getPercentile99and9(), decimalFormat), numToString(soStats.getApplicationTime().getPercentile99and9(), decimalFormat)),
                                         List.of("100", numToString(soStats.getTts().getPercentile100(), decimalFormat), numToString(soStats.getOperationTime().getPercentile100(), decimalFormat), numToString(soStats.getApplicationTime().getPercentile100(), decimalFormat)),
                                         List.of("Average", numToString(soStats.getTts().getAverage(), decimalFormat), numToString(soStats.getOperationTime().getAverage(), decimalFormat), numToString(soStats.getApplicationTime().getAverage(), decimalFormat)),
-                                        List.of("Total", numToString(soStats.getTts().getTotal(), decimalFormat), numToString(soStats.getOperationTime().getTotal(), decimalFormat), numToString(soStats.getApplicationTime().getTotal(), decimalFormat))
+                                        List.of("Total", numToString(soStats.getTts().getTotal(), decimalFormat), numToString(soStats.getOperationTime().getTotal(), decimalFormat), numToString(soStats.getApplicationTime().getTotal(), decimalFormat)),
+                                        List.of("Percent", numToString(soStats.getTts().getTotal().divide(totalTimeD100, 2, RoundingMode.HALF_EVEN), decimalFormat), numToString(soStats.getOperationTime().getTotal().divide(totalTimeD100, 2, RoundingMode.HALF_EVEN), decimalFormat), numToString(soStats.getApplicationTime().getTotal().divide(totalTimeD100, 2, RoundingMode.HALF_EVEN), decimalFormat))
                                 ))
                                 .build(),
                         Table.builder()
@@ -80,4 +84,5 @@ public class SafepointTableStats implements PageCreator {
                 ))
                 .build();
     }
+
 }
