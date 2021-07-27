@@ -37,7 +37,7 @@ public class GCConcurrentMixed implements PageCreator {
                 .pageContents(List.of(
                         Chart.builder()
                                 .chartType(Chart.ChartType.POINTS)
-                                .xAxisLabel("Mixed collections")
+                                .yAxisLabel("Mixed collections")
                                 .data(getChart(jvmLogFile))
                                 .build())
                 )
