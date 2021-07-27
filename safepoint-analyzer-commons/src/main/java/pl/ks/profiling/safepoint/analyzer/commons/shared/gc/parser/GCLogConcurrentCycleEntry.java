@@ -24,8 +24,13 @@ import lombok.Getter;
 public class GCLogConcurrentCycleEntry {
     private long sequenceId;
     private BigDecimal time;
+    private int mixedCollectionsAfterConcurrent;
 
     public String getPhase() {
         return "Concurrent Mark";
+    }
+
+    void nextMixedCollection() {
+        mixedCollectionsAfterConcurrent++;
     }
 }

@@ -32,6 +32,8 @@ public class GCLogFile {
     @Getter
     private GCStats stats;
 
+    private GCLogConcurrentCycleEntry lastConcurrentCycle = null;
+
     private Map<Long, GCLogCycleEntry> unprocessedCycles = new HashMap<>();
 
     void newLine(Long cycleId, String line) {
@@ -39,7 +41,11 @@ public class GCLogFile {
     }
 
     void newPhase(Long sequenceId, String phase, BigDecimal timeStamp) {
-        unprocessedCycles.put(sequenceId, new GCLogCycleEntry(sequenceId, phase, timeStamp));
+        GCLogCycleEntry cycle = new GCLogCycleEntry(sequenceId, phase, timeStamp);
+        unprocessedCycles.put(sequenceId, cycle);
+        if (cycle.isMixed() && lastConcurrentCycle != null) {
+            lastConcurrentCycle.nextMixedCollection();
+        }
     }
 
     void addSubPhaseTime(Long sequenceId, String phase, BigDecimal time) {
@@ -132,7 +138,8 @@ public class GCLogFile {
     }
 
     void newConcurrentCycle(Long sequenceId, BigDecimal time) {
-        concurrentCycleEntries.add(new GCLogConcurrentCycleEntry(sequenceId, time));
+        lastConcurrentCycle = new GCLogConcurrentCycleEntry(sequenceId, time, 0);
+        concurrentCycleEntries.add(lastConcurrentCycle);
     }
 
     void addSurvivorStats(Long sequenceId, long desiredSize, long newThreshold, long maxThreshold) {

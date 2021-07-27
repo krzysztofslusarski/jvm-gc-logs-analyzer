@@ -15,6 +15,14 @@
  */
 package pl.ks.profiling.safepoint.analyzer.commons.shared;
 
+import java.math.BigDecimal;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.collections4.CollectionUtils;
 import pl.ks.profiling.gui.commons.Page;
@@ -22,7 +30,20 @@ import pl.ks.profiling.io.source.LogSourceSubfile;
 import pl.ks.profiling.io.source.LogsSource;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.classloader.page.ClassCount;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.classloader.parser.ClassLoaderLogFileParser;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.page.*;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.page.GCAllocationRate;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.page.GCAllocationRateInTime;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.page.GCConcurrentMixed;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.page.GCHeapAfter;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.page.GCHeapBefore;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.page.GCHeapBeforeAfter;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.page.GCPhaseTime;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.page.GCRegionCountAfter;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.page.GCRegionCountBefore;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.page.GCRegionMax;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.page.GCRegionSizeAfter;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.page.GCSubphaseStats;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.page.GCSurvivorAndTenuring;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.page.GCTableStats;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.parser.GCJdk8LogFileParser;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.parser.GCUnifiedLogFileParser;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.jit.page.JitCodeCacheStats;
@@ -33,7 +54,12 @@ import pl.ks.profiling.safepoint.analyzer.commons.shared.jit.parser.JitLogFilePa
 import pl.ks.profiling.safepoint.analyzer.commons.shared.report.JvmLogFile;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.report.LogsFile;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.report.ParsingMetaData;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.safepoint.page.*;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.safepoint.page.SafepoinOperationCount;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.safepoint.page.SafepoinOperationTime;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.safepoint.page.SafepointApplicationTimeByTime;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.safepoint.page.SafepointOperationTimeCharts;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.safepoint.page.SafepointTableStats;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.safepoint.page.SafepointTotalTimeInPhases;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.safepoint.parser.SafepointJdk8LogFileParser;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.safepoint.parser.SafepointUnifiedLogFileParser;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.stringdedup.page.StringDedupLast;
@@ -45,15 +71,6 @@ import pl.ks.profiling.safepoint.analyzer.commons.shared.thread.parser.ThreadLog
 import pl.ks.profiling.safepoint.analyzer.commons.shared.tlab.page.TlabSummary;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.tlab.page.TlabThreadStats;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.tlab.parser.TlabLogFileParser;
-
-import java.math.BigDecimal;
-import java.text.DecimalFormat;
-import java.text.DecimalFormatSymbols;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 public class StatsService {
@@ -299,7 +316,8 @@ public class StatsService {
                 new GCHeapBeforeAfter(),
                 new GCSurvivorAndTenuring(),
                 new GCAllocationRate(),
-                new GCAllocationRateInTime(new BigDecimal(10))
+                new GCAllocationRateInTime(new BigDecimal(10)),
+                new GCConcurrentMixed()
         );
 
         for (PageCreator safepointPageCreator : gcPageCreators) {

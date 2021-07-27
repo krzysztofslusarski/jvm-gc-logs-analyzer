@@ -25,6 +25,9 @@ import lombok.Getter;
 
 @Getter
 public class GCLogCycleEntry {
+    public static final String MIXED_COLLECTION = "Mixed collection";
+    public static final String FULL_COLLECTION = "Full collection";
+    public static final String YOUNG_COLLECTION = "Young collection";
     private long sequenceId;
     private BigDecimal timeStamp;
     private String phase;
@@ -101,32 +104,32 @@ public class GCLogCycleEntry {
 
         if (phase.contains("Pause Young")) {
             if (phase.contains("(Mixed)")) {
-                aggregatedPhase = "Mixed collection";
+                aggregatedPhase = MIXED_COLLECTION;
                 genuineCollection = true;
             } else if (phase.contains("(Allocation Failure)")) {
-                aggregatedPhase = "Young collection";
+                aggregatedPhase = YOUNG_COLLECTION;
                 genuineCollection = true;
             } else if (phase.contains("(Normal)")) {
-                aggregatedPhase = "Young collection";
+                aggregatedPhase = YOUNG_COLLECTION;
                 genuineCollection = true;
             } else {
                 aggregatedPhase = "Young collection - piggybacks";
             }
         } else if (phase.contains("Pause Full")) {
-            aggregatedPhase = "Full collection";
+            aggregatedPhase = FULL_COLLECTION;
             genuineCollection = true;
         } else if (phase.startsWith("(G1") || phase.startsWith("(GC") || phase.startsWith("(Meta")) {
             if (phase.contains("(mixed)")) {
-                aggregatedPhase = "Mixed collection";
+                aggregatedPhase = MIXED_COLLECTION;
                 genuineCollection = true;
             } else if (phase.endsWith("(young)") && !phase.contains("G1 Humongous Allocation")) {
-                aggregatedPhase = "Young collection";
+                aggregatedPhase = YOUNG_COLLECTION;
                 genuineCollection = true;
             } else {
                 aggregatedPhase = "Young collection - piggybacks";
             }
         } else if (phase.contains("Full")) {
-            aggregatedPhase = "Full collection";
+            aggregatedPhase = FULL_COLLECTION;
             genuineCollection = true;
         } else {
             aggregatedPhase = phase;
@@ -180,12 +183,15 @@ public class GCLogCycleEntry {
 
     void addSurvivorStats(long desiredSize, long newThreshold, long maxThreshold) {
         this.desiredSurvivorSize = desiredSize;
-        ;
         this.newTenuringThreshold = newThreshold;
         this.maxTenuringThreshold = maxThreshold;
     }
 
     void addTime(BigDecimal phaseTime) {
         this.timeMs = phaseTime;
+    }
+
+    boolean isMixed() {
+        return MIXED_COLLECTION.equals(aggregatedPhase);
     }
 }
