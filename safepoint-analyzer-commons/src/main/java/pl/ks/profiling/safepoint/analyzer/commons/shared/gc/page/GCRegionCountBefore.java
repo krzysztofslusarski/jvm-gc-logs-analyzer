@@ -22,9 +22,9 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import pl.ks.profiling.gui.commons.Chart;
 import pl.ks.profiling.gui.commons.Page;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.report.JvmLogFile;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.PageCreator;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.parser.GCLogCycleEntry;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.report.JvmLogFile;
 
 public class GCRegionCountBefore implements PageCreator {
     @Override
@@ -40,7 +40,7 @@ public class GCRegionCountBefore implements PageCreator {
                 .pageContents(
                         jvmLogFile.getGcLogFile().getStats().getGcAggregatedPhases().stream()
                                 .map(phase -> Chart.builder()
-                                        .chartType(Chart.ChartType.LINE)
+                                        .chartType(Chart.ChartType.POINTS)
                                         .title(phase)
                                         .data(getChart(phase, jvmLogFile))
                                         .xAxisLabel("Seconds since application start when collection happened")

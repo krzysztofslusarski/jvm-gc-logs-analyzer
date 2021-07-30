@@ -15,6 +15,34 @@
  */
 package pl.ks.profiling.safepoint.analyzer.standalone;
 
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.EventQueue;
+import java.awt.event.ActionEvent;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.text.DecimalFormat;
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JFileChooser;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.SwingWorker;
+import javax.swing.UIManager;
+import javax.swing.UnsupportedLookAndFeelException;
+import javax.swing.border.EmptyBorder;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,22 +56,6 @@ import pl.ks.profiling.safepoint.analyzer.commons.shared.ParserUtils;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.ParsingProgress;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.StatsService;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.report.JvmLogFile;
-
-import javax.swing.*;
-import javax.swing.border.EmptyBorder;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.text.DecimalFormat;
-import java.util.Arrays;
-import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.function.Consumer;
-import java.util.function.Function;
 
 @Slf4j
 @SpringBootApplication
@@ -63,6 +75,7 @@ public class AnalyzerStandaloneApplication extends JFrame {
     private JButton loadOldButton;
     private JLabel parsingProgressLabel;
     private final DecimalFormat TWO_DECIMAL_DIGITS_FORMAT = new DecimalFormat("##.#");
+    private File lastDir;
 
     public AnalyzerStandaloneApplication() {
     }
@@ -206,11 +219,12 @@ public class AnalyzerStandaloneApplication extends JFrame {
     }
 
     private List<File> selectFilesForProcessing() {
-        JFileChooser fileChooser = new JFileChooser();
+        JFileChooser fileChooser = new JFileChooser(lastDir);
         fileChooser.setDialogTitle("Select files with logs");
         fileChooser.setMultiSelectionEnabled(true);
         int ret = fileChooser.showOpenDialog(null);
         if (ret == JFileChooser.APPROVE_OPTION) {
+            lastDir = fileChooser.getCurrentDirectory();
             return Arrays.asList(fileChooser.getSelectedFiles());
         } else {
             return null;
