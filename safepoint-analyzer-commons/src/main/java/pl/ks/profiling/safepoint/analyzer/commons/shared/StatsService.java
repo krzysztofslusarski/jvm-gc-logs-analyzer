@@ -36,6 +36,7 @@ import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.page.GCConcurrentMix
 import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.page.GCHeapAfter;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.page.GCHeapBefore;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.page.GCHeapBeforeAfter;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.page.GCPhaseCount;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.page.GCPhaseTime;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.page.GCRegionCountAfter;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.page.GCRegionCountBefore;
@@ -307,6 +308,7 @@ public class StatsService {
                 new GCTableStats(),
                 new GCSubphaseStats(),
                 new GCPhaseTime(),
+                new GCPhaseCount(),
                 new GCRegionCountBefore(),
                 new GCRegionCountAfter(),
                 new GCRegionMax(),

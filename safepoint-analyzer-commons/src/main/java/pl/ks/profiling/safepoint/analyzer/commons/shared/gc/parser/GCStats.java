@@ -16,6 +16,7 @@
 package pl.ks.profiling.safepoint.analyzer.commons.shared.gc.parser;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -40,4 +41,5 @@ public class GCStats {
     private OneFiledAllStats allHumongousStats;
     private List<GCToSpaceStats> toSpaceStats;
     private List<Long> fullGcSequenceIds;
+    private Map<String, Long> reasonCount;
 }

@@ -25,10 +25,10 @@ import java.util.stream.IntStream;
 import pl.ks.profiling.gui.commons.Page;
 import pl.ks.profiling.gui.commons.PageContent;
 import pl.ks.profiling.gui.commons.Table;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.report.JvmLogFile;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.OneFiledAllStats;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.PageCreator;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.parser.GCStats;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.report.JvmLogFile;
 
 public class GCTableStats implements PageCreator {
     @Override
@@ -112,6 +112,21 @@ public class GCTableStats implements PageCreator {
                         .collect(Collectors.toList())
                 )
                 .build());
+        if (gcStats.getReasonCount() != null) {
+            pageContents.add(Table.builder()
+                    .header(List.of("Reason", "Count"))
+                    .title("GC start reason")
+                    .info("Table presents statistics about the reason of starting the collection.")
+                    .table(gcStats.getReasonCount().entrySet().stream()
+                            .map(stat -> List.of(
+                                    stat.getKey(),
+                                    stat.getValue() + ""
+                            ))
+                            .collect(Collectors.toList())
+                    )
+                    .build());
+        }
+
         if (gcStats.getGcConcurrentCycleStats().size() > 0) {
             pageContents.add(Table.builder()
                     .header(List.of("Concurrent phase name", "Count", "Per. 50", "Per. 75", "Per. 90", "Per. 95", "Per. 99", "Per. 99.9", "Per. 100", "Average", "Total"))

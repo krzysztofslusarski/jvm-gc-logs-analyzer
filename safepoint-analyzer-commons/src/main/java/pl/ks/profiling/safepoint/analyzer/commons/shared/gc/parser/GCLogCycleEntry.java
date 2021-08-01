@@ -32,6 +32,7 @@ public class GCLogCycleEntry {
     private BigDecimal timeStamp;
     private String phase;
     private String aggregatedPhase;
+    private String cause;
 
     private int heapBeforeGCMb;
     private int heapAfterGCMb;
@@ -133,6 +134,16 @@ public class GCLogCycleEntry {
             genuineCollection = true;
         } else {
             aggregatedPhase = phase;
+        }
+
+        fillCause();
+    }
+
+    private void fillCause() {
+        int start = phase.lastIndexOf('(');
+        int end = phase.lastIndexOf(')');
+        if (start >= 0 && end >= 0) {
+            cause = phase.substring(start + 1, end);
         }
     }
 

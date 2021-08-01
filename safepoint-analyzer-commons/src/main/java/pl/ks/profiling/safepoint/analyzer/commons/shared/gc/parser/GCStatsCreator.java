@@ -29,26 +29,28 @@ import java.util.OptionalDouble;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import org.apache.commons.collections4.MapUtils;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.OneFiledAllStats;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.OneFiledAllStatsUtil;
 
 public class GCStatsCreator {
-    public static GCStats createStats(GCLogFile GCLogFile) {
+    public static GCStats createStats(GCLogFile gcLogFile) {
         GCStats gcStats = new GCStats();
-        generateAgingStats(GCLogFile, gcStats);
-        generateAgingSummary(GCLogFile, gcStats);
+        generateAgingStats(gcLogFile, gcStats);
+        generateAgingSummary(gcLogFile, gcStats);
+        generateCauseCounts(gcLogFile, gcStats);
 
-        gcStats.setGcRegions(GCLogFile.getCycleEntries().stream()
+        gcStats.setGcRegions(gcLogFile.getCycleEntries().stream()
                 .flatMap(GCLogCycleEntry -> GCLogCycleEntry.getRegionsBeforeGC().keySet().stream())
                 .collect(Collectors.toSet()));
-        gcStats.setGcPhases(GCLogFile.getCycleEntries().stream()
+        gcStats.setGcPhases(gcLogFile.getCycleEntries().stream()
                 .map(GCLogCycleEntry::getPhase)
                 .collect(Collectors.toSet()));
-        gcStats.setGcAggregatedPhases(GCLogFile.getCycleEntries().stream()
+        gcStats.setGcAggregatedPhases(gcLogFile.getCycleEntries().stream()
                 .map(GCLogCycleEntry::getAggregatedPhase)
                 .collect(Collectors.toSet()));
         Map<String, Set<String>> subPhasesMap = new LinkedHashMap<>();
-        for (GCLogCycleEntry GCLogCycleEntry : GCLogFile.getCycleEntries()) {
+        for (GCLogCycleEntry GCLogCycleEntry : gcLogFile.getCycleEntries()) {
             Set<String> currentParentSet = null;
             for (String phaseName : GCLogCycleEntry.getSubPhasesTime().keySet()) {
                 if (phaseName.startsWith("--") && currentParentSet != null) {
@@ -67,13 +69,23 @@ public class GCStatsCreator {
 
         gcStats.setSubPhases(subPhases);
 
-        generatePhaseStats(GCLogFile, gcStats);
-        generateAggregatedPhaseStats(GCLogFile, gcStats);
-        generateConcurrentCycleStats(GCLogFile, gcStats);
-        generateHumongousStats(GCLogFile, gcStats);
-        generateToSpaceStats(GCLogFile, gcStats);
-        generateFullGcStats(GCLogFile, gcStats);
+        generatePhaseStats(gcLogFile, gcStats);
+        generateAggregatedPhaseStats(gcLogFile, gcStats);
+        generateConcurrentCycleStats(gcLogFile, gcStats);
+        generateHumongousStats(gcLogFile, gcStats);
+        generateToSpaceStats(gcLogFile, gcStats);
+        generateFullGcStats(gcLogFile, gcStats);
         return gcStats;
+    }
+
+    private static void generateCauseCounts(GCLogFile gcLogFile, GCStats gcStats) {
+        Map<String, Long> map = gcLogFile.getCycleEntries().stream()
+                .map(GCLogCycleEntry::getCause)
+                .filter(Objects::nonNull)
+                .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
+        if (MapUtils.isNotEmpty(map)) {
+            gcStats.setReasonCount(map);
+        }
     }
 
     private static void generateFullGcStats(GCLogFile gcLogFile, GCStats gcStats) {
