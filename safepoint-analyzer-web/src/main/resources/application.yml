@@ -18,7 +18,7 @@ server:
     mime-types: text/html, text/xml, text/plain, text/css, text/javascript, application/javascript, application/json, application/hal+json
     min-response-size: 1024
 
-safepoint.files.dir: ${UPLOAD_DIR:/uploads}
+safepoint.files.dir: ${UPLOAD_DIR:/${java.io.tmpdir}}
 
 parsing:
   results:
