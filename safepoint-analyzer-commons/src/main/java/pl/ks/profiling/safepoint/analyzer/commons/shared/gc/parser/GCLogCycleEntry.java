@@ -28,6 +28,9 @@ public class GCLogCycleEntry {
     public static final String MIXED_COLLECTION = "Mixed collection";
     public static final String FULL_COLLECTION = "Full collection";
     public static final String YOUNG_COLLECTION = "Young collection";
+
+    public static final String REMARK_COLLECTION = "remark";
+
     private long sequenceId;
     private BigDecimal timeStamp;
     private String phase;
@@ -204,5 +207,9 @@ public class GCLogCycleEntry {
 
     boolean isMixed() {
         return MIXED_COLLECTION.equals(aggregatedPhase);
+    }
+
+    boolean isRemark() {
+        return phase.toLowerCase().contains(REMARK_COLLECTION);
     }
 }

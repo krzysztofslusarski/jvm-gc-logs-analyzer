@@ -16,8 +16,10 @@
 package pl.ks.profiling.safepoint.analyzer.commons.shared.gc.parser;
 
 import java.math.BigDecimal;
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.Setter;
 
 @Getter
 @AllArgsConstructor
@@ -25,6 +27,8 @@ public class GCLogConcurrentCycleEntry {
     private long sequenceId;
     private BigDecimal time;
     private int mixedCollectionsAfterConcurrent;
+    @Setter(AccessLevel.PACKAGE)
+    private int remarkReclaimed;
 
     public String getPhase() {
         return "Concurrent Mark";

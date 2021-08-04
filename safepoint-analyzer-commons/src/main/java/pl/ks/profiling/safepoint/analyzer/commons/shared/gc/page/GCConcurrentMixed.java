@@ -30,21 +30,71 @@ public class GCConcurrentMixed implements PageCreator {
             return null;
         }
         return Page.builder()
-                .menuName("Mixed after the concurrent phase")
-                .fullName("Mixed after the concurrent phase")
-                .info("Chart presents number of mixed collections after ending the concurrent phase")
+                .menuName("Concurrent phase efficiency")
+                .fullName("Concurrent phase efficiency")
                 .icon(Page.Icon.CHART)
                 .pageContents(List.of(
                         Chart.builder()
                                 .chartType(Chart.ChartType.POINTS)
+                                .info("Chart presents number of mixed collections after ending the concurrent phase")
                                 .yAxisLabel("Mixed collections")
-                                .data(getChart(jvmLogFile))
-                                .build())
+                                .data(getMixedCollectionCountChart(jvmLogFile))
+                                .build(),
+                        Chart.builder()
+                                .chartType(Chart.ChartType.POINTS)
+                                .info("Chart presents space reclaimed by Remark phase")
+                                .yAxisLabel("Reclaimed space")
+                                .data(getRemarkReclaimedChart(jvmLogFile))
+                                .build(),
+                        Chart.builder()
+                                .chartType(Chart.ChartType.LINE)
+                                .info("Count of wasted concurrent cycles")
+                                .data(getWastedCyclesChart(jvmLogFile))
+                                .build()
+                        )
                 )
                 .build();
     }
 
-    private static Object[][] getChart(JvmLogFile jvmLogFile) {
+    private static Object[][] getWastedCyclesChart(JvmLogFile jvmLogFile) {
+        List<GCLogConcurrentCycleEntry> cycles = jvmLogFile.getGcLogFile().getConcurrentCycleEntries();
+
+        Object[][] stats = new Object[cycles.size() + 1][2];
+        stats[0][0] = "GC sequence";
+        stats[0][1] = "Wasted cycles";
+
+        int j = 1;
+        int count = 0;
+        for (GCLogConcurrentCycleEntry cycle : cycles) {
+            if (cycle.getMixedCollectionsAfterConcurrent() == 0 && cycle.getRemarkReclaimed() == 0) {
+                count++;
+            }
+            stats[j][0] = cycle.getSequenceId();
+            stats[j][1] = count;
+            j++;
+        }
+
+        return stats;
+    }
+
+    private static Object[][] getRemarkReclaimedChart(JvmLogFile jvmLogFile) {
+        List<GCLogConcurrentCycleEntry> cycles = jvmLogFile.getGcLogFile().getConcurrentCycleEntries();
+
+        Object[][] stats = new Object[cycles.size() + 1][2];
+        stats[0][0] = "GC sequence";
+        stats[0][1] = "Remark reclaimed";
+
+        int j = 1;
+        for (GCLogConcurrentCycleEntry cycle : cycles) {
+            stats[j][0] = cycle.getSequenceId();
+            stats[j][1] = cycle.getRemarkReclaimed();
+            j++;
+        }
+
+        return stats;
+    }
+
+    private static Object[][] getMixedCollectionCountChart(JvmLogFile jvmLogFile) {
         List<GCLogConcurrentCycleEntry> cycles = jvmLogFile.getGcLogFile().getConcurrentCycleEntries();
 
         Object[][] stats = new Object[cycles.size() + 1][2];

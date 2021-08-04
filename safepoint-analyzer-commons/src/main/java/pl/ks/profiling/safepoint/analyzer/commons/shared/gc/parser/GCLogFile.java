@@ -62,6 +62,9 @@ public class GCLogFile {
             return;
         }
         gcLogCycleEntry.addSizes(heapBeforeGC, heapAfterGC, heapSize);
+        if (gcLogCycleEntry.isRemark() && lastConcurrentCycle != null) {
+            lastConcurrentCycle.setRemarkReclaimed(heapBeforeGC - heapAfterGC);
+        }
     }
 
     void finishCycle(Long sequenceId) {
@@ -79,6 +82,9 @@ public class GCLogFile {
         }
         cycleEntries.add(gcLogCycleEntry);
         gcLogCycleEntry.addSizesAndTime(heapBeforeGC, heapAfterGC, heapSize, phaseTime);
+        if (gcLogCycleEntry.isRemark() && lastConcurrentCycle != null) {
+            lastConcurrentCycle.setRemarkReclaimed(heapBeforeGC - heapAfterGC);
+        }
     }
 
     void addTime(Long sequenceId, BigDecimal phaseTime) {
@@ -138,7 +144,7 @@ public class GCLogFile {
     }
 
     void newConcurrentCycle(Long sequenceId, BigDecimal time) {
-        lastConcurrentCycle = new GCLogConcurrentCycleEntry(sequenceId, time, 0);
+        lastConcurrentCycle = new GCLogConcurrentCycleEntry(sequenceId, time, 0, 0);
         concurrentCycleEntries.add(lastConcurrentCycle);
     }
 
