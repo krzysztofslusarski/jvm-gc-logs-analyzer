@@ -155,7 +155,9 @@ public class GCLogCycleEntry {
     }
 
     void addSubPhaseTime(String phase, BigDecimal time) {
-        subPhasesTime.put(phase, time);
+        BigDecimal total = subPhasesTime.getOrDefault(phase, BigDecimal.ZERO);
+        BigDecimal newTotal = total.add(time);
+        subPhasesTime.put(phase, newTotal);
     }
 
     void addSizesAndTime(int heapBeforeGC, int heapAfterGC, int heapSize, BigDecimal time) {
