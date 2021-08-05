@@ -42,6 +42,10 @@ public class GCLogCycleEntry {
     private int heapSizeMb;
     private BigDecimal timeMs;
 
+    public String toString() {
+        return sequenceId + " " + timeStamp + " " + heapBeforeGCMb + " " + heapAfterGCMb + " " + heapSizeMb;
+    }
+
     private Map<String, BigDecimal> subPhasesTime = new LinkedHashMap<>();
 
     private Map<String, Integer> regionsAfterGC = new HashMap<>();
@@ -142,6 +146,16 @@ public class GCLogCycleEntry {
         fillCause();
     }
 
+    GCLogCycleEntry(Long sequenceId, String phase, BigDecimal timeStamp, boolean genuineCollection) {
+        this.sequenceId = sequenceId;
+        this.phase = phase;
+        this.timeStamp = timeStamp;
+        this.aggregatedPhase = phase;
+        this.genuineCollection = genuineCollection;
+
+        fillCause();
+    }
+
     private void fillCause() {
         int start = phase.lastIndexOf('(');
         int end = phase.lastIndexOf(')');
@@ -151,7 +165,9 @@ public class GCLogCycleEntry {
     }
 
     void addSubPhaseTime(String phase, BigDecimal time) {
-        subPhasesTime.put(phase, time);
+        BigDecimal total = subPhasesTime.getOrDefault(phase, BigDecimal.ZERO);
+        BigDecimal newTotal = total.add(time);
+        subPhasesTime.put(phase, newTotal);
     }
 
     void addSizesAndTime(int heapBeforeGC, int heapAfterGC, int heapSize, BigDecimal time) {
@@ -159,6 +175,21 @@ public class GCLogCycleEntry {
         this.heapAfterGCMb = heapAfterGC;
         this.heapSizeMb = heapSize;
         this.timeMs = time;
+    }
+
+    void addHeapBeforeAndAfterGC(int heapBeforeGCMb, int heapAfterGCMb) {
+        this.heapBeforeGCMb = heapBeforeGCMb;
+        this.heapAfterGCMb = heapAfterGCMb;
+    }
+
+    void addHeapCapacityAfterGC(int capacity) {
+        this.heapSizeMb = capacity;
+    }
+
+    void sumUpSubPhaseTimes() {
+        BigDecimal sum = this.subPhasesTime.values().stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+        System.out.println("Total time for (" + sequenceId + ") " + phase + ": " + sum + "ms");
+        this.timeMs = sum;
     }
 
     void addSizes(int heapBeforeGCMb, int heapAfterGCMb, int heapSizeMb) {

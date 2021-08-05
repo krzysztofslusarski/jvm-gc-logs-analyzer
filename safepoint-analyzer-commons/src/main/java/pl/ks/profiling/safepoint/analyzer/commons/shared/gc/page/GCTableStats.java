@@ -17,6 +17,7 @@ package pl.ks.profiling.safepoint.analyzer.commons.shared.gc.page;
 
 import static pl.ks.profiling.gui.commons.PageCreatorHelper.numToString;
 
+import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,6 +28,7 @@ import pl.ks.profiling.gui.commons.PageContent;
 import pl.ks.profiling.gui.commons.Table;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.OneFiledAllStats;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.PageCreator;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.parser.GCPhaseStats;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.parser.GCStats;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.report.JvmLogFile;
 
@@ -91,26 +93,32 @@ public class GCTableStats implements PageCreator {
                     )
                     .build());
         }
+
+        List<List<String>> phaseStats = gcStats.getGcPhaseStats().stream()
+          .map(stat -> List.of(
+            stat.getName(),
+            stat.getCount() + "",
+            numToString(stat.getTime().getPercentile50(), decimalFormat),
+            numToString(stat.getTime().getPercentile75(), decimalFormat),
+            numToString(stat.getTime().getPercentile90(), decimalFormat),
+            numToString(stat.getTime().getPercentile95(), decimalFormat),
+            numToString(stat.getTime().getPercentile99(), decimalFormat),
+            numToString(stat.getTime().getPercentile99and9(), decimalFormat),
+            numToString(stat.getTime().getPercentile100(), decimalFormat),
+            numToString(stat.getTime().getAverage(), decimalFormat),
+            numToString(stat.getTime().getTotal(), decimalFormat)
+          )).collect(Collectors.toCollection(ArrayList::new));
+
+        BigDecimal totalTime = gcStats.getGcPhaseStats().stream().map(s -> s.getTime().getTotal()).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalCount = gcStats.getGcPhaseStats().stream().map(s -> s.getTime().getCount()).reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        phaseStats.add(List.of("Total", totalCount + "", "", "", "", "", "", "", "", "", numToString(totalTime, decimalFormat)));
+
         pageContents.add(Table.builder()
                 .header(List.of("Phase name", "Count", "Per. 50", "Per. 75", "Per. 90", "Per. 95", "Per. 99", "Per. 99.9", "Per. 100", "Average", "Total"))
                 .title("Phase stats - times in ms")
                 .info("Table presents statistics about each Stop-the-world Garbage Collector phase without aggregation.")
-                .table(gcStats.getGcPhaseStats().stream()
-                        .map(stat -> List.of(
-                                stat.getName(),
-                                stat.getCount() + "",
-                                numToString(stat.getTime().getPercentile50(), decimalFormat),
-                                numToString(stat.getTime().getPercentile75(), decimalFormat),
-                                numToString(stat.getTime().getPercentile90(), decimalFormat),
-                                numToString(stat.getTime().getPercentile95(), decimalFormat),
-                                numToString(stat.getTime().getPercentile99(), decimalFormat),
-                                numToString(stat.getTime().getPercentile99and9(), decimalFormat),
-                                numToString(stat.getTime().getPercentile100(), decimalFormat),
-                                numToString(stat.getTime().getAverage(), decimalFormat),
-                                numToString(stat.getTime().getTotal(), decimalFormat)
-                        ))
-                        .collect(Collectors.toList())
-                )
+                .table(phaseStats)
                 .build());
         if (gcStats.getReasonCount() != null) {
             pageContents.add(Table.builder()

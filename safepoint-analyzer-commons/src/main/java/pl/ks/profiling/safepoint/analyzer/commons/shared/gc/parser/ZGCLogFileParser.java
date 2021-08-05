@@ -15,16 +15,17 @@
  */
 package pl.ks.profiling.safepoint.analyzer.commons.shared.gc.parser;
 
+import pl.ks.profiling.safepoint.analyzer.commons.FileParser;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.ParserUtils;
+
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import pl.ks.profiling.safepoint.analyzer.commons.FileParser;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.ParserUtils;
 
-public class GCUnifiedLogFileParser implements FileParser<GCLogFile> {
+public class ZGCLogFileParser implements FileParser<GCLogFile> {
     private final GCLogFile gcLogFile = new GCLogFile();
     private String lastRegion;
 
@@ -74,14 +75,13 @@ public class GCUnifiedLogFileParser implements FileParser<GCLogFile> {
     private final List<GcLineParser> parsers = List.of(
             new GcLineParser(includes("gc,start"), excludes(), this::gcStart),
             new GcLineParser(includes("gc ", "Concurrent Cycle", "ms"), excludes(), this::addConcurrentCycleDataIfPresent),
-            new GcLineParser(includes("gc,phases", "ms", ")   "), excludes(")       ", "Queue Fixup", "Table Fixup"), this::addPhaseYoungAndMixed),
+            new GcLineParser(includes("gc,phases", "ms"), excludes(), this::addSubPhase),
             new GcLineParser(includes("gc,phases", "ms"), excludes(")  "), this::addPhaseConcurrentSTW),
-            new GcLineParser(includes("gc ", "->"), excludes(), this::addSizesAndTime),
+            new GcLineParser(includes("gc ", "->", "%"), excludes(), this::addSizesBeforeAndAfter),
+            new GcLineParser(includes("gc,heap", "Heap after GC invocations"), excludes(), this::addHeapCapacityAfterGC),
             new GcLineParser(includes("regions", "gc,heap", "info"), excludes(), this::addRegionsCounts),
-            new GcLineParser(includes("gc,heap", "trace"), excludes(), this::addRegionsSizes),
+            //new GcLineParser(includes("gc,heap", "trace"), excludes(), this::addRegionsSizes),
             new GcLineParser(includes("gc,humongous", "debug"), excludes(), this::addHumongous),
-            new GcLineParser(includes("- age"), excludes(), this::addAgeCount),
-            new GcLineParser(includes("gc,age", "debug"), excludes(), this::addSurvivorStats),
             new GcLineParser(includes("To-space exhausted"), excludes(), this::toSpaceExhausted)
     );
 
@@ -93,7 +93,7 @@ public class GCUnifiedLogFileParser implements FileParser<GCLogFile> {
         return new ArrayList<>(Arrays.asList(excluded));
     }
 
-    public GCUnifiedLogFileParser() {
+    public ZGCLogFileParser() {
     }
 
     @Override
@@ -122,7 +122,7 @@ public class GCUnifiedLogFileParser implements FileParser<GCLogFile> {
     }
 
     private void gcStart(GCLogFile gcLogFile, Long sequenceId, String line) {
-        gcLogFile.newPhase(sequenceId, getPhase(line), ParserUtils.getTimeStamp(line));
+        gcLogFile.newPhase(sequenceId, getPhase(line), ParserUtils.getTimeStamp(line), true);
     }
 
     private void addConcurrentCycleDataIfPresent(GCLogFile gcLogFile, Long sequenceId, String line) {
@@ -147,46 +147,35 @@ public class GCUnifiedLogFileParser implements FileParser<GCLogFile> {
         gcLogFile.addSubPhaseTime(sequenceId, phase, new BigDecimal(time));
     }
 
-    private void addPhaseYoungAndMixed(GCLogFile gcLogFile, Long sequenceId, String line) {
-        String phase = line.replaceFirst(".*GC\\(\\d+\\)", "").replaceFirst(":.*", "").replace("   ", "").replaceAll("  ", "|______").replace(" (ms)", "");
-        if (line.contains("Max:")) {
-            String time = line.replaceFirst(".*Max:", "").replaceFirst(",.*", "").trim().replace(',', '.');
-            gcLogFile.addSubPhaseTime(sequenceId, phase, new BigDecimal(time));
-        } else if (line.contains("skipped")) {
-            gcLogFile.addSubPhaseTime(sequenceId, phase, BigDecimal.ZERO);
-        } else {
-            String time = line.replaceFirst(".*:", "").replaceFirst("ms", "").trim().replace(',', '.');
-            gcLogFile.addSubPhaseTime(sequenceId, phase, new BigDecimal(time));
-        }
+    private void addSubPhase(GCLogFile gcLogFile, Long sequenceId, String line) {
+        Pattern pattern = Pattern.compile("GC\\(.+\\) (.+) ([^ ]+)ms");
+        Matcher matcher = pattern.matcher(line);
+        matcher.find();
+        String phase = matcher.group(1);
+        String time = matcher.group(2);
+        //System.out.println("Recognized subphase: " + phase + " " + time + "ms");
+        gcLogFile.addSubPhaseTime(sequenceId, phase, new BigDecimal(time));
     }
 
-    private void addSizesAndTime(GCLogFile gcLogFile, Long sequenceId, String line) {
+    private void addSizesBeforeAndAfter(GCLogFile gcLogFile, Long sequenceId, String line) {
         Pattern pattern = Pattern.compile("\\d+M");
         Matcher matcher = pattern.matcher(line);
         matcher.find();
         String before = matcher.group().replace("M", "");
         matcher.find();
         String after = matcher.group().replace("M", "");
-        matcher.find();
-        String heapSize = matcher.group().replace("M", "");
-        pattern = Pattern.compile("\\d+.\\d+ms");
-        matcher = pattern.matcher(line);
-        matcher.find();
-        String time = matcher.group().replace("ms", "").replace(",", ".");
 
-        gcLogFile.addSizesAndTime(sequenceId, Integer.parseInt(before), Integer.parseInt(after), Integer.parseInt(heapSize), new BigDecimal(time));
+        gcLogFile.addHeapBeforeAndAfterGCAndSumUpPhase(sequenceId, Integer.parseInt(before), Integer.parseInt(after));
     }
 
-    private void addSurvivorStats(GCLogFile gcLogFile, Long sequenceId, String line) {
-        int desiredSizePos = line.indexOf("Desired survivor size");
-        int newThresholdPos = line.indexOf("new threshold", desiredSizePos);
-        int maxThresholdPos = line.indexOf("max threshold", newThresholdPos);
+    private void addHeapCapacityAfterGC(GCLogFile gcLogFile, Long sequenceId, String line) {
+        Pattern pattern = Pattern.compile(", capacity (\\d+)M");
+        Matcher matcher = pattern.matcher(line);
+        matcher.find();
+        String capacity = matcher.group(1);
 
-        long desiredSize = ParserUtils.parseFirstNumber(line, desiredSizePos);
-        long newThreshold = ParserUtils.parseFirstNumber(line, newThresholdPos);
-        long maxThreshold = ParserUtils.parseFirstNumber(line, maxThresholdPos);
-
-        gcLogFile.addSurvivorStats(sequenceId, desiredSize, newThreshold, maxThreshold);
+        //System.out.println("Found heap cap: " + capacity);
+        gcLogFile.addHeapCapacityAfterGC(sequenceId, Integer.parseInt(capacity));
     }
 
     private void toSpaceExhausted(GCLogFile gcLogFile, Long sequenceId, String line) {
@@ -244,24 +233,8 @@ public class GCUnifiedLogFileParser implements FileParser<GCLogFile> {
     private String getPhase(String line) {
         String phase = line
                 .replaceFirst(".* GC\\(", "")
-                .replaceFirst(".*\\) Pause", "Pause")
+                .replaceFirst(".*\\) ", "")
                 .trim();
         return phase;
-    }
-
-    private void addAgeCount(GCLogFile gcLogFile, Long sequenceId, String line) {
-        String ageStr = line
-                .replaceFirst(".* - age", "")
-                .replaceFirst(":.*", "")
-                .trim();
-        String sizeStr = line
-                .replaceFirst(".*:", "")
-                .replaceFirst("bytes.*", "")
-                .trim();
-
-        int age = Integer.parseInt(ageStr);
-        long size = Long.parseLong(sizeStr);
-
-        gcLogFile.addAgeWithSize(sequenceId, age, size);
     }
 }

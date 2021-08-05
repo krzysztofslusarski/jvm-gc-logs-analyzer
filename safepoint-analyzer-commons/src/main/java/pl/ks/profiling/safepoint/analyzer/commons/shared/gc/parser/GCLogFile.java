@@ -41,7 +41,17 @@ public class GCLogFile {
     }
 
     void newPhase(Long sequenceId, String phase, BigDecimal timeStamp) {
+        //System.out.println("New phase: " + phase + " " + sequenceId);
         GCLogCycleEntry cycle = new GCLogCycleEntry(sequenceId, phase, timeStamp);
+        unprocessedCycles.put(sequenceId, cycle);
+        if (cycle.isMixed() && lastConcurrentCycle != null) {
+            lastConcurrentCycle.nextMixedCollection();
+        }
+    }
+
+    void newPhase(Long sequenceId, String phase, BigDecimal timeStamp, boolean genuineCollection) {
+        //System.out.println("New phase: " + phase + " " + sequenceId);
+        GCLogCycleEntry cycle = new GCLogCycleEntry(sequenceId, phase, timeStamp, genuineCollection);
         unprocessedCycles.put(sequenceId, cycle);
         if (cycle.isMixed() && lastConcurrentCycle != null) {
             lastConcurrentCycle.nextMixedCollection();
@@ -54,6 +64,29 @@ public class GCLogFile {
             return;
         }
         gcLogCycleEntry.addSubPhaseTime(phase, time);
+    }
+
+    void addHeapBeforeAndAfterGCAndSumUpPhase(Long sequenceId, int heapBeforeGCMb, int heapAfterGCMb) {
+        GCLogCycleEntry gcLogCycleEntry = unprocessedCycles.get(sequenceId);
+        if (gcLogCycleEntry == null) {
+            System.err.println("Unknown sequenceId " + sequenceId);
+            return;
+        }
+
+        gcLogCycleEntry.addHeapBeforeAndAfterGC(heapBeforeGCMb, heapAfterGCMb);
+        gcLogCycleEntry.sumUpSubPhaseTimes();
+        cycleEntries.add(gcLogCycleEntry);
+    }
+
+
+    void addHeapCapacityAfterGC(Long sequenceId, int capacity) {
+        GCLogCycleEntry gcLogCycleEntry = unprocessedCycles.get(sequenceId);
+        if (gcLogCycleEntry == null) {
+            System.err.println("Unknown sequenceId " + sequenceId);
+            return;
+        }
+
+        gcLogCycleEntry.addHeapCapacityAfterGC(capacity);
     }
 
     void addSizes(Long sequenceId, int heapBeforeGC, int heapAfterGC, int heapSize) {
@@ -82,6 +115,7 @@ public class GCLogFile {
         }
         cycleEntries.add(gcLogCycleEntry);
         gcLogCycleEntry.addSizesAndTime(heapBeforeGC, heapAfterGC, heapSize, phaseTime);
+        System.out.println("Added " + gcLogCycleEntry);
         if (gcLogCycleEntry.isRemark() && lastConcurrentCycle != null) {
             lastConcurrentCycle.setRemarkReclaimed(heapBeforeGC - heapAfterGC);
         }
