@@ -122,7 +122,7 @@ public class ZGCLogFileParser implements FileParser<GCLogFile> {
     }
 
     private void gcStart(GCLogFile gcLogFile, Long sequenceId, String line) {
-        gcLogFile.newPhase(sequenceId, getPhase(line), ParserUtils.getTimeStamp(line));
+        gcLogFile.newPhase(sequenceId, getPhase(line), ParserUtils.getTimeStamp(line), true);
     }
 
     private void addConcurrentCycleDataIfPresent(GCLogFile gcLogFile, Long sequenceId, String line) {

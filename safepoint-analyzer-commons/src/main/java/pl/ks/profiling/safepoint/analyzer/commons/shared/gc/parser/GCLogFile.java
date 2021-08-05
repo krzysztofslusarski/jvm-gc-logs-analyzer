@@ -49,6 +49,15 @@ public class GCLogFile {
         }
     }
 
+    void newPhase(Long sequenceId, String phase, BigDecimal timeStamp, boolean genuineCollection) {
+        //System.out.println("New phase: " + phase + " " + sequenceId);
+        GCLogCycleEntry cycle = new GCLogCycleEntry(sequenceId, phase, timeStamp, genuineCollection);
+        unprocessedCycles.put(sequenceId, cycle);
+        if (cycle.isMixed() && lastConcurrentCycle != null) {
+            lastConcurrentCycle.nextMixedCollection();
+        }
+    }
+
     void addSubPhaseTime(Long sequenceId, String phase, BigDecimal time) {
         GCLogCycleEntry gcLogCycleEntry = unprocessedCycles.get(sequenceId);
         if (gcLogCycleEntry == null) {

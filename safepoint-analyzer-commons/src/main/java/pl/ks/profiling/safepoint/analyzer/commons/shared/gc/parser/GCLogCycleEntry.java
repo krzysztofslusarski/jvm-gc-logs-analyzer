@@ -146,6 +146,16 @@ public class GCLogCycleEntry {
         fillCause();
     }
 
+    GCLogCycleEntry(Long sequenceId, String phase, BigDecimal timeStamp, boolean genuineCollection) {
+        this.sequenceId = sequenceId;
+        this.phase = phase;
+        this.timeStamp = timeStamp;
+        this.aggregatedPhase = phase;
+        this.genuineCollection = genuineCollection;
+
+        fillCause();
+    }
+
     private void fillCause() {
         int start = phase.lastIndexOf('(');
         int end = phase.lastIndexOf(')');
