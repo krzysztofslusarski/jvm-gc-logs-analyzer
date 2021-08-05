@@ -41,7 +41,7 @@ public class GCLogFile {
     }
 
     void newPhase(Long sequenceId, String phase, BigDecimal timeStamp) {
-        System.out.println("New phase: " + phase + " " + sequenceId);
+        //System.out.println("New phase: " + phase + " " + sequenceId);
         GCLogCycleEntry cycle = new GCLogCycleEntry(sequenceId, phase, timeStamp);
         unprocessedCycles.put(sequenceId, cycle);
         if (cycle.isMixed() && lastConcurrentCycle != null) {

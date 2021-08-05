@@ -176,7 +176,7 @@ public class GCLogCycleEntry {
 
     void sumUpSubPhaseTimes() {
         BigDecimal sum = this.subPhasesTime.values().stream().reduce(BigDecimal.ZERO, BigDecimal::add);
-        System.out.println("Total time for (" + sequenceId + "): " + sum + "ms");
+        System.out.println("Total time for (" + sequenceId + ") " + phase + ": " + sum + "ms");
         this.timeMs = sum;
     }
 

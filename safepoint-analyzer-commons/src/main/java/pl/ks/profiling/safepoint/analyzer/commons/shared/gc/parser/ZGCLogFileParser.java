@@ -80,7 +80,7 @@ public class ZGCLogFileParser implements FileParser<GCLogFile> {
             new GcLineParser(includes("gc ", "->", "%"), excludes(), this::addSizesBeforeAndAfter),
             new GcLineParser(includes("gc,heap", "Heap after GC invocations"), excludes(), this::addHeapCapacityAfterGC),
             new GcLineParser(includes("regions", "gc,heap", "info"), excludes(), this::addRegionsCounts),
-            new GcLineParser(includes("gc,heap", "trace"), excludes(), this::addRegionsSizes),
+            //new GcLineParser(includes("gc,heap", "trace"), excludes(), this::addRegionsSizes),
             new GcLineParser(includes("gc,humongous", "debug"), excludes(), this::addHumongous),
             new GcLineParser(includes("To-space exhausted"), excludes(), this::toSpaceExhausted)
     );
