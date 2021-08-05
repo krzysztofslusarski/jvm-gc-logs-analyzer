@@ -28,6 +28,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import pl.ks.profiling.gui.commons.Page;
 import pl.ks.profiling.io.source.LogSourceSubfile;
 import pl.ks.profiling.io.source.LogsSource;
+import pl.ks.profiling.safepoint.analyzer.commons.FileParser;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.classloader.page.ClassCount;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.classloader.parser.ClassLoaderLogFileParser;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.page.GCAllocationRate;
@@ -46,7 +47,9 @@ import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.page.GCSubphaseStats
 import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.page.GCSurvivorAndTenuring;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.page.GCTableStats;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.parser.GCJdk8LogFileParser;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.parser.GCLogFile;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.parser.GCUnifiedLogFileParser;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.parser.ZGCLogFileParser;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.jit.page.JitCodeCacheStats;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.jit.page.JitCodeCacheSweeperActivity;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.jit.page.JitCompilationCount;
@@ -143,7 +146,7 @@ public class StatsService {
     public JvmLogFile createAllStatsUnifiedLogger(LogsSource ls, Consumer<ParsingProgress> notificationConsumer, Consumer<JvmLogFile> onComplete) {
         try (LogsSource logsSource = ls) {
             SafepointUnifiedLogFileParser safepointUnifiedLogFileParser = new SafepointUnifiedLogFileParser();
-            GCUnifiedLogFileParser gcUnifiedLogFileParser = new GCUnifiedLogFileParser();
+            FileParser<GCLogFile> gcUnifiedLogFileParser = new GCUnifiedLogFileParser();
             ThreadLogFileParser threadLogFileParser = new ThreadLogFileParser();
             ClassLoaderLogFileParser classLoaderLogFileParser = new ClassLoaderLogFileParser();
             JitLogFileParser jitLogFileParser = new JitLogFileParser();
@@ -153,6 +156,12 @@ public class StatsService {
 
             String line = logsSource.readLine();
             while (line != null) {
+
+                if (line.contains("Using The Z Garbage Collector")) {
+                    System.out.println("Switching to ZGCLogFileParser");
+                    gcUnifiedLogFileParser = new ZGCLogFileParser();
+                }
+
                 safepointUnifiedLogFileParser.parseLine(line);
                 gcUnifiedLogFileParser.parseLine(line);
                 threadLogFileParser.parseLine(line);
