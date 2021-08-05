@@ -76,7 +76,7 @@ public class GCUnifiedLogFileParser implements FileParser<GCLogFile> {
             new GcLineParser(includes("gc ", "Concurrent Cycle", "ms"), excludes(), this::addConcurrentCycleDataIfPresent),
             new GcLineParser(includes("gc,phases", "ms", ")   "), excludes(")       ", "Queue Fixup", "Table Fixup"), this::addPhaseYoungAndMixed),
             new GcLineParser(includes("gc,phases", "ms"), excludes(")  "), this::addPhaseConcurrentSTW),
-            new GcLineParser(includes("gc ", "->"), excludes("%"), this::addSizesAndTime),
+            new GcLineParser(includes("gc ", "->"), excludes(), this::addSizesAndTime),
             new GcLineParser(includes("regions", "gc,heap", "info"), excludes(), this::addRegionsCounts),
             new GcLineParser(includes("gc,heap", "trace"), excludes(), this::addRegionsSizes),
             new GcLineParser(includes("gc,humongous", "debug"), excludes(), this::addHumongous),
@@ -149,7 +149,6 @@ public class GCUnifiedLogFileParser implements FileParser<GCLogFile> {
 
     private void addPhaseYoungAndMixed(GCLogFile gcLogFile, Long sequenceId, String line) {
         String phase = line.replaceFirst(".*GC\\(\\d+\\)", "").replaceFirst(":.*", "").replace("   ", "").replaceAll("  ", "|______").replace(" (ms)", "");
-        System.out.println("Recognized subphase: " + phase);
         if (line.contains("Max:")) {
             String time = line.replaceFirst(".*Max:", "").replaceFirst(",.*", "").trim().replace(',', '.');
             gcLogFile.addSubPhaseTime(sequenceId, phase, new BigDecimal(time));
@@ -245,7 +244,7 @@ public class GCUnifiedLogFileParser implements FileParser<GCLogFile> {
     private String getPhase(String line) {
         String phase = line
                 .replaceFirst(".* GC\\(", "")
-                .replaceFirst(".*\\) ", "")
+                .replaceFirst(".*\\) Pause", "Pause")
                 .trim();
         return phase;
     }
