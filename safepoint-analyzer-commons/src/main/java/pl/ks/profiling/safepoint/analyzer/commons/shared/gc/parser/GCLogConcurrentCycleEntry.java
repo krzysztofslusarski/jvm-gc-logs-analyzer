@@ -37,4 +37,8 @@ public class GCLogConcurrentCycleEntry {
     void nextMixedCollection() {
         mixedCollectionsAfterConcurrent++;
     }
+
+    public boolean isWasted() {
+        return getMixedCollectionsAfterConcurrent() == 0 && getRemarkReclaimed() == 0;
+    }
 }

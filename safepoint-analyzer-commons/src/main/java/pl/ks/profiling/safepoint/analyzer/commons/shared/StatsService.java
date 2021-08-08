@@ -32,7 +32,7 @@ import pl.ks.profiling.safepoint.analyzer.commons.shared.classloader.page.ClassC
 import pl.ks.profiling.safepoint.analyzer.commons.shared.classloader.parser.ClassLoaderLogFileParser;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.page.GCAllocationRate;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.page.GCAllocationRateInTime;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.page.GCConcurrentMixed;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.page.GCConcurrentEfficiency;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.page.GCHeapAfter;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.page.GCHeapBefore;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.page.GCHeapBeforeAfter;
@@ -319,7 +319,7 @@ public class StatsService {
                 new GCSurvivorAndTenuring(),
                 new GCAllocationRate(),
                 new GCAllocationRateInTime(new BigDecimal(10)),
-                new GCConcurrentMixed()
+                new GCConcurrentEfficiency()
         );
 
         for (PageCreator safepointPageCreator : gcPageCreators) {

@@ -23,7 +23,7 @@ import pl.ks.profiling.safepoint.analyzer.commons.shared.PageCreator;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.parser.GCLogConcurrentCycleEntry;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.report.JvmLogFile;
 
-public class GCConcurrentMixed implements PageCreator {
+public class GCConcurrentEfficiency implements PageCreator {
     @Override
     public Page create(JvmLogFile jvmLogFile, DecimalFormat decimalFormat) {
         if (jvmLogFile.getGcLogFile().getConcurrentCycleEntries().isEmpty()) {
@@ -66,7 +66,7 @@ public class GCConcurrentMixed implements PageCreator {
         int j = 1;
         int count = 0;
         for (GCLogConcurrentCycleEntry cycle : cycles) {
-            if (cycle.getMixedCollectionsAfterConcurrent() == 0 && cycle.getRemarkReclaimed() == 0) {
+            if (cycle.isWasted()) {
                 count++;
             }
             stats[j][0] = cycle.getSequenceId();

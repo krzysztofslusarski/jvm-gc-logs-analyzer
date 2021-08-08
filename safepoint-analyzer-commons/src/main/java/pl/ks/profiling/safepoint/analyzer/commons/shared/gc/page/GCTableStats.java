@@ -17,6 +17,8 @@ package pl.ks.profiling.safepoint.analyzer.commons.shared.gc.page;
 
 import static pl.ks.profiling.gui.commons.PageCreatorHelper.numToString;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,6 +29,7 @@ import pl.ks.profiling.gui.commons.PageContent;
 import pl.ks.profiling.gui.commons.Table;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.OneFiledAllStats;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.PageCreator;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.parser.GCLogConcurrentCycleEntry;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.parser.GCStats;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.report.JvmLogFile;
 
@@ -128,14 +131,19 @@ public class GCTableStats implements PageCreator {
         }
 
         if (gcStats.getGcConcurrentCycleStats().size() > 0) {
+            long wasted = jvmLogFile.getGcLogFile().getConcurrentCycleEntries().stream()
+                    .filter(GCLogConcurrentCycleEntry::isWasted)
+                    .count();
             pageContents.add(Table.builder()
-                    .header(List.of("Concurrent phase name", "Count", "Per. 50", "Per. 75", "Per. 90", "Per. 95", "Per. 99", "Per. 99.9", "Per. 100", "Average", "Total"))
+                    .header(List.of("Concurrent phase name", "Count", "Wasted", "Wasted %", "Per. 50", "Per. 75", "Per. 90", "Per. 95", "Per. 99", "Per. 99.9", "Per. 100", "Average", "Total"))
                     .title("Concurrent stats - times in ms")
                     .info("Table presents statistics about Concurrent Cycle of Garbage Collector.")
                     .table(gcStats.getGcConcurrentCycleStats().stream()
                             .map(stat -> List.of(
                                     stat.getName(),
                                     stat.getCount() + "",
+                                    wasted + "",
+                                    numToString(new BigDecimal(wasted).multiply(new BigDecimal(100)).divide(new BigDecimal(stat.getCount()), 2, RoundingMode.HALF_EVEN), decimalFormat),
                                     numToString(stat.getTime().getPercentile50(), decimalFormat),
                                     numToString(stat.getTime().getPercentile75(), decimalFormat),
                                     numToString(stat.getTime().getPercentile90(), decimalFormat),
