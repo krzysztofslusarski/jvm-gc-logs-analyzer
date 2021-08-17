@@ -36,18 +36,21 @@ public class GCConcurrentEfficiency implements PageCreator {
                 .pageContents(List.of(
                         Chart.builder()
                                 .chartType(Chart.ChartType.POINTS)
+                                .title("Mixed collections count after concurrent mark")
                                 .info("Chart presents number of mixed collections after ending the concurrent phase")
                                 .yAxisLabel("Mixed collections")
                                 .data(getMixedCollectionCountChart(jvmLogFile))
                                 .build(),
                         Chart.builder()
                                 .chartType(Chart.ChartType.POINTS)
+                                .title("Space reclaimed by remark phase")
                                 .info("Chart presents space reclaimed by Remark phase")
                                 .yAxisLabel("Reclaimed space")
                                 .data(getRemarkReclaimedChart(jvmLogFile))
                                 .build(),
                         Chart.builder()
                                 .chartType(Chart.ChartType.LINE)
+                                .title("Wasted concurrent cycles")
                                 .info("Count of wasted concurrent cycles")
                                 .data(getWastedCyclesChart(jvmLogFile))
                                 .build()
