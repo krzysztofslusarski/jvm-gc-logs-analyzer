@@ -29,7 +29,7 @@
         <java.version>11</java.version>
         <commons-math3.version>3.2</commons-math3.version>
         <poi.version>4.1.0</poi.version>
-        <commons-compress.version>1.20</commons-compress.version>
+        <commons-compress.version>1.21</commons-compress.version>
         <xz.version>1.8</xz.version>
         <commons-collections4.version>4.1</commons-collections4.version>
         <xchart.version>3.6.0</xchart.version>
@@ -70,7 +70,7 @@
             <dependency>
                 <groupId>org.hibernate.validator</groupId>
                 <artifactId>hibernate-validator</artifactId>
-                <version>6.0.17.Final</version>
+                <version>6.0.20.Final</version>
             </dependency>
             <dependency>
                 <groupId>org.tukaani</groupId>
