@@ -189,7 +189,7 @@ public class GCUnifiedLogFileParser implements FileParser<GCLogFile> {
     }
 
     private void addHumongous(GCLogFile gcLogFile, Long sequenceId, String line) {
-        boolean live = line.contains("Live");
+        boolean live = line.contains("reclaim candidate 0");
         String size = line
                 .replaceFirst(".*object size", "")
                 .replaceFirst("start.*", "")
