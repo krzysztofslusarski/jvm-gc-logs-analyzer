@@ -15,15 +15,6 @@
  */
 package pl.ks.profiling.safepoint.analyzer.commons.shared.gc.page;
 
-import static pl.ks.profiling.gui.commons.PageCreatorHelper.numToString;
-
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import pl.ks.profiling.gui.commons.Page;
 import pl.ks.profiling.gui.commons.PageContent;
 import pl.ks.profiling.gui.commons.Table;
@@ -32,6 +23,16 @@ import pl.ks.profiling.safepoint.analyzer.commons.shared.PageCreator;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.parser.GCLogConcurrentCycleEntry;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.parser.GCStats;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.report.JvmLogFile;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
+import static pl.ks.profiling.gui.commons.PageCreatorHelper.numToString;
 
 public class GCTableStats implements PageCreator {
     @Override
@@ -51,6 +52,15 @@ public class GCTableStats implements PageCreator {
                             .collect(Collectors.toList()))
                     .build());
         }
+        pageContents.add(Table.builder()
+                .header(List.of("Total allocation (MB)"))
+                .title("Allocation statistics")
+                .info("Table presents allocation statistics")
+                .screenWidth("25%")
+                .table(List.of(List.of(
+                        numToString(gcStats.getAllocationStats().getTotalAllocation(), decimalFormat)))
+                )
+                .build());
         if (gcStats.getGcAgingSummary().getAgingSizes().size() > 0) {
             pageContents.add(Table.builder()
                     .header(List.of("Age", "Per. 50", "Per. 75", "Per. 90", "Per. 95", "Per. 99", "Per. 99.9", "Per. 100", "Average"))

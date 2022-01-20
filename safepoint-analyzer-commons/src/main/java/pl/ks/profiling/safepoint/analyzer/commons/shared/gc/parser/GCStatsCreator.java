@@ -15,6 +15,10 @@
  */
 package pl.ks.profiling.safepoint.analyzer.commons.shared.gc.parser;
 
+import org.apache.commons.collections4.MapUtils;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.OneFiledAllStats;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.OneFiledAllStatsUtil;
+
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
@@ -29,9 +33,6 @@ import java.util.OptionalDouble;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import org.apache.commons.collections4.MapUtils;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.OneFiledAllStats;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.OneFiledAllStatsUtil;
 
 public class GCStatsCreator {
     public static GCStats createStats(GCLogFile gcLogFile) {
@@ -75,7 +76,24 @@ public class GCStatsCreator {
         generateHumongousStats(gcLogFile, gcStats);
         generateToSpaceStats(gcLogFile, gcStats);
         generateFullGcStats(gcLogFile, gcStats);
+        generateAllocationStats(gcLogFile, gcStats);
         return gcStats;
+    }
+
+    private static void generateAllocationStats(GCLogFile gcLogFile, GCStats gcStats) {
+        GCLogCycleEntry prev = null;
+        GCLogCycleEntry current = null;
+        BigDecimal allocation = BigDecimal.ZERO;
+        for (GCLogCycleEntry cycle : gcLogFile.getCycleEntries()) {
+            prev = current;
+            current = cycle;
+            if (prev == null) {
+                continue;
+            }
+            allocation = allocation.add(new BigDecimal(current.getHeapBeforeGCMb())).subtract(new BigDecimal(prev.getHeapAfterGCMb()));
+        }
+        gcStats.setAllocationStats(new GCAllocationStats());
+        gcStats.getAllocationStats().setTotalAllocation(allocation);
     }
 
     private static void generateCauseCounts(GCLogFile gcLogFile, GCStats gcStats) {
