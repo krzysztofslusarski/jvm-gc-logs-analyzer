@@ -117,6 +117,12 @@ td:nth-of-type(n+2) {
     font-weight: bold;
 }
 
+table.sticky-header thead {
+    position: sticky;
+    top: 0;
+    background-color: white; /* otherwise sticky header labels would have transparent background */
+}
+
 .search-input {
     width: 100%; /* Full-width */
     font-size: 16px; /* Increase font-size */
