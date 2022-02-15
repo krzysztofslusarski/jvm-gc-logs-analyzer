@@ -218,7 +218,7 @@
 
                         </div>
                         <div th:if="${content.type.name() == 'TABLE'}">
-                            <table class="table table-striped table-bordered table-sm big-font" th:style="'width: ' + ${content.screenWidth} + ';'">
+                            <table th:class="'table table-striped table-bordered table-sm big-font' + ${content.table.size() >= 18 ? ' sticky-header' : ''}" th:style="'width: ' + ${content.screenWidth} + ';'">
                                 <thead th:if="${content.header != null}">
                                 <tr>
                                     <th th:each="column, columnStatus: ${content.header}" th:inline="text">
