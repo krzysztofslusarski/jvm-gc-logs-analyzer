@@ -15,14 +15,15 @@
  */
 package pl.ks.profiling.safepoint.analyzer.commons.shared.gc.parser;
 
+import pl.ks.profiling.safepoint.analyzer.commons.FileParser;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.ParserUtils;
+
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import pl.ks.profiling.safepoint.analyzer.commons.FileParser;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.ParserUtils;
 
 public class GCUnifiedLogFileParser implements FileParser<GCLogFile> {
     private final GCLogFile gcLogFile = new GCLogFile();
@@ -74,6 +75,7 @@ public class GCUnifiedLogFileParser implements FileParser<GCLogFile> {
     private final List<GcLineParser> parsers = List.of(
             new GcLineParser(includes("gc,start"), excludes(), this::gcStart),
             new GcLineParser(includes("gc ", "Concurrent Cycle", "ms"), excludes(), this::addConcurrentCycleDataIfPresent),
+            new GcLineParser(includes("gc ", "Concurrent Mark Cycle", "ms"), excludes(), this::addConcurrentCycleDataIfPresent),
             new GcLineParser(includes("gc,phases", "ms", ")   "), excludes(")       ", "Queue Fixup", "Table Fixup"), this::addPhaseYoungAndMixed),
             new GcLineParser(includes("gc,phases", "ms"), excludes(")  "), this::addPhaseConcurrentSTW),
             new GcLineParser(includes("gc ", "->"), excludes(), this::addSizesAndTime),
