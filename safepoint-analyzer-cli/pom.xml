@@ -9,20 +9,12 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>safepoint-analyzer-standalone</artifactId>
+    <artifactId>safepoint-analyzer-cli</artifactId>
 
     <dependencies>
         <dependency>
-            <groupId>org.spockframework</groupId>
-            <artifactId>spock-core</artifactId>
-        </dependency>
-        <dependency>
             <groupId>org.knowm.xchart</groupId>
             <artifactId>xchart</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.miglayout</groupId>
-            <artifactId>miglayout-swing</artifactId>
         </dependency>
         <dependency>
             <groupId>pl.ks.profiling</groupId>
@@ -42,7 +34,7 @@
     </dependencies>
 
     <build>
-        <finalName>analyzer-standalone</finalName>
+        <finalName>analyzer-cli</finalName>
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
@@ -55,11 +47,10 @@
                     </execution>
                 </executions>
                 <configuration>
-                    <mainClass>pl.ks.profiling.safepoint.analyzer.standalone.AnalyzerStandaloneApplication</mainClass>
+                    <mainClass>pl.ks.profiling.safepoint.analyzer.cli.AnalyzerCliApplication</mainClass>
                     <addResources>true</addResources>
                 </configuration>
             </plugin>
         </plugins>
     </build>
-
 </project>

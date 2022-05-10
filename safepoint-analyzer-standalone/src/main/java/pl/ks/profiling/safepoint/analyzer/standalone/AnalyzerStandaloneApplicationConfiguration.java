@@ -30,7 +30,7 @@ class AnalyzerStandaloneApplicationConfiguration {
     boolean presentationMode;
 
     @Bean
-    PresentationFontProvider presentationFontProvider() {
-        return new PresentationFontProvider(presentationMode);
+    PresentationFontProviderStandalone presentationFontProvider() {
+        return new PresentationFontProviderStandalone(presentationMode);
     }
 }

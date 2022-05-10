@@ -24,9 +24,9 @@ import java.awt.*;
 public class AnalyzerFrame extends JFrame {
     private final ContentPanel contentPanel;
     private final JScrollPane contentScroll;
-    private final PresentationFontProvider presentationFontProvider;
+    private final PresentationFontProviderStandalone presentationFontProvider;
 
-    public AnalyzerFrame(JvmLogFile stats, PresentationFontProvider presentationFontProvider) {
+    public AnalyzerFrame(JvmLogFile stats, PresentationFontProviderStandalone presentationFontProvider) {
         this.presentationFontProvider = presentationFontProvider;
         this.contentPanel = new ContentPanel(presentationFontProvider);
         this.contentScroll = new JScrollPane(contentPanel);

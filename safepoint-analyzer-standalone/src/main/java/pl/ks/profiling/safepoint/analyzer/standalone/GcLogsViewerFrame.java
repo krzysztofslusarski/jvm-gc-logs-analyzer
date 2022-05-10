@@ -15,23 +15,15 @@
  */
 package pl.ks.profiling.safepoint.analyzer.standalone;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.HeadlessException;
-import java.util.List;
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
-import javax.swing.JTextField;
 import net.miginfocom.swing.MigLayout;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.parser.GCLogFile;
 
+import javax.swing.*;
+import java.awt.*;
+import java.util.List;
+
 class GcLogsViewerFrame extends JFrame {
-    private PresentationFontProvider presentationFontProvider;
+    private PresentationFontProviderStandalone presentationFontProvider;
     private Long collectionIdFrom = null;
     private Long collectionIdTo = null;
     private boolean showDecorators = false;
@@ -40,7 +32,7 @@ class GcLogsViewerFrame extends JFrame {
     private GcLogsViewerFrame uberFrame;
     private GCLogFile gcLogFile;
 
-    public GcLogsViewerFrame(PresentationFontProvider presentationFontProvider, GCLogFile gcLogFile) throws HeadlessException {
+    public GcLogsViewerFrame(PresentationFontProviderStandalone presentationFontProvider, GCLogFile gcLogFile) throws HeadlessException {
         this.presentationFontProvider = presentationFontProvider;
         this.gcLogsPanel = new GcLogsPanel();
         this.gcLogFile = gcLogFile;

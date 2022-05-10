@@ -52,7 +52,7 @@ public class AnalyzerStandaloneApplication extends JFrame {
     private StatsService statsService;
 
     @Autowired
-    private PresentationFontProvider presentationFontProvider;
+    private PresentationFontProviderStandalone presentationFontProvider;
 
     private final String LOAD_BUTTON_LABEL = "Load file (JDK >= 9)";
     private final String LOAD_OLD_BUTTON_LABEL = "Load file (JDK 8)";

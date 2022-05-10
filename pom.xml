@@ -14,6 +14,8 @@
         <module>safepoint-analyzer-standalone</module>
         <module>safepoint-analyzer-web</module>
         <module>web-commons</module>
+        <module>safepoint-analyzer-cli</module>
+        <module>xchart-commons</module>
     </modules>
 
     <parent>

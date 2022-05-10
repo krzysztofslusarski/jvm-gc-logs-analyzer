@@ -16,17 +16,17 @@
 package pl.ks.profiling.safepoint.analyzer.standalone;
 
 import net.miginfocom.swing.MigLayout;
-import org.knowm.xchart.*;
+import org.knowm.xchart.BitmapEncoder;
+import org.knowm.xchart.PieChart;
+import org.knowm.xchart.XYChart;
 import org.knowm.xchart.internal.series.Series;
 import org.knowm.xchart.style.Styler;
-import org.knowm.xchart.style.XYStyler;
-import org.knowm.xchart.style.lines.SeriesLines;
-import org.knowm.xchart.style.markers.SeriesMarkers;
 import pl.ks.profiling.gui.commons.Chart;
 import pl.ks.profiling.gui.commons.Page;
 import pl.ks.profiling.gui.commons.PageContent;
 import pl.ks.profiling.gui.commons.Table;
 import pl.ks.profiling.io.TempFileUtils;
+import pl.ks.profiling.xchart.commons.XChartCreator;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -34,28 +34,17 @@ import javax.swing.table.DefaultTableColumnModel;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import java.awt.*;
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 
 class ContentPanel extends JPanel {
-    private static final List<String> colors = List.of(
-            "#3366cc", "#dc3912", "#ff9900", "#109618", "#990099", "#0099c6", "#dd4477", "#66aa00",
-            "#b82e2e", "#316395", "#994499", "#22aa99", "#aaaa11", "#6633cc", "#e67300", "#8b0707",
-            "#651067", "#329262", "#5574a6", "#3b3eac", "#b77322", "#16d620", "#b91383", "#f4359e",
-            "#9c5935", "#a9c413", "#2a778d", "#668d1c", "#bea413", "#0c5922", "#743411"
-    );
-    private static final Color[] SERIES_COLORS = colors.stream()
-            .map(Color::decode)
-            .toArray(Color[]::new);
+    private final PresentationFontProviderStandalone presentationFontProvider;
+    private final XChartCreator xChartCreator;
 
-    private final PresentationFontProvider presentationFontProvider;
-
-    ContentPanel(PresentationFontProvider presentationFontProvider) {
+    ContentPanel(PresentationFontProviderStandalone presentationFontProvider) {
         this.presentationFontProvider = presentationFontProvider;
         setLayout(new MigLayout());
         setBackground(Color.WHITE);
+        this.xChartCreator = new XChartCreator(presentationFontProvider);
     }
 
     void recreate(Page page) {
@@ -116,11 +105,11 @@ class ContentPanel extends JPanel {
         String tmpFilePath = TempFileUtils.getFilePath(subTitle + UUID.randomUUID().toString() + ".jpg");
         switch (chart.getChartType()) {
             case PIE:
-                return chartToImage(tmpFilePath, createPieChart(chart, title, 1200));
+                return chartToImage(tmpFilePath, xChartCreator.createPieChart(chart, title, 1200));
             case POINTS_OR_LINE:
             case LINE:
             case POINTS:
-                return chartToImage(tmpFilePath, createXyChart(chart, title, 1200));
+                return chartToImage(tmpFilePath, xChartCreator.createXyChart(chart, title, 1200));
             default:
                 return new JLabel("Unsupported chart type " + chart.getChartType());
         }
@@ -144,108 +133,15 @@ class ContentPanel extends JPanel {
         String title = chart.getTitle() == null ? "" : chart.getTitle();
         switch (chart.getChartType()) {
             case PIE:
-                PieChart pieChart = createPieChart(chart, title, 1200);
+                PieChart pieChart = xChartCreator.createPieChart(chart, title, 1200);
                 return pieChart;
             case LINE:
             case POINTS:
-                XYChart xyChart = createXyChart(chart, title, chart.getData().length + 500);
+                XYChart xyChart = xChartCreator.createXyChart(chart, title, chart.getData().length + 500);
                 return xyChart;
         }
         return null;
     }
-
-    private PieChart createPieChart(Chart chart, String title, int width) {
-        PieChart pieChart = createEmptyPieChart(title, width);
-        for (Object[] row : chart.getRows()) {
-            String seriesName = row[0].toString();
-            BigDecimal value = new BigDecimal(row[1].toString());
-            pieChart.addSeries(seriesName, value);
-        }
-
-        return pieChart;
-    }
-
-    private PieChart createEmptyPieChart(String title, int width) {
-        PieChart pieChart = new PieChartBuilder().width(width).height(800).title(title).build();
-        pieChart.getStyler().setSeriesColors(SERIES_COLORS);
-        pieChart.getStyler().setLegendVisible(true);
-        pieChart.getStyler().setChartBackgroundColor(Color.WHITE);
-        pieChart.getStyler().setLegendFont(presentationFontProvider.getDefaultFont());
-        pieChart.getStyler().setSumFont(presentationFontProvider.getDefaultFont());
-        pieChart.getStyler().setChartTitleFont(presentationFontProvider.getDefaultBoldFont());
-        return pieChart;
-    }
-
-    private XYChart createXyChart(Chart chart, String title, int width) {
-        XYChart xyChart = createEmptyXyChart(chart, title, width);
-        Object[][] chartRows = chart.getRows();
-        List<Number> xAxis = extractColumnValues(chartRows, chart.getXAxisColumnIndex(), false);
-        Object[] columnsHeadersRow = chart.getHeaders();
-
-        for (int columnIndex = 0; columnIndex < columnsHeadersRow.length; columnIndex++) {
-            if (columnIndex == chart.getXAxisColumnIndex()) {
-                continue;
-            }
-            addSeriesForColumn(chart, chartRows, columnsHeadersRow, columnIndex, xAxis, xyChart);
-        }
-        return xyChart;
-    }
-
-    private void addSeriesForColumn(Chart chart, Object[][] rows, Object[] columnsHeadersRow, int columnIndex, List<Number> xAxis, XYChart xyChart) {
-        String seriesName = columnsHeadersRow[columnIndex].toString();
-        List<Number> seriesValues = extractColumnValues(rows, columnIndex, false);
-        XYSeries series = xyChart.addSeries(seriesName, xAxis, seriesValues);
-        if (chart.getChartType() == Chart.ChartType.POINTS ||
-                (chart.getChartType() == Chart.ChartType.POINTS_OR_LINE && chart.getSeriesTypes()[columnIndex - 1] == Chart.SeriesType.POINTS)) {
-            series.setMarker(SeriesMarkers.CIRCLE);
-            series.setLineStyle(SeriesLines.NONE);
-            xyChart.getStyler().setMarkerSize(3);
-        } else {
-            series.setMarker(SeriesMarkers.NONE);
-        }
-    }
-
-    private XYChart createEmptyXyChart(Chart chart, String title, int width) {
-        XYChart xyChart = new XYChartBuilder()
-                .title(title)
-                .xAxisTitle(chart.getXAxisLabel())
-                .yAxisTitle(chart.getYAxisLabel())
-                .width(width)
-                .height(800)
-                .build();
-        XYStyler chartStyler = xyChart.getStyler();
-        if (chart.isForceZeroMinValue()) {
-            chartStyler.setYAxisMin(0.0);
-        }
-        chartStyler.setDefaultSeriesRenderStyle(XYSeries.XYSeriesRenderStyle.Line);
-        chartStyler.setYAxisLabelAlignment(Styler.TextAlignment.Right);
-        chartStyler.setYAxisDecimalPattern("#,###.##");
-        chartStyler.setLegendVisible(true);
-        chartStyler.setChartBackgroundColor(Color.WHITE);
-        chartStyler.setSeriesColors(SERIES_COLORS);
-        chartStyler.setLegendFont(presentationFontProvider.getDefaultFont());
-        chartStyler.setAxisTickLabelsFont(presentationFontProvider.getDefaultFont());
-        chartStyler.setChartTitleFont(presentationFontProvider.getDefaultBoldFont());
-        return xyChart;
-    }
-
-    private List<Number> extractColumnValues(Object[][] table, int columnIndex, boolean skipHeader) {
-        List<Number> values = new ArrayList<>(table.length);
-        boolean skipNextRow = skipHeader;
-        for (Object[] objects : table) {
-            if (skipNextRow) {
-                skipNextRow = false;
-                continue;
-            }
-            if (objects[columnIndex] == null) {
-                values.add(null);
-            } else {
-                values.add(new BigDecimal(objects[columnIndex].toString()));
-            }
-        }
-        return values;
-    }
-
 
     private JScrollPane createTable(PageContent pageContent) {
         Table content = (Table) pageContent;

@@ -15,9 +15,11 @@
  */
 package pl.ks.profiling.safepoint.analyzer.standalone;
 
-import java.awt.Font;
+import pl.ks.profiling.xchart.commons.PresentationFontProvider;
 
-class PresentationFontProvider {
+import java.awt.*;
+
+class PresentationFontProviderStandalone implements PresentationFontProvider {
     public static final Font DEFAULT_FONT = new Font("Helvetica Neue", Font.PLAIN, 14);
     public static final Font DEFAULT_BOLD_FONT = new Font("Helvetica Neue", Font.BOLD, 14);
     public static final Font DEFAULT_H2_FONT = new Font("Helvetica Neue", Font.BOLD, 18);
@@ -32,10 +34,11 @@ class PresentationFontProvider {
 
     private boolean presentationMode;
 
-    public PresentationFontProvider(boolean presentationMode) {
+    public PresentationFontProviderStandalone(boolean presentationMode) {
         this.presentationMode = presentationMode;
     }
 
+    @Override
     public Font getDefaultFont() {
         if (presentationMode) {
             return PRESENTATION_DEFAULT_FONT;
@@ -43,6 +46,7 @@ class PresentationFontProvider {
         return DEFAULT_FONT;
     }
 
+    @Override
     public Font getDefaultBoldFont() {
         if (presentationMode) {
             return PRESENTATION_DEFAULT_BOLD_FONT;
