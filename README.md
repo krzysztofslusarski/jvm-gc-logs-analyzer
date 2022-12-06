@@ -177,7 +177,8 @@ From code cache and sweeper logs this tool will create charts:
 
 I recommend to use following Xlog configuration
 ```
--Xlog:codecache+sweep*=trace,
+-Xlog:codecache=info,
+codecache+sweep*=trace,
 class+unload,
 class+load,
 os+thread,
@@ -199,7 +200,7 @@ If you want to change Xlog configuration on runtime, you can do it with:
 sudo -u JVM_USER jcmd `pgrep -x java` VM.log
 output="file=/PATH/TO/gc.log"
 output_options="filesize=104857600,filecount=5"
-what="codecache+sweep*=trace,class+unload,class+load,os+thread,safepoint,gc*,gc+stringdedup=debug,gc+ergo=trace,gc+age=trace,gc+phases=trace,gc+humongous=trace,jit+compilation=debug"
+what="codecache=info,codecache+sweep*=trace,class+unload,class+load,os+thread,safepoint,gc*,gc+stringdedup=debug,gc+ergo=trace,gc+age=trace,gc+phases=trace,gc+humongous=trace,jit+compilation=debug"
 decorators="level,tags,time,uptime,pid
 ```
 
