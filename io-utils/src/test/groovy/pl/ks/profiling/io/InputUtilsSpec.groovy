@@ -15,6 +15,8 @@
  */
 package pl.ks.profiling.io
 
+import java.util.function.Function
+
 import static pl.ks.profiling.io.TestFileUtils.getFile
 import spock.lang.Specification
 import java.nio.charset.StandardCharsets
@@ -27,7 +29,7 @@ class InputUtilsSpec extends Specification {
 
     def "should concatenate files as passed by default"() {
         given:
-        InputStream stream = InputUtils.getInputStream(files, null)
+        InputStream stream = InputUtils.getInputStream(files, Function.identity(), null).inputStream
 
         when:
         String streamContent = readStream(stream)
@@ -41,7 +43,7 @@ class InputUtilsSpec extends Specification {
 
     def "should sort files before if sorting object function is passed"() {
         given:
-        InputStream stream = InputUtils.getInputStream(files, TimestampTestUtils.&getTimeStamp)
+        InputStream stream = InputUtils.getInputStream(files, TimestampTestUtils.&getTimeStamp, null).inputStream
 
         when:
         String streamContent = readStream(stream)
@@ -52,10 +54,10 @@ class InputUtilsSpec extends Specification {
 
 [2020-12-21T01:04:49.436+0000][30.123s][info ][gc,heap              ] file.log.0"""
     }
-    
+
     def "should load sorted files from 7z file"() {
         given:
-        InputStream stream = InputUtils.getInputStream([getFile("loading/file.log.7z")], TimestampTestUtils.&getTimeStamp)
+        InputStream stream = InputUtils.getInputStream([getFile("loading/file.log.7z")], TimestampTestUtils.&getTimeStamp, null).inputStream
 
         when:
         String streamContent = readStream(stream)
@@ -69,7 +71,7 @@ class InputUtilsSpec extends Specification {
 
     def "should load sorted files from zip file"() {
         given:
-        InputStream stream = InputUtils.getInputStream([getFile("loading/file.log.zip")], TimestampTestUtils.&getTimeStamp)
+        InputStream stream = InputUtils.getInputStream([getFile("loading/file.log.zip")], TimestampTestUtils.&getTimeStamp, null).inputStream
 
         when:
         String streamContent = readStream(stream)
@@ -85,14 +87,4 @@ class InputUtilsSpec extends Specification {
         return String.join("\n", new InputStreamReader(stream, StandardCharsets.UTF_8).readLines())
     }
 
-    BigDecimal getTimeStamp(String line) {
-        return new BigDecimal(getContentBetweenMarkers(line, "[", "s]"));
-    }
-
-    private static String getContentBetweenMarkers(String line, String startMarker, String endMarker) {
-        int endMarkerIndex = line.indexOf(endMarker);
-        String lineUntilEndMarker = line.substring(0, endMarkerIndex);
-        int startMarkerIndex = lineUntilEndMarker.lastIndexOf(startMarker);
-        return line.substring(startMarkerIndex + 1, endMarkerIndex);
-    }
 }

@@ -30,7 +30,7 @@ import pl.ks.profiling.safepoint.analyzer.commons.shared.ParserUtils;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.report.JvmLogFile;
 import pl.ks.profiling.web.commons.WelcomePage;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 

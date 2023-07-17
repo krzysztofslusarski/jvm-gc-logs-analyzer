@@ -67,7 +67,7 @@ class FilesConcatenationSpec extends Specification {
 
     def "should concatenate files"() {
         when:
-        String concatenated = concatenateFiles("fileWithoutNewLine.log", "nextFile.log")
+        String concatenated = concatenateFiles("concatenation/fileWithoutNewLine.log", "concatenation/nextFile.log")
 
         then:
         concatenated == """file without new line
@@ -76,7 +76,7 @@ some next file"""
 
     def "should keep new lines while concatenating"() {
         when:
-        String concatenated = concatenateFiles("fileWithNewLine.log", "nextFile.log")
+        String concatenated = concatenateFiles("concatenation/fileWithNewLine.log", "concatenation/nextFile.log")
 
         then:
         concatenated == """file with new line

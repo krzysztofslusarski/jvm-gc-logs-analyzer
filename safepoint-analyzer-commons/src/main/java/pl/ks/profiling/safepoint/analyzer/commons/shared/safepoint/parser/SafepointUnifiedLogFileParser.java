@@ -58,7 +58,7 @@ public class SafepointUnifiedLogFileParser implements FileParser<SafepointLogFil
                 .trim();
         String tts = line
                 .replaceFirst(".* Reaching safepoint: ", "")
-                .replaceFirst(" ns, At safepoint.*", "")
+                .replaceFirst(" ns, .*", "")
                 .trim();
         String stopped = line
                 .replaceFirst(".*Total: ", "")
@@ -66,7 +66,7 @@ public class SafepointUnifiedLogFileParser implements FileParser<SafepointLogFil
                 .trim();
         String appTime = line
                 .replaceFirst(".*Time since last: ", "")
-                .replaceFirst(" ns, Reaching safepoint.*", "")
+                .replaceFirst(" ns, .*", "")
                 .trim();
         current.addAllData(
                 new BigDecimal(tts)

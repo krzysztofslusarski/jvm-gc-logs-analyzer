@@ -245,8 +245,8 @@ class GCUnifiedLogFileParserSpec extends Specification {
         gcEntry.regionsMax[REGIONS_SURVIVOR] == 184
         gcEntry.regionsMax[REGIONS_OLD] == null
         gcEntry.regionsMax[REGIONS_HUMONGOUS] == null
-        gcEntry.regionsSizeAfterGC == null
-        gcEntry.regionsWastedAfterGC == null
+        gcEntry.regionsSizeAfterGC == Collections.emptyMap()
+        gcEntry.regionsWastedAfterGC == Collections.emptyMap()
         gcEntry.liveHumongousSizes.size() == 87
         gcEntry.deadHumongousSizes.size() == 1
         !gcEntry.genuineCollection

@@ -21,14 +21,14 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>2.4.1</version>
+        <version>3.1.1</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
 
     <packaging>pom</packaging>
 
     <properties>
-        <java.version>11</java.version>
+        <java.version>17</java.version>
         <commons-math3.version>3.2</commons-math3.version>
         <poi.version>4.1.0</poi.version>
         <commons-compress.version>1.21</commons-compress.version>
@@ -36,8 +36,8 @@
         <commons-collections4.version>4.1</commons-collections4.version>
         <xchart.version>3.6.0</xchart.version>
         <miglayout-swing.version>5.0</miglayout-swing.version>
-        <spock.version>1.3-groovy-2.5</spock.version>
-        <gmavenplus-plugin.version>1.6.2</gmavenplus-plugin.version>
+        <spock.version>2.3-groovy-4.0</spock.version>
+        <gmavenplus-plugin.version>3.0.0</gmavenplus-plugin.version>
         <axios.version>0.21.1</axios.version>
         <spring-boot.build-image.imageName>gclogs/${project.artifactId}:${project.version}</spring-boot.build-image.imageName>
     </properties>
@@ -132,25 +132,15 @@
                     </execution>
                 </executions>
             </plugin>
-
             <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>build-helper-maven-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>add-groovy-test-source</id>
-                        <phase>test</phase>
-                        <goals>
-                            <goal>add-test-source</goal>
-                        </goals>
-                        <configuration>
-                            <sources>
-                                <source>${basedir}/src/test/groovy</source>
-                                <source>${basedir}/src/test/java</source>
-                            </sources>
-                        </configuration>
-                    </execution>
-                </executions>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.0.0-M7</version>
+                <configuration>
+                    <includes>
+                        <include>**/*Test</include>
+                        <include>**/*Spec</include>
+                    </includes>
+                </configuration>
             </plugin>
 
             <plugin>
