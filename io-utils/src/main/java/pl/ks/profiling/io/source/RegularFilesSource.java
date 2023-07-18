@@ -25,27 +25,6 @@ public class RegularFilesSource<U extends Comparable<? super U>> extends LogsSou
         return this.name;
     }
 
-    @Override
-    public String readLine() throws IOException {
-        this.lineNumber++;
-        return reader.readLine();
-    }
-
-    @Override
-    public int getTotalNumberOfFiles() {
-        return this.totalNumberOfFiles;
-    }
-
-    @Override
-    public int getNumberOfFile() {
-        return this.currentFileNumber;
-    }
-
-    @Override
-    public long getNumberOfLine() {
-        return this.lineNumber;
-    }
-
     private List<InputStream> toStreams(List<File> files) {
         return files.stream().map(f -> new LazyFileInputStream(f, this::startNextFileProcessing)).collect(Collectors.toList());
     }
