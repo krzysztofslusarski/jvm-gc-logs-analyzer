@@ -20,7 +20,7 @@ cd jvm-gc-logs-analyzer/
 mvn clean package
 ```
 
-JAVA_HOME should point to JDK 11. 
+JAVA_HOME should point to JDK 17. 
 
 ## How to run
 
