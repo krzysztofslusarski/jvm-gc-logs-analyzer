@@ -28,7 +28,7 @@ Standalone application: ```java -jar analyzer-standalone.jar```
 
 Web application: ```java -jar analyzer-web.jar```
 
-Java should point to JDK 11.
+Java should point to JDK 17.
 
 ## Features
 
