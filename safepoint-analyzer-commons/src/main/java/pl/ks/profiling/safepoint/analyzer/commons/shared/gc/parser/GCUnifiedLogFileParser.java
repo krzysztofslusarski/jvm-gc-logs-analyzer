@@ -123,10 +123,7 @@ public class GCUnifiedLogFileParser implements FileParser<GCLogFile> {
     }
 
     private void addConcurrentCycleDataIfPresent(GCLogFile gcLogFile, Long sequenceId, String line) {
-        Pattern pattern = Pattern.compile("\\d+.\\d+ms");
-        Matcher matcher = pattern.matcher(line);
-        matcher.find();
-        String time = matcher.group().replace("ms", "").replace(",", ".");
+        String time = getTime(line);
         gcLogFile.newConcurrentCycle(sequenceId, new BigDecimal(time));
     }
 
@@ -138,10 +135,18 @@ public class GCUnifiedLogFileParser implements FileParser<GCLogFile> {
 
     private void addPhaseConcurrentSTW(GCLogFile gcLogFile, Long sequenceId, String line) {
         String phaseWithTime = line.replaceFirst(".*GC\\(\\d+\\)", "").trim();
-        int indexOfSpace = phaseWithTime.lastIndexOf(" ");
-        String phase = phaseWithTime.substring(0, indexOfSpace);
-        String time = phaseWithTime.substring(indexOfSpace + 1).replaceAll("ms", "").replaceAll(",", ".");
+        String time = getTime(phaseWithTime);
+        int timeIndex = phaseWithTime.indexOf(time);
+        String phase = phaseWithTime.substring(0, timeIndex).trim();
         gcLogFile.addSubPhaseTime(sequenceId, phase, new BigDecimal(time));
+    }
+
+    private String getTime(String line) {
+        Pattern timeExtractorPatter = Pattern.compile("\\d+.\\d+(\\s*)?ms");
+        Matcher matcher = timeExtractorPatter.matcher(line);
+        matcher.find();
+        String timePart = matcher.group();
+        return timePart.replaceAll("ms", "").replaceAll(",", ".").trim();
     }
 
     private void addPhaseYoungAndMixed(GCLogFile gcLogFile, Long sequenceId, String line) {
@@ -166,10 +171,7 @@ public class GCUnifiedLogFileParser implements FileParser<GCLogFile> {
         String after = matcher.group().replace("M", "");
         matcher.find();
         String heapSize = matcher.group().replace("M", "");
-        pattern = Pattern.compile("\\d+.\\d+ms");
-        matcher = pattern.matcher(line);
-        matcher.find();
-        String time = matcher.group().replace("ms", "").replace(",", ".");
+        String time = getTime(line);
 
         gcLogFile.addSizesAndTime(sequenceId, Integer.parseInt(before), Integer.parseInt(after), Integer.parseInt(heapSize), new BigDecimal(time));
     }

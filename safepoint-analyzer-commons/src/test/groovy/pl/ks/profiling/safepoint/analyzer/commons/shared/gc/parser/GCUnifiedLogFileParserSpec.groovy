@@ -272,6 +272,101 @@ class GCUnifiedLogFileParserSpec extends Specification {
         !gcEntry.wasToSpaceExhausted
     }
 
+    def gcLogsWithTimeSeparatedBySpace = """
+[2020-12-21T01:04:47.091+0000][1778483.410s][debug][gc,ergo              ] GC(597760) Initiate concurrent cycle (concurrent cycle initiation requested)
+[2020-12-21T01:04:47.091+0000][1778483.410s][info ][gc,start             ] GC(597760) Pause Young (Concurrent Start) (G1 Humongous Allocation)
+[2020-12-21T01:04:47.097+0000][1778483.416s][info ][gc,phases            ] GC(597760)   Pre Evacuate Collection Set: 0.4 ms
+[2020-12-21T01:04:47.097+0000][1778483.416s][debug][gc,phases            ] GC(597760)     Prepare TLABs: 0.0 ms
+[2020-12-21T01:04:47.097+0000][1778483.416s][debug][gc,phases            ] GC(597760)     Choose Collection Set: 0.0 ms
+[2020-12-21T01:04:47.097+0000][1778483.416s][debug][gc,phases            ] GC(597760)     Humongous Register: 0.2 ms
+[2020-12-21T01:04:47.097+0000][1778483.416s][trace][gc,phases            ] GC(597760)       Humongous Total: 88
+[2020-12-21T01:04:47.097+0000][1778483.416s][trace][gc,phases            ] GC(597760)       Humongous Candidate: 58
+[2020-12-21T01:04:47.097+0000][1778483.416s][debug][gc,phases            ] GC(597760)     Clear Claimed Marks: 0.3 ms
+[2020-12-21T01:04:47.097+0000][1778483.416s][info ][gc,phases            ] GC(597760)   Evacuate Collection Set: 2.3 ms
+[2020-12-21T01:04:47.098+0000][1778483.416s][info ][gc,phases            ] GC(597760)   Post Evacuate Collection Set: 1.9 ms
+[2020-12-21T01:04:47.098+0000][1778483.416s][debug][gc,phases            ] GC(597760)     Code Roots Fixup: 0.0 ms
+[2020-12-21T01:04:47.098+0000][1778483.416s][debug][gc,phases            ] GC(597760)     Clear Card Table: 0.4 ms
+[2020-12-21T01:04:47.098+0000][1778483.416s][debug][gc,phases            ] GC(597760)     Reference Processing: 0.1 ms
+[2020-12-21T01:04:47.098+0000][1778483.416s][debug][gc,phases            ] GC(597760)     Weak Processing: 0.1 ms
+[2020-12-21T01:04:47.098+0000][1778483.416s][debug][gc,phases            ] GC(597760)     Merge Per-Thread State: 0.0 ms
+[2020-12-21T01:04:47.098+0000][1778483.416s][debug][gc,phases            ] GC(597760)     Code Roots Purge: 0.0 ms
+[2020-12-21T01:04:47.098+0000][1778483.416s][debug][gc,phases            ] GC(597760)     Redirty Cards: 0.0 ms
+[2020-12-21T01:04:47.098+0000][1778483.416s][debug][gc,phases            ] GC(597760)     DerivedPointerTable Update: 0.0 ms
+[2020-12-21T01:04:47.098+0000][1778483.416s][debug][gc,phases            ] GC(597760)     Free Collection Set: 0.4 ms
+[2020-12-21T01:04:47.098+0000][1778483.416s][trace][gc,phases            ] GC(597760)       Free Collection Set Serial: 0.0 ms
+[2020-12-21T01:04:47.098+0000][1778483.416s][debug][gc,phases            ] GC(597760)     Humongous Reclaim: 0.9 ms
+[2020-12-21T01:04:47.098+0000][1778483.416s][trace][gc,phases            ] GC(597760)       Humongous Reclaimed: 1
+[2020-12-21T01:04:47.098+0000][1778483.416s][debug][gc,phases            ] GC(597760)     Start New Collection Set: 0.0 ms
+[2020-12-21T01:04:47.098+0000][1778483.416s][debug][gc,phases            ] GC(597760)     Resize TLABs: 0.0 ms
+[2020-12-21T01:04:47.098+0000][1778483.416s][debug][gc,phases            ] GC(597760)     Expand Heap After Collection: 0.0 ms
+[2020-12-21T01:04:47.098+0000][1778483.416s][info ][gc,phases            ] GC(597760)   Other: 1.0 ms
+[2020-12-21T01:04:47.098+0000][1778483.416s][info ][gc,heap              ] GC(597760) Eden regions: 7->0(1473)
+[2020-12-21T01:04:47.098+0000][1778483.416s][info ][gc,heap              ] GC(597760) Survivor regions: 1->1(184)
+[2020-12-21T01:04:47.098+0000][1778483.416s][info ][gc,heap              ] GC(597760) Old regions: 526->526
+[2020-12-21T01:04:47.098+0000][1778483.416s][info ][gc,heap              ] GC(597760) Humongous regions: 137->136
+[2020-12-21T01:04:47.098+0000][1778483.416s][info ][gc,metaspace         ] GC(597760) Metaspace: 93798K->93798K(1134592K)
+[2020-12-21T01:04:47.098+0000][1778483.417s][info ][gc                   ] GC(597760) Pause Young (Concurrent Start) (G1 Humongous Allocation) 1338M->1324M(5120M) 6.363 ms
+[2020-12-21T01:04:47.098+0000][1778483.417s][info ][gc,cpu               ] GC(597760) User=0.02s Sys=0.01s Real=0.01s"""
+
+    def "should parse time when 'ms' separated by space"() {
+        given:
+        GCUnifiedLogFileParser parser = new GCUnifiedLogFileParser();
+
+        when:
+        gcLogsWithTimeSeparatedBySpace.split("\n").each {
+            parser.parseLine(it)
+        }
+        GCLogCycleEntry gcEntry = parser.fetchData().cycleEntries.head()
+
+        then:
+        gcEntry.timeStamp == 1778483.410G
+        gcEntry.sequenceId == 597760
+        gcEntry.phase == "Pause Young (Concurrent Start) (G1 Humongous Allocation)"
+        gcEntry.aggregatedPhase == "Young collection - piggybacks"
+        gcEntry.heapBeforeGCMb == 1338
+        gcEntry.heapAfterGCMb == 1324
+        gcEntry.heapSizeMb == 5120
+        gcEntry.timeMs == 6.363
+        phaseTimeMax(gcEntry, PRE_EVACUATE) == 0.4G
+        subphaseTimeMax(gcEntry, PRE_PREPARE_TLABS) == 0.0G
+        subphaseTimeMax(gcEntry, PRE_CHOOSE_COLLECTION_SET) == 0.0G
+        subphaseTimeMax(gcEntry, PRE_HUMONGOUS_REGISTER) == 0.2G
+        subphaseTimeMax(gcEntry, PRE_CLEAR_CLAIMED_MARKS) == 0.3G
+        phaseTimeMax(gcEntry, EVACUATE) == 2.3G
+        phaseTimeMax(gcEntry, POST_EVACUATE) == 1.9G
+        subphaseTimeMax(gcEntry, POST_CODE_ROOTS_FIXUP) == 0.0G
+        subphaseTimeMax(gcEntry, POST_CLEAR_CARD_TABLE) == 0.4G
+        subphaseTimeMax(gcEntry, POST_REFERENCE_PROCESSING) == 0.1G
+        subphaseTimeMax(gcEntry, POST_WEAK_PROCESSING) == 0.1G
+        subphaseTimeMax(gcEntry, POST_MERGE_PER_THREAD_STATE) == 0.0G
+        subphaseTimeMax(gcEntry, POST_CODE_ROOTS_PURGE) == 0.0G
+        subphaseTimeMax(gcEntry, POST_REDIRTY_CARDS) == 0.0G
+        subphaseTimeMax(gcEntry, POST_DERIVED_POINTER_TABLE_UPDATE) == 0.0G
+        subphaseTimeMax(gcEntry, POST_FREE_COLLECTION_SET) == 0.4G
+        subphaseTimeMax(gcEntry, POST_HUMONGOUS_RECLAIM) == 0.9G
+        subphaseTimeMax(gcEntry, POST_START_NEW_COLLECTION_SET) == 0.0G
+        subphaseTimeMax(gcEntry, POST_RESIZE_TLABS) == 0.0G
+        subphaseTimeMax(gcEntry, POST_EXPAND_HEAP) == 0.0G
+        phaseTimeMax(gcEntry, PHASE_OTHER) == 1.0G
+        gcEntry.regionsBeforeGC[REGIONS_EDEN] == 7
+        gcEntry.regionsBeforeGC[REGIONS_SURVIVOR] == 1
+        gcEntry.regionsBeforeGC[REGIONS_OLD] == 526
+        gcEntry.regionsBeforeGC[REGIONS_HUMONGOUS] == 137
+        gcEntry.regionsAfterGC[REGIONS_EDEN] == 0
+        gcEntry.regionsAfterGC[REGIONS_SURVIVOR] == 1
+        gcEntry.regionsAfterGC[REGIONS_OLD] == 526
+        gcEntry.regionsAfterGC[REGIONS_HUMONGOUS] == 136
+        gcEntry.regionsMax[REGIONS_EDEN] == 1473
+        gcEntry.regionsMax[REGIONS_SURVIVOR] == 184
+        gcEntry.regionsMax[REGIONS_OLD] == null
+        gcEntry.regionsMax[REGIONS_HUMONGOUS] == null
+        gcEntry.regionsSizeAfterGC == Collections.emptyMap()
+        gcEntry.regionsWastedAfterGC == Collections.emptyMap()
+        !gcEntry.genuineCollection
+        !gcEntry.wasToSpaceExhausted
+    }
+
+
     BigDecimal phaseTimeMax(GCLogCycleEntry gcEntry, String phase) {
         return gcEntry.subPhasesTime[phase]
     }
