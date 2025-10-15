@@ -62,7 +62,7 @@ public class SafepointUnifiedLogFileParser implements FileParser<SafepointLogFil
                 .trim();
         String stopped = line
                 .replaceFirst(".*Total: ", "")
-                .replaceFirst(" ns", "")
+                .replaceFirst(" ns.*", "")
                 .trim();
         String appTime = line
                 .replaceFirst(".*Time since last: ", "")
