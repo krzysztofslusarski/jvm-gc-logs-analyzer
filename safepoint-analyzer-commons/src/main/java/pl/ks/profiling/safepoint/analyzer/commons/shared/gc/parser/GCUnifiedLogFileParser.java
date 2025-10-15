@@ -142,11 +142,21 @@ public class GCUnifiedLogFileParser implements FileParser<GCLogFile> {
     }
 
     private String getTime(String line) {
-        Pattern timeExtractorPatter = Pattern.compile("\\d+.\\d+(\\s*)?ms");
+        if (line.contains("ms")) {
+            Pattern timeExtractorPatter = Pattern.compile("\\d+.\\d+(\\s*)?ms");
+            Matcher matcher = timeExtractorPatter.matcher(line);
+            matcher.find();
+            String timePart = matcher.group();
+            return timePart.replaceAll("ms", "").replaceAll(",", ".").trim();
+        }
+        Pattern timeExtractorPatter = Pattern.compile("\\d+.\\d+(\\s*)?s");
         Matcher matcher = timeExtractorPatter.matcher(line);
-        matcher.find();
-        String timePart = matcher.group();
-        return timePart.replaceAll("ms", "").replaceAll(",", ".").trim();
+        String timePart = null;
+        while (matcher.find()) {
+            timePart = matcher.group();
+        }
+
+        return timePart.replaceAll("s", "").replaceAll(",", ".").replaceAll("\\.","").trim();
     }
 
     private void addPhaseYoungAndMixed(GCLogFile gcLogFile, Long sequenceId, String line) {
@@ -170,7 +180,8 @@ public class GCUnifiedLogFileParser implements FileParser<GCLogFile> {
         matcher.find();
         String after = matcher.group().replace("M", "");
         matcher.find();
-        String heapSize = matcher.group().replace("M", "");
+        String heapSize =
+                line.contains("%") ? "-1" : matcher.group().replace("M", "");
         String time = getTime(line);
 
         gcLogFile.addSizesAndTime(sequenceId, Integer.parseInt(before), Integer.parseInt(after), Integer.parseInt(heapSize), new BigDecimal(time));
