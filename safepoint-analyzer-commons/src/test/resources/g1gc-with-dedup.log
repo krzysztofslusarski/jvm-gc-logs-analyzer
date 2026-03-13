@@ -1,0 +1,48 @@
+[2020-11-05T08:47:58.620+0000][1604566078.620s][info ][gc,start        ] GC(21536) Pause Young (Normal) (G1 Evacuation Pause)
+[2020-11-05T08:47:58.620+0000][1604566078.620s][info ][gc,task         ] GC(21536) Using 8 workers of 8 for evacuation
+[2020-11-05T08:47:58.817+0000][1604566078.817s][info ][gc,phases       ] GC(21536)   Pre Evacuate Collection Set: 0.1ms
+[2020-11-05T08:47:58.817+0000][1604566078.817s][debug][gc,phases       ] GC(21536)     Prepare TLABs: 0.0ms
+[2020-11-05T08:47:58.818+0000][1604566078.818s][debug][gc,phases       ] GC(21536)     Choose Collection Set: 0.0ms
+[2020-11-05T08:47:58.818+0000][1604566078.818s][debug][gc,phases       ] GC(21536)     Humongous Register: 0.1ms
+[2020-11-05T08:47:58.818+0000][1604566078.818s][info ][gc,phases       ] GC(21536)   Evacuate Collection Set: 16.3ms
+[2020-11-05T08:47:58.818+0000][1604566078.818s][debug][gc,phases       ] GC(21536)     Ext Root Scanning (ms):   Min:  0.2, Avg:  0.2, Max:  0.2, Diff:  0.1, Sum:  1.8, Workers: 8
+[2020-11-05T08:47:58.818+0000][1604566078.818s][trace][gc,phases       ] GC(21536)     Update RS (ms):           Min:  0.1, Avg:  0.1, Max:  0.3, Diff:  0.2, Sum:  1.0, Workers: 8
+[2020-11-05T08:47:58.818+0000][1604566078.818s][trace][gc,phases       ] GC(21536)       Processed Buffers:        Min: 1, Avg:  4.0, Max: 7, Diff: 6, Sum: 32, Workers: 8
+[2020-11-05T08:47:58.818+0000][1604566078.818s][trace][gc,phases       ] GC(21536)       Scanned Cards:            Min: 16, Avg: 31.5, Max: 52, Diff: 36, Sum: 252, Workers: 8
+[2020-11-05T08:47:58.818+0000][1604566078.818s][trace][gc,phases       ] GC(21536)       Skipped Cards:            Min: 0, Avg:  0.2, Max: 1, Diff: 1, Sum: 2, Workers: 8
+[2020-11-05T08:47:58.818+0000][1604566078.818s][trace][gc,phases       ] GC(21536)     Scan RS (ms):             Min:  0.0, Avg:  0.0, Max:  0.1, Diff:  0.1, Sum:  0.2, Workers: 8
+[2020-11-05T08:47:58.818+0000][1604566078.818s][trace][gc,phases       ] GC(21536)       Scanned Cards:            Min: 0, Avg:  0.4, Max: 3, Diff: 3, Sum: 3, Workers: 8
+[2020-11-05T08:47:58.818+0000][1604566078.818s][trace][gc,phases       ] GC(21536)       Claimed Cards:            Min: 0, Avg:  0.4, Max: 3, Diff: 3, Sum: 3, Workers: 8
+[2020-11-05T08:47:58.818+0000][1604566078.818s][trace][gc,phases       ] GC(21536)       Skipped Cards:            Min: 0, Avg:  0.0, Max: 0, Diff: 0, Sum: 0, Workers: 8
+[2020-11-05T08:47:58.818+0000][1604566078.818s][debug][gc,phases       ] GC(21536)     Code Root Scanning (ms):  Min:  0.0, Avg:  0.0, Max:  0.0, Diff:  0.0, Sum:  0.0, Workers: 8
+[2020-11-05T08:47:58.818+0000][1604566078.818s][debug][gc,phases       ] GC(21536)     AOT Root Scanning (ms):   skipped
+[2020-11-05T08:47:58.818+0000][1604566078.818s][trace][gc,phases       ] GC(21536)     Object Copy (ms):         Min: 15.7, Avg: 15.8, Max: 16.0, Diff:  0.2, Sum: 126.7, Workers: 8
+[2020-11-05T08:47:58.818+0000][1604566078.818s][trace][gc,phases       ] GC(21536)     Termination (ms):         Min:  0.0, Avg:  0.0, Max:  0.0, Diff:  0.0, Sum:  0.0, Workers: 8
+[2020-11-05T08:47:58.818+0000][1604566078.818s][trace][gc,phases       ] GC(21536)       Termination Attempts:     Min: 1, Avg:  1.0, Max: 1, Diff: 0, Sum: 8, Workers: 8
+[2020-11-05T08:47:58.818+0000][1604566078.818s][debug][gc,phases       ] GC(21536)     GC Worker Other (ms):     Min:  0.0, Avg:  0.0, Max:  0.1, Diff:  0.1, Sum:  0.2, Workers: 8
+[2020-11-05T08:47:58.818+0000][1604566078.818s][debug][gc,phases       ] GC(21536)     GC Worker Total (ms):     Min: 16.2, Avg: 16.2, Max: 16.3, Diff:  0.0, Sum: 130.0, Workers: 8
+[2020-11-05T08:47:58.818+0000][1604566078.818s][info ][gc,phases       ] GC(21536)   Post Evacuate Collection Set: 181.0ms
+[2020-11-05T08:47:58.818+0000][1604566078.818s][debug][gc,phases       ] GC(21536)     Code Roots Fixup: 0.0ms
+[2020-11-05T08:47:58.818+0000][1604566078.818s][debug][gc,phases       ] GC(21536)     Clear Card Table: 0.2ms
+[2020-11-05T08:47:58.818+0000][1604566078.818s][debug][gc,phases       ] GC(21536)     Reference Processing: 0.1ms
+[2020-11-05T08:47:58.818+0000][1604566078.818s][debug][gc,phases       ] GC(21536)     Weak Processing: 0.1ms
+[2020-11-05T08:47:58.818+0000][1604566078.818s][debug][gc,phases       ] GC(21536)     String Dedup Fixup: 180.2ms
+[2020-11-05T08:47:58.818+0000][1604566078.818s][trace][gc,phases       ] GC(21536)     Queue Fixup (ms):         Min:  0.0, Avg:  0.0, Max:  0.0, Diff:  0.0, Sum:  0.0, Workers: 8
+[2020-11-05T08:47:58.818+0000][1604566078.818s][trace][gc,phases       ] GC(21536)     Table Fixup (ms):         Min: 180.0, Avg: 180.1, Max: 180.1, Diff:  0.1, Sum: 1440.6, Workers: 8
+[2020-11-05T08:47:58.818+0000][1604566078.818s][debug][gc,phases       ] GC(21536)     Merge Per-Thread State: 0.0ms
+[2020-11-05T08:47:58.818+0000][1604566078.818s][debug][gc,phases       ] GC(21536)     Code Roots Purge: 0.0ms
+[2020-11-05T08:47:58.818+0000][1604566078.818s][debug][gc,phases       ] GC(21536)     Redirty Cards: 0.0ms
+[2020-11-05T08:47:58.818+0000][1604566078.818s][debug][gc,phases       ] GC(21536)     DerivedPointerTable Update: 0.0ms
+[2020-11-05T08:47:58.818+0000][1604566078.818s][debug][gc,phases       ] GC(21536)     Free Collection Set: 0.4ms
+[2020-11-05T08:47:58.818+0000][1604566078.818s][debug][gc,phases       ] GC(21536)     Humongous Reclaim: 0.0ms
+[2020-11-05T08:47:58.818+0000][1604566078.818s][debug][gc,phases       ] GC(21536)     Start New Collection Set: 0.0ms
+[2020-11-05T08:47:58.818+0000][1604566078.818s][debug][gc,phases       ] GC(21536)     Resize TLABs: 0.0ms
+[2020-11-05T08:47:58.818+0000][1604566078.818s][debug][gc,phases       ] GC(21536)     Expand Heap After Collection: 0.0ms
+[2020-11-05T08:47:58.818+0000][1604566078.818s][info ][gc,phases       ] GC(21536)   Other: 0.3ms
+[2020-11-05T08:47:58.818+0000][1604566078.818s][info ][gc,heap         ] GC(21536) Eden regions: 133->0(133)
+[2020-11-05T08:47:58.818+0000][1604566078.818s][info ][gc,heap         ] GC(21536) Survivor regions: 20->20(20)
+[2020-11-05T08:47:58.818+0000][1604566078.818s][info ][gc,heap         ] GC(21536) Old regions: 1156->1171
+[2020-11-05T08:47:58.818+0000][1604566078.818s][info ][gc,heap         ] GC(21536) Humongous regions: 155->155
+[2020-11-05T08:47:58.818+0000][1604566078.818s][info ][gc,metaspace    ] GC(21536) Metaspace: 88863K->88863K(1128448K)
+[2020-11-05T08:47:58.818+0000][1604566078.818s][info ][gc              ] GC(21536) Pause Young (Normal) (G1 Evacuation Pause) 5855M->5383M(12288M) 198.221ms
+[2020-11-05T08:47:58.818+0000][1604566078.818s][info ][gc,cpu          ] GC(21536) User=1.56s Sys=0.01s Real=0.20s

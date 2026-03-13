@@ -1,0 +1,34 @@
+[2020-12-21T01:04:47.091+0000][1778483.410s][debug][gc,ergo              ] GC(597760) Initiate concurrent cycle (concurrent cycle initiation requested)
+[2020-12-21T01:04:47.091+0000][1778483.410s][info ][gc,start             ] GC(597760) Pause Young (Concurrent Start) (G1 Humongous Allocation)
+[2020-12-21T01:04:47.097+0000][1778483.416s][info ][gc,phases            ] GC(597760)   Pre Evacuate Collection Set: 0.4 ms
+[2020-12-21T01:04:47.097+0000][1778483.416s][debug][gc,phases            ] GC(597760)     Prepare TLABs: 0.0 ms
+[2020-12-21T01:04:47.097+0000][1778483.416s][debug][gc,phases            ] GC(597760)     Choose Collection Set: 0.0 ms
+[2020-12-21T01:04:47.097+0000][1778483.416s][debug][gc,phases            ] GC(597760)     Humongous Register: 0.2 ms
+[2020-12-21T01:04:47.097+0000][1778483.416s][trace][gc,phases            ] GC(597760)       Humongous Total: 88
+[2020-12-21T01:04:47.097+0000][1778483.416s][trace][gc,phases            ] GC(597760)       Humongous Candidate: 58
+[2020-12-21T01:04:47.097+0000][1778483.416s][debug][gc,phases            ] GC(597760)     Clear Claimed Marks: 0.3 ms
+[2020-12-21T01:04:47.097+0000][1778483.416s][info ][gc,phases            ] GC(597760)   Evacuate Collection Set: 2.3 ms
+[2020-12-21T01:04:47.098+0000][1778483.416s][info ][gc,phases            ] GC(597760)   Post Evacuate Collection Set: 1.9 ms
+[2020-12-21T01:04:47.098+0000][1778483.416s][debug][gc,phases            ] GC(597760)     Code Roots Fixup: 0.0 ms
+[2020-12-21T01:04:47.098+0000][1778483.416s][debug][gc,phases            ] GC(597760)     Clear Card Table: 0.4 ms
+[2020-12-21T01:04:47.098+0000][1778483.416s][debug][gc,phases            ] GC(597760)     Reference Processing: 0.1 ms
+[2020-12-21T01:04:47.098+0000][1778483.416s][debug][gc,phases            ] GC(597760)     Weak Processing: 0.1 ms
+[2020-12-21T01:04:47.098+0000][1778483.416s][debug][gc,phases            ] GC(597760)     Merge Per-Thread State: 0.0 ms
+[2020-12-21T01:04:47.098+0000][1778483.416s][debug][gc,phases            ] GC(597760)     Code Roots Purge: 0.0 ms
+[2020-12-21T01:04:47.098+0000][1778483.416s][debug][gc,phases            ] GC(597760)     Redirty Cards: 0.0 ms
+[2020-12-21T01:04:47.098+0000][1778483.416s][debug][gc,phases            ] GC(597760)     DerivedPointerTable Update: 0.0 ms
+[2020-12-21T01:04:47.098+0000][1778483.416s][debug][gc,phases            ] GC(597760)     Free Collection Set: 0.4 ms
+[2020-12-21T01:04:47.098+0000][1778483.416s][trace][gc,phases            ] GC(597760)       Free Collection Set Serial: 0.0 ms
+[2020-12-21T01:04:47.098+0000][1778483.416s][debug][gc,phases            ] GC(597760)     Humongous Reclaim: 0.9 ms
+[2020-12-21T01:04:47.098+0000][1778483.416s][trace][gc,phases            ] GC(597760)       Humongous Reclaimed: 1
+[2020-12-21T01:04:47.098+0000][1778483.416s][debug][gc,phases            ] GC(597760)     Start New Collection Set: 0.0 ms
+[2020-12-21T01:04:47.098+0000][1778483.416s][debug][gc,phases            ] GC(597760)     Resize TLABs: 0.0 ms
+[2020-12-21T01:04:47.098+0000][1778483.416s][debug][gc,phases            ] GC(597760)     Expand Heap After Collection: 0.0 ms
+[2020-12-21T01:04:47.098+0000][1778483.416s][info ][gc,phases            ] GC(597760)   Other: 1.0 ms
+[2020-12-21T01:04:47.098+0000][1778483.416s][info ][gc,heap              ] GC(597760) Eden regions: 7->0(1473)
+[2020-12-21T01:04:47.098+0000][1778483.416s][info ][gc,heap              ] GC(597760) Survivor regions: 1->1(184)
+[2020-12-21T01:04:47.098+0000][1778483.416s][info ][gc,heap              ] GC(597760) Old regions: 526->526
+[2020-12-21T01:04:47.098+0000][1778483.416s][info ][gc,heap              ] GC(597760) Humongous regions: 137->136
+[2020-12-21T01:04:47.098+0000][1778483.416s][info ][gc,metaspace         ] GC(597760) Metaspace: 93798K->93798K(1134592K)
+[2020-12-21T01:04:47.098+0000][1778483.417s][info ][gc                   ] GC(597760) Pause Young (Concurrent Start) (G1 Humongous Allocation) 1338M->1324M(5120M) 6.363 ms
+[2020-12-21T01:04:47.098+0000][1778483.417s][info ][gc,cpu               ] GC(597760) User=0.02s Sys=0.01s Real=0.01s

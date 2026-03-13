@@ -85,6 +85,7 @@ public class GCLogCycleEntry {
     public static final String POST_CLEAR_CARD_TABLE = "Clear Card Table";
     public static final String POST_REFERENCE_PROCESSING = "Reference Processing";
     public static final String POST_WEAK_PROCESSING = "Weak Processing";
+    public static final String STRING_DEDUP_FIXUP = "String Dedup Fixup";
     public static final String POST_MERGE_PER_THREAD_STATE = "Merge Per-Thread State";
     public static final String POST_CODE_ROOTS_PURGE = "Code Roots Purge";
     public static final String POST_REDIRTY_CARDS = "Redirty Cards";
