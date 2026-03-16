@@ -36,6 +36,7 @@
         <commons-collections4.version>4.1</commons-collections4.version>
         <xchart.version>3.6.0</xchart.version>
         <miglayout-swing.version>5.0</miglayout-swing.version>
+        <flatlaf.version>3.2.5</flatlaf.version>
         <spock.version>2.3-groovy-4.0</spock.version>
         <gmavenplus-plugin.version>3.0.0</gmavenplus-plugin.version>
         <axios.version>0.21.1</axios.version>
@@ -93,6 +94,11 @@
                 <groupId>com.miglayout</groupId>
                 <artifactId>miglayout-swing</artifactId>
                 <version>${miglayout-swing.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.formdev</groupId>
+                <artifactId>flatlaf</artifactId>
+                <version>${flatlaf.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.webjars.npm</groupId>

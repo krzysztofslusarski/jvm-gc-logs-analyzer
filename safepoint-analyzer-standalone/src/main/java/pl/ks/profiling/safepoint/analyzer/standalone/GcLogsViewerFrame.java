@@ -19,6 +19,7 @@ import net.miginfocom.swing.MigLayout;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.parser.GCLogFile;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.util.List;
 
@@ -51,25 +52,30 @@ class GcLogsViewerFrame extends JFrame {
 
     class GcLogsViewerPanel extends JPanel {
         public GcLogsViewerPanel() {
-            setBackground(new Color(220, 220, 220));
+            setBackground(new Color(248, 250, 252));
             setOpaque(true);
-            setLayout(new MigLayout());
+            setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(218, 222, 230)),
+                    new EmptyBorder(10, 16, 10, 16)
+            ));
+            setLayout(new MigLayout("", "[]8[]16[]8[]16[]", ""));
             JLabel inputDescription = new JLabel("GC collection id:", JLabel.LEFT);
             inputDescription.setFont(presentationFontProvider.getDefaultFont());
             add(inputDescription);
             JTextField textField = new JTextField(20);
             add(textField);
-            inputDescription = new JLabel("With decorators: ", JLabel.LEFT);
+            inputDescription = new JLabel("With decorators:", JLabel.LEFT);
             inputDescription.setFont(presentationFontProvider.getDefaultFont());
             add(inputDescription);
             JCheckBox checkBox = new JCheckBox();
             add(checkBox);
             JButton button = new JButton("Show");
+            button.setPreferredSize(new Dimension(100, 32));
             button.addActionListener(e -> {
                 String[] range = textField.getText().split("-");
                 collectionIdFrom = Long.parseLong(range[0]);
                 if (range.length > 1) {
-                    collectionIdTo= Long.parseLong(range[1]);
+                    collectionIdTo = Long.parseLong(range[1]);
                 } else {
                     collectionIdTo = collectionIdFrom;
                 }
@@ -89,13 +95,14 @@ class GcLogsViewerFrame extends JFrame {
         public GcLogsPanel() {
             setBackground(Color.WHITE);
             setOpaque(true);
-            setLayout(new MigLayout());
+            setLayout(new MigLayout("insets 16"));
             showInfo();
         }
 
         private void showInfo() {
             JLabel inputDescription = new JLabel("Enter collection id to view log", JLabel.LEFT);
             inputDescription.setFont(presentationFontProvider.getDefaultFont());
+            inputDescription.setForeground(new Color(100, 116, 139));
             add(inputDescription);
         }
 
@@ -117,8 +124,9 @@ class GcLogsViewerFrame extends JFrame {
 
             JTextArea textArea = new JTextArea();
             textArea.setFont(presentationFontProvider.getMonospaceFont());
-            textArea.setBorder(null);
+            textArea.setBorder(new EmptyBorder(8, 8, 8, 8));
             textArea.setEditable(false);
+            textArea.setBackground(new Color(248, 250, 252));
 
             textArea.setText(builder.toString());
             add(textArea);

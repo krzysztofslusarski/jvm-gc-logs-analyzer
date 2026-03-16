@@ -29,6 +29,8 @@ import pl.ks.profiling.safepoint.analyzer.commons.shared.ParsingProgress;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.StatsService;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.report.JvmLogFile;
 
+import com.formdev.flatlaf.FlatLightLaf;
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
@@ -69,14 +71,14 @@ public class AnalyzerStandaloneApplication extends JFrame {
     }
 
     public void init() throws ClassNotFoundException, UnsupportedLookAndFeelException, InstantiationException, IllegalAccessException {
-        for (UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
-            if ("Nimbus".equals(info.getName())) {
-                UIManager.setLookAndFeel(info.getClassName());
-                break;
-            }
-        }
-        UIManager.getLookAndFeelDefaults()
-                .put("defaultFont", presentationFontProvider.getDefaultFont());
+        FlatLightLaf.setup();
+        UIManager.put("defaultFont", presentationFontProvider.getDefaultFont());
+        UIManager.put("Button.arc", 8);
+        UIManager.put("Component.arc", 8);
+        UIManager.put("TextComponent.arc", 8);
+        UIManager.put("ScrollBar.trackArc", 999);
+        UIManager.put("ScrollBar.thumbArc", 999);
+        UIManager.put("ScrollBar.width", 10);
 
         quitButton = new JButton("Quit");
         loadButton = new JButton(LOAD_BUTTON_LABEL);
@@ -97,6 +99,7 @@ public class AnalyzerStandaloneApplication extends JFrame {
 
         setTitle("Safepoint/GC log file analyzer");
         pack();
+        setSize(800, 600);
         setMinimumSize(getSize());
         setLocationRelativeTo(null);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
@@ -105,21 +108,56 @@ public class AnalyzerStandaloneApplication extends JFrame {
     private void createLayout() {
         setLayout(new BorderLayout());
 
-        JPanel buttonsPanel = new JPanel();
-        buttonsPanel.setLayout(new BoxLayout(buttonsPanel, BoxLayout.Y_AXIS));
-        buttonsPanel.setBorder(new EmptyBorder(10, 30, 10, 30));
-        loadButton.setAlignmentX(Component.CENTER_ALIGNMENT);
-        loadOldButton.setAlignmentX(Component.CENTER_ALIGNMENT);
-        parsingProgressLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        concatLogsButton.setAlignmentX(Component.CENTER_ALIGNMENT);
-        buttonsPanel.add(loadButton);
-        buttonsPanel.add(loadOldButton);
-        buttonsPanel.add(parsingProgressLabel);
-        buttonsPanel.add(Box.createRigidArea(new Dimension(0, 10)));
-        buttonsPanel.add(concatLogsButton);
+        JPanel mainPanel = new JPanel();
+        mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
+        mainPanel.setBorder(new EmptyBorder(30, 50, 30, 50));
 
-        add(buttonsPanel, BorderLayout.CENTER);
-        add(quitButton, BorderLayout.PAGE_END);
+        JLabel titleLabel = new JLabel("GC Log Analyzer");
+        titleLabel.setFont(presentationFontProvider.getDefaultH1Font());
+        titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        mainPanel.add(titleLabel);
+        mainPanel.add(Box.createRigidArea(new Dimension(0, 8)));
+
+        JLabel subtitleLabel = new JLabel("Safepoint & GC log file analysis tool");
+        subtitleLabel.setFont(presentationFontProvider.getDefaultFont());
+        subtitleLabel.setForeground(new Color(100, 100, 100));
+        subtitleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        mainPanel.add(subtitleLabel);
+        mainPanel.add(Box.createRigidArea(new Dimension(0, 24)));
+
+        Dimension buttonSize = new Dimension(300, 36);
+        styleButton(loadButton, buttonSize);
+        styleButton(loadOldButton, buttonSize);
+        styleButton(concatLogsButton, buttonSize);
+
+        parsingProgressLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        mainPanel.add(loadButton);
+        mainPanel.add(Box.createRigidArea(new Dimension(0, 8)));
+        mainPanel.add(loadOldButton);
+        mainPanel.add(Box.createRigidArea(new Dimension(0, 6)));
+        mainPanel.add(parsingProgressLabel);
+        mainPanel.add(Box.createRigidArea(new Dimension(0, 20)));
+
+        JSeparator separator = new JSeparator();
+        separator.setMaximumSize(new Dimension(Integer.MAX_VALUE, 1));
+        mainPanel.add(separator);
+        mainPanel.add(Box.createRigidArea(new Dimension(0, 20)));
+        mainPanel.add(concatLogsButton);
+
+        add(mainPanel, BorderLayout.CENTER);
+
+        JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        bottomPanel.setBorder(new EmptyBorder(0, 0, 10, 0));
+        quitButton.setPreferredSize(new Dimension(120, 32));
+        bottomPanel.add(quitButton);
+        add(bottomPanel, BorderLayout.PAGE_END);
+    }
+
+    private void styleButton(JButton button, Dimension size) {
+        button.setAlignmentX(Component.CENTER_ALIGNMENT);
+        button.setMaximumSize(size);
+        button.setPreferredSize(size);
     }
 
     private void onLoadButtonClicked(ActionEvent event) {

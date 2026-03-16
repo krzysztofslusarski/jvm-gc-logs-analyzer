@@ -25,6 +25,10 @@
             <artifactId>miglayout-swing</artifactId>
         </dependency>
         <dependency>
+            <groupId>com.formdev</groupId>
+            <artifactId>flatlaf</artifactId>
+        </dependency>
+        <dependency>
             <groupId>pl.ks.profiling</groupId>
             <artifactId>xchart-commons</artifactId>
             <version>${project.version}</version>

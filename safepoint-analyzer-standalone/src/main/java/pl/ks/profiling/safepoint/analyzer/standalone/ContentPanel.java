@@ -29,6 +29,7 @@ import pl.ks.profiling.io.TempFileUtils;
 import pl.ks.profiling.xchart.commons.XChartCreator;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableColumnModel;
 import javax.swing.table.TableCellRenderer;
@@ -37,12 +38,15 @@ import java.awt.*;
 import java.util.UUID;
 
 class ContentPanel extends JPanel {
+    private static final Color ALT_ROW_COLOR = new Color(245, 247, 250);
+    private static final Color TABLE_GRID_COLOR = new Color(228, 232, 238);
+
     private final PresentationFontProviderStandalone presentationFontProvider;
     private final XChartCreator xChartCreator;
 
     ContentPanel(PresentationFontProviderStandalone presentationFontProvider) {
         this.presentationFontProvider = presentationFontProvider;
-        setLayout(new MigLayout());
+        setLayout(new MigLayout("insets 20 24 20 24"));
         setBackground(Color.WHITE);
         this.xChartCreator = new XChartCreator(presentationFontProvider);
     }
@@ -78,22 +82,28 @@ class ContentPanel extends JPanel {
     }
 
     private JLabel contentDescription(PageContent pageContent) {
-        JLabel title = new JLabel("<html><div width=\"800px\">" + pageContent.getInfo() + "</div></html>");
-        title.setFont(presentationFontProvider.getDefaultFont());
-        return title;
+        JLabel desc = new JLabel("<html><div width=\"800px\">" + pageContent.getInfo() + "</div></html>");
+        desc.setFont(presentationFontProvider.getDefaultFont());
+        desc.setForeground(new Color(80, 90, 100));
+        return desc;
     }
 
     private JLabel contentTitle(PageContent pageContent) {
-        return createTitle(pageContent.getTitle(), presentationFontProvider.getDefaultH2Font());
+        JLabel title = createTitle(pageContent.getTitle(), presentationFontProvider.getDefaultH2Font());
+        title.setBorder(new EmptyBorder(12, 0, 4, 0));
+        return title;
     }
 
     private JLabel pageTitle(Page page) {
-        return createTitle(page.getFullName(), presentationFontProvider.getDefaultH1Font());
+        JLabel title = createTitle(page.getFullName(), presentationFontProvider.getDefaultH1Font());
+        title.setBorder(new EmptyBorder(0, 0, 8, 0));
+        return title;
     }
 
-    private JLabel createTitle(String fullName, Font defaultH1Font) {
+    private JLabel createTitle(String fullName, Font font) {
         JLabel pageTitle = new JLabel(fullName, JLabel.LEFT);
-        pageTitle.setFont(defaultH1Font);
+        pageTitle.setFont(font);
+        pageTitle.setForeground(new Color(30, 41, 59));
         return pageTitle;
     }
 
@@ -152,20 +162,48 @@ class ContentPanel extends JPanel {
         JTable view = new JTable(array, header);
         view.setFillsViewportHeight(true);
         view.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+        view.setShowGrid(false);
+        view.setIntercellSpacing(new Dimension(0, 0));
+        view.setGridColor(TABLE_GRID_COLOR);
+        view.setSelectionBackground(new Color(219, 234, 254));
+        view.setSelectionForeground(new Color(30, 41, 59));
+        view.getTableHeader().setBackground(new Color(248, 250, 252));
+        view.getTableHeader().setForeground(new Color(71, 85, 105));
+        view.getTableHeader().setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, TABLE_GRID_COLOR));
         update(view);
-        return new JScrollPane(view);
+        JScrollPane scrollPane = new JScrollPane(view);
+        scrollPane.setBorder(BorderFactory.createLineBorder(TABLE_GRID_COLOR));
+        return scrollPane;
     }
 
     private void update(JTable jTable) {
         adjustRowSizes(jTable);
         for (int i = 0; i < jTable.getColumnCount(); i++) {
-            adjustColumnSizes(jTable, i, 2);
+            adjustColumnSizes(jTable, i, 8);
         }
         jTable.setPreferredScrollableViewportSize(jTable.getPreferredSize());
+
+        DefaultTableCellRenderer firstColRenderer = new AlternatingRowRenderer();
+        firstColRenderer.setHorizontalAlignment(JLabel.LEFT);
+        jTable.getColumnModel().getColumn(0).setCellRenderer(firstColRenderer);
+
         for (int column = 1; column < jTable.getColumnCount(); column++) {
-            DefaultTableCellRenderer rightRenderer = new DefaultTableCellRenderer();
+            DefaultTableCellRenderer rightRenderer = new AlternatingRowRenderer();
             rightRenderer.setHorizontalAlignment(JLabel.RIGHT);
             jTable.getColumnModel().getColumn(column).setCellRenderer(rightRenderer);
+        }
+    }
+
+    private static class AlternatingRowRenderer extends DefaultTableCellRenderer {
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value,
+                boolean isSelected, boolean hasFocus, int row, int column) {
+            Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            if (!isSelected) {
+                c.setBackground(row % 2 == 0 ? Color.WHITE : ALT_ROW_COLOR);
+            }
+            setBorder(new EmptyBorder(4, 8, 4, 8));
+            return c;
         }
     }
 
