@@ -1,30 +1,22 @@
 <!DOCTYPE HTML>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="en">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <link rel="stylesheet" th:href="@{/webjars/bootstrap/4.2.1/css/bootstrap.min.css}"/>
-    <link href="/public/css/upload.css" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>500 - Server Error</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="/css/app.css" rel="stylesheet">
 </head>
-
-<body class="text-center">
-
-<div class="cover-container d-flex h-100 p-3 mx-auto flex-column">
-    <main role="main" class="inner cover">
-        <h1>Safepoints and Garbage Collector log file analyzer</h1>
-        <div class="lead text-left">
-            Uuuups. Some exception happened, make sure that your file is nor greater than 10MB. If so, please contact <a href="mailto:ks@gclogs.com">ks@gclogs.com</a>. Please give me following info:
-            <ul>
-                <li>JDK version,</li>
-                <li>VM args used,</li>
-                <li>log file.</li>
-            </ul>
-        </div>
-    </main>
+<body>
+<div class="error-page">
+    <div>
+        <div class="error-code">500</div>
+        <h2>Something went wrong</h2>
+        <p>Please contact <a href="mailto:ks@gclogs.com">ks@gclogs.com</a> with your JDK version, VM args, and log file.</p>
+        <a href="/" class="btn btn-primary" style="margin-top: 1.5rem; display: inline-flex;">Back to home</a>
+    </div>
 </div>
-
-<script type="text/javascript" th:src="@{/webjars/jquery/2.2.4/jquery.min.js}"></script>
-<script type="text/javascript" th:src="@{/webjars/bootstrap/4.2.1/js/bootstrap.min.js}"></script>
-
 </body>
 </html>

@@ -2,323 +2,295 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <link rel="stylesheet" th:href="@{/webjars/bootstrap/4.2.1/css/bootstrap.min.css}"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Analysis Results - GC Log Analyzer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="/css/app.css" rel="stylesheet">
     <link href="/css/welcome.css" rel="stylesheet">
     <script type="text/javascript" th:src="@{/webjars/jquery/2.2.4/jquery.min.js}"></script>
-    <script type="text/javascript" th:src="@{/webjars/bootstrap/4.2.1/js/bootstrap.min.js}"></script>
-    <script src="https://code.highcharts.com/highcharts.src.js"></script>
-    <script src="https://code.highcharts.com/modules/boost.js"></script>
-    <script src="https://code.highcharts.com/modules/exporting.js"></script>
-    <script src="https://code.highcharts.com/themes/grid.src.js"></script>
+    <script src="/js/highcharts/highcharts.src.js"></script>
+    <script src="/js/highcharts/boost.js"></script>
+    <script src="/js/highcharts/exporting.js"></script>
+    <script src="/js/highcharts/grid.src.js"></script>
 </head>
-
 <body>
-<div class="container-fluid">
+<div class="viewer-layout">
+    <nav class="viewer-sidebar">
+        <div class="sidebar-brand">
+            <a href="/">
+                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                GC Log Analyzer
+            </a>
+        </div>
+        <ul class="nav-list">
+            <li class="nav-item">
+                <a class="show-all nav-link" href="#">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                         stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                        <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                    </svg>
+                    Show all
+                </a>
+            </li>
 
-    <div class="row">
-        <nav class="col-md-2 d-none d-md-block bg-light sidebar">
-            <div class="sidebar-sticky">
-                <ul class="nav flex-column">
-                    <li class="nav-item">
-                        <a class="show-all nav-link" href="#">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-home">
-                                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-                                <polyline points="9 22 9 12 15 12 15 22"></polyline>
-                            </svg>
-                            Show all
-                        </a>
-                    </li>
+            <li class="nav-item" th:each="page, pagesStatus: ${welcomePage.pages}" th:inline="text">
+                <a th:class="'show-page-' + ${pagesStatus.index} + ' nav-link'" href="#">
+                    <svg th:if="${page.icon.name() == 'STATS'}" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                        <polyline points="10 9 9 9 8 9"></polyline>
+                    </svg>
+                    <svg th:if="${page.icon.name() == 'CHART'}" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                         stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="20" x2="18" y2="10"></line>
+                        <line x1="12" y1="20" x2="12" y2="4"></line>
+                        <line x1="6" y1="20" x2="6" y2="14"></line>
+                    </svg>
+                    <svg th:if="${page.icon.name() == 'HOME'}" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                         stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                        <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                    </svg>
+                    [[${page.menuName}]]
+                </a>
+            </li>
+        </ul>
+    </nav>
 
-                    <li class="nav-item" th:each="page, pagesStatus: ${welcomePage.pages}" th:inline="text">
-                        <a th:class="'show-page-' + ${pagesStatus.index} + ' nav-link'" href="#">
-                            <svg th:if="${page.icon.name() == 'STATS'}" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-file-text">
-                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                <polyline points="14 2 14 8 20 8"></polyline>
-                                <line x1="16" y1="13" x2="8" y2="13"></line>
-                                <line x1="16" y1="17" x2="8" y2="17"></line>
-                                <polyline points="10 9 9 9 8 9"></polyline>
-                            </svg>
-                            <svg th:if="${page.icon.name() == 'CHART'}" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-bar-chart-2">
-                                <line x1="18" y1="20" x2="18" y2="10"></line>
-                                <line x1="12" y1="20" x2="12" y2="4"></line>
-                                <line x1="6" y1="20" x2="6" y2="14"></line>
-                            </svg>
-                            <svg th:if="${page.icon.name() == 'HOME'}" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-home">
-                                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-                                <polyline points="9 22 9 12 15 12 15 22"></polyline>
-                            </svg>
-                            [[${page.menuName}]]
-                        </a>
-                    </li>
+    <script type="text/javascript">
+        var contentAreaWidth = function() {
+            return Math.max(document.querySelector('.viewer-content').offsetWidth - 80, 400);
+        };
 
-                </ul>
-            </div>
-        </nav>
-        <script type="text/javascript">
+        var commonHighChartsPieChartsOptions = {
+            title: { text: '' },
+            chart: {
+                height: $(window).height() * 0.9,
+                plotBackgroundColor: null,
+                plotBorderWidth: null,
+                plotShadow: false,
+                type: 'pie'
+            },
+            pie: {
+                dataLabels: {
+                    enabled: true,
+                    format: '<b>{point.name}</b>: {point.percentage:.1f} %',
+                }
+            },
+            tooltip: {
+                pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b>',
+            },
+            accessibility: {
+                point: { valueSuffix: '%' }
+            },
+            legend: {
+                align: 'left',
+                verticalAlign: 'top',
+                borderWidth: 0,
+                style: { fontSize: 15 },
+            },
+        };
 
-            let commonHighChartsPieChartsOptions = {
-                title: {
-                    text: ''
-                },
-
+        function commonHighChartsLineChartsOptions(xAxisLabel, yAxisLabel, forceZeroMinValue) {
+            return {
+                title: { text: '' },
                 chart: {
                     height: $(window).height() * 0.9,
-                    width: $(window).width() * 0.8,
-                    plotBackgroundColor: null,
-                    plotBorderWidth: null,
-                    plotShadow: false,
-                    type: 'pie'
+                    zoomType: 'x'
                 },
-
-                pie: {
-                    dataLabels: {
-                        enabled: true,
-                        format: '<b>{point.name}</b>: {point.percentage:.1f} %',
-                    }
-                },
-
                 tooltip: {
-                    pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b>',
+                    pointFormat: '{series.name}: <b>{point.y}</b><br/>',
                 },
-
-                accessibility: {
-                    point: {
-                        valueSuffix: '%'
-                    }
-                },
-
                 legend: {
                     align: 'left',
                     verticalAlign: 'top',
                     borderWidth: 0,
-                    style: {
-                        fontSize: 15,
+                },
+                plotOptions: {
+                    series: {
+                        label: { connectorAllowed: false },
+                    },
+                    scatter: {
+                        marker: { radius: 2 },
                     },
                 },
-            }
-
-            function commonHighChartsLineChartsOptions(xAxisLabel, yAxisLabel, forceZeroMinValue) {
-                return {
-                    title: {
-                        text: '',
-                    },
-
-                    chart: {
-                        height: $(window).height() * 0.9,
-                        width: $(window).width() * 0.8,
-                        zoomType: 'x'
-                    },
-
-                    tooltip: {
-                        pointFormat: '{series.name}: <b>{point.y}</b><br/>',
-                    },
-
-                    legend: {
-                        align: 'left',
-                        verticalAlign: 'top',
-                        borderWidth: 0,
-                    },
-
-                    plotOptions: {
-                        series: {
-                            label: {
-                                connectorAllowed: false
-                            },
-                        },
-                        scatter: {
-                            marker: {
-                                radius: 2,
-                            },
-                        },
-                    },
-
-                    xAxis: {
-                        title: {
-                            text: xAxisLabel,
-                        },
-                    },
-
-                    yAxis: {
-                        title: {
-                            text: yAxisLabel,
-                        },
-                        min: forceZeroMinValue ? 0 : null,
-                    }
+                xAxis: {
+                    title: { text: xAxisLabel },
+                },
+                yAxis: {
+                    title: { text: yAxisLabel },
+                    min: forceZeroMinValue ? 0 : null,
                 }
-            }
-        </script>
+            };
+        }
+    </script>
 
-        <main role="main" class="col-md-9 ml-sm-auto col-lg-10 pt-3 px-4">
-            <div class="starter-template">
-                <div th:each="page, pagesStatus: ${welcomePage.pages}" th:class="'subpage page-' + ${pagesStatus.index}" th:inline="text">
-                    <h2>[[${page.fullName}]]</h2>
-                    <span th:if="${page.info != null}">
-                        [[${page.info}]]
-                    </span>
-                    <div th:each="content, contentStatus: ${page.pageContents}" th:inline="text">
-                        <h3 th:if="${content.title != null}">[[${content.title}]]</h3>
-                        <span th:if="${content.info != null}">
-                            [[${content.info}]]
-                        </span>
-                        <div th:if="${content.type.name() == 'CHART'}">
-                            <div style="width: 100%; height: 100%;" th:id="'content' + ${pagesStatus.index} +  '-' + ${contentStatus.index}"></div>
-                            <figure class="highcharts-figure">
-                                <div th:id="'container-' + ${pagesStatus.index} + '-' + ${contentStatus.index}"></div>
-                            </figure>
+    <main class="viewer-content">
+        <div th:each="page, pagesStatus: ${welcomePage.pages}" th:class="'subpage page-' + ${pagesStatus.index}" th:inline="text">
+            <h2>[[${page.fullName}]]</h2>
+            <span th:if="${page.info != null}">
+                [[${page.info}]]
+            </span>
+            <div th:each="content, contentStatus: ${page.pageContents}" th:inline="text">
+                <h3 th:if="${content.title != null}">[[${content.title}]]</h3>
+                <span th:if="${content.info != null}" style="display: block; color: var(--text-secondary); margin-bottom: 0.75rem; font-size: 0.875rem;">
+                    [[${content.info}]]
+                </span>
+                <div th:if="${content.type.name() == 'CHART'}">
+                    <div th:id="'content' + ${pagesStatus.index} +  '-' + ${contentStatus.index}"></div>
+                    <figure class="highcharts-figure">
+                        <div th:id="'container-' + ${pagesStatus.index} + '-' + ${contentStatus.index}"></div>
+                    </figure>
 
-                            <script th:if="${content.chartType.name() == 'PIE'}" type="text/javascript" th:inline="javascript">
-                                var id = /*[[${pagesStatus.index}]]*/;
-                                var contentId = /*[[${contentStatus.index}]]*/;
-                                var common = {...commonHighChartsPieChartsOptions};
-                                Highcharts.chart('container-' + id + '-' + contentId, {
-                                    ...common,
-                                    series: /*[[${content.getHighChartPieSeriesData()}]]*/,
-                                });
-                            </script>
+                    <script th:if="${content.chartType.name() == 'PIE'}" type="text/javascript" th:inline="javascript">
+                        var id = /*[[${pagesStatus.index}]]*/;
+                        var contentId = /*[[${contentStatus.index}]]*/;
+                        var common = {...commonHighChartsPieChartsOptions};
+                        Highcharts.chart('container-' + id + '-' + contentId, {
+                            ...common,
+                            chart: { ...common.chart, width: contentAreaWidth() },
+                            series: /*[[${content.getHighChartPieSeriesData()}]]*/,
+                        });
+                    </script>
 
-                            <script th:if="${content.chartType.name() == 'LINE' || content.chartType.name() == 'POINTS_OR_LINE'}" type="text/javascript" th:inline="javascript">
-                                var id = /*[[${pagesStatus.index}]]*/;
-                                var contentId = /*[[${contentStatus.index}]]*/;
-                                var common = {...commonHighChartsLineChartsOptions(/*[[${content.xAxisLabel}]]*/, /*[[${content.yAxisLabel}]]*/, /*[[${content.forceZeroMinValue}]]*/)};
-                                Highcharts.chart('container-' + id + '-' + contentId, {
-                                    ...common,
-                                    chart: {
-                                        ...common.chart,
-                                        type: 'line',
-                                    },
+                    <script th:if="${content.chartType.name() == 'LINE' || content.chartType.name() == 'POINTS_OR_LINE'}" type="text/javascript" th:inline="javascript">
+                        var id = /*[[${pagesStatus.index}]]*/;
+                        var contentId = /*[[${contentStatus.index}]]*/;
+                        var common = {...commonHighChartsLineChartsOptions(/*[[${content.xAxisLabel}]]*/, /*[[${content.yAxisLabel}]]*/, /*[[${content.forceZeroMinValue}]]*/)};
+                        Highcharts.chart('container-' + id + '-' + contentId, {
+                            ...common,
+                            chart: { ...common.chart, type: 'line', width: contentAreaWidth() },
+                            xAxis: { ...common.xAxis },
+                            series: /*[[${content.getHighChartSeriesData()}]]*/,
+                        });
+                    </script>
 
-                                    xAxis: {
-                                        ...common.xAxis,
-                                    },
-                                    series: /*[[${content.getHighChartSeriesData()}]]*/,
-                                });
-                            </script>
-
-                            <script th:if="${content.chartType.name() == 'POINTS'}" type="text/javascript" th:inline="javascript">
-                                var id = /*[[${pagesStatus.index}]]*/;
-                                var contentId = /*[[${contentStatus.index}]]*/;
-                                var common = {...commonHighChartsLineChartsOptions(/*[[${content.xAxisLabel}]]*/, /*[[${content.yAxisLabel}]]*/, /*[[${content.forceZeroMinValue}]]*/)};
-                                Highcharts.chart('container-' + id + '-' + contentId, {
-                                    ...common,
-                                    chart: {
-                                        ...common.chart,
-                                        type: 'scatter',
-                                    },
-
-                                    xAxis: {
-                                        ...common.xAxis,
-                                    },
-                                    series: /*[[${content.getHighChartSeriesData()}]]*/,
-                                });
-                            </script>
-
-                        </div>
-                        <div th:if="${content.type.name() == 'TABLE'}">
-                            <table th:class="'table table-striped table-bordered table-sm big-font' + ${content.table.size() >= 18 ? ' sticky-header' : ''}" th:style="'width: ' + ${content.screenWidth} + ';'">
-                                <thead th:if="${content.header != null}">
-                                <tr>
-                                    <th th:each="column, columnStatus: ${content.header}" th:inline="text">
-                                        [[${column}]]
-                                    </th>
-                                </tr>
-                                </thead>
-                                <tbody>
-                                <tr th:each="row, rowStatus: ${content.table}">
-                                    <td th:each="column, columnStatus: ${row}" th:inline="text">
-                                        [[${column}]]
-                                    </td>
-                                </tr>
-                                </tbody>
-                                <tfoot th:if="${content.footer != null}">
-                                <tr>
-                                    <td th:each="column, columnStatus: ${content.footer}" th:inline="text">
-                                        [[${column}]]
-                                    </td>
-                                </tr>
-                                </tfoot>
-                            </table>
-                        </div>
-                        <div th:if="${content.type.name() == 'IMAGE'}">
-                            <img th:if="${!content.linkOnly}" th:src="'image/' + ${content.name}"/>
-                            <br th:if="${!content.linkOnly}"/>
-                            <a class="img-link" th:href="'image/' + ${content.name}" target="_blank">Open image in new window</a>
-                        </div>
-                        <div th:if="${content.type.name() == 'TABLE_WITH_LINKS'}">
-                            <input th:if="${content.filteredColumn != null}" type="text" class="search-input"
-                                   th:data-table-id="${'table-' + pagesStatus.index}"
-                                   th:data-column="${content.filteredColumn}"
-                                   onkeyup="filterTable(this)" placeholder="Search ..."/>
-
-                            <table th:id="${'table-' + pagesStatus.index}" class="table table-striped table-bordered table-sm big-font" th:style="'width: ' + ${content.screenWidth} + ';'">
-                                <thead th:if="${content.header != null}">
-                                <tr>
-                                    <th th:each="column, columnStatus: ${content.header}" th:inline="text">
-                                        [[${column}]]
-                                    </th>
-                                </tr>
-                                </thead>
-                                <tbody>
-                                <tr th:each="row, rowStatus: ${content.table}">
-                                    <td th:each="column, columnStatus: ${row}" th:inline="text">
-                                        <span th:class="${column.linkColor == null ? '' :
-                                        (column.linkColor.name() == 'GREEN' ? 'table-with-link-green' : (
-                                        (column.linkColor.name() == 'RED' ? 'table-with-link-red' : '')))}">
-                                            <span th:if="${column.href != null}">
-                                                <a target="_blank" th:href="${column.href}">[[${column.description}]]</a>
-                                            </span>
-                                            <span th:if="${column.href == null}">
-                                                [[${column.description}]]
-                                            </span>
-                                        </span>
-                                    </td>
-                                </tr>
-                                </tbody>
-                                <tfoot th:if="${content.footer != null}">
-                                <tr>
-                                    <td th:each="column, columnStatus: ${content.footer}" th:inline="text">
-                                        [[${column}]]
-                                    </td>
-                                </tr>
-                                </tfoot>
-                            </table>
-                        </div>
-                        <br>
-                    </div>
-                    <script type="text/javascript" th:inline="javascript">
-                        $(document).ready(function () {
-                            let id = /*[[${pagesStatus.index}]]*/;
-                            $('.show-page-' + id).click(function () {
-                                    $(".subpage").hide();
-                                    $(".page-" + id).show();
-                                }
-                            );
+                    <script th:if="${content.chartType.name() == 'POINTS'}" type="text/javascript" th:inline="javascript">
+                        var id = /*[[${pagesStatus.index}]]*/;
+                        var contentId = /*[[${contentStatus.index}]]*/;
+                        var common = {...commonHighChartsLineChartsOptions(/*[[${content.xAxisLabel}]]*/, /*[[${content.yAxisLabel}]]*/, /*[[${content.forceZeroMinValue}]]*/)};
+                        Highcharts.chart('container-' + id + '-' + contentId, {
+                            ...common,
+                            chart: { ...common.chart, type: 'scatter', width: contentAreaWidth() },
+                            xAxis: { ...common.xAxis },
+                            series: /*[[${content.getHighChartSeriesData()}]]*/,
                         });
                     </script>
                 </div>
+                <div th:if="${content.type.name() == 'TABLE'}">
+                    <div class="table-wrapper">
+                        <table class="data-table" th:style="'width: ' + ${content.screenWidth} + ';'">
+                            <thead th:if="${content.header != null}" th:class="${content.table.size() >= 18 ? 'sticky-header' : ''}">
+                            <tr>
+                                <th th:each="column, columnStatus: ${content.header}" th:inline="text">
+                                    [[${column}]]
+                                </th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="row, rowStatus: ${content.table}">
+                                <td th:each="column, columnStatus: ${row}" th:inline="text">
+                                    [[${column}]]
+                                </td>
+                            </tr>
+                            </tbody>
+                            <tfoot th:if="${content.footer != null}">
+                            <tr>
+                                <td th:each="column, columnStatus: ${content.footer}" th:inline="text">
+                                    [[${column}]]
+                                </td>
+                            </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+                <div th:if="${content.type.name() == 'IMAGE'}">
+                    <img th:if="${!content.linkOnly}" th:src="'image/' + ${content.name}" style="max-width: 100%;"/>
+                    <br th:if="${!content.linkOnly}"/>
+                    <a class="img-link" th:href="'image/' + ${content.name}" target="_blank">Open image in new window</a>
+                </div>
+                <div th:if="${content.type.name() == 'TABLE_WITH_LINKS'}">
+                    <input th:if="${content.filteredColumn != null}" type="text" class="search-input"
+                           th:data-table-id="${'table-' + pagesStatus.index}"
+                           th:data-column="${content.filteredColumn}"
+                           onkeyup="filterTable(this)" placeholder="Search ..."/>
 
+                    <div class="table-wrapper">
+                        <table th:id="${'table-' + pagesStatus.index}" class="data-table" th:style="'width: ' + ${content.screenWidth} + ';'">
+                            <thead th:if="${content.header != null}">
+                            <tr>
+                                <th th:each="column, columnStatus: ${content.header}" th:inline="text">
+                                    [[${column}]]
+                                </th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="row, rowStatus: ${content.table}">
+                                <td th:each="column, columnStatus: ${row}" th:inline="text">
+                                    <span th:class="${column.linkColor == null ? '' :
+                                    (column.linkColor.name() == 'GREEN' ? 'table-with-link-green' : (
+                                    (column.linkColor.name() == 'RED' ? 'table-with-link-red' : '')))}">
+                                        <span th:if="${column.href != null}">
+                                            <a target="_blank" th:href="${column.href}">[[${column.description}]]</a>
+                                        </span>
+                                        <span th:if="${column.href == null}">
+                                            [[${column.description}]]
+                                        </span>
+                                    </span>
+                                </td>
+                            </tr>
+                            </tbody>
+                            <tfoot th:if="${content.footer != null}">
+                            <tr>
+                                <td th:each="column, columnStatus: ${content.footer}" th:inline="text">
+                                    [[${column}]]
+                                </td>
+                            </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
             </div>
-        </main>
-    </div>
+            <script type="text/javascript" th:inline="javascript">
+                $(document).ready(function () {
+                    var id = /*[[${pagesStatus.index}]]*/;
+                    $('.show-page-' + id).click(function () {
+                            $(".subpage").hide();
+                            $(".page-" + id).show();
+                        }
+                    );
+                });
+            </script>
+        </div>
+    </main>
 </div>
 
 <script type="text/javascript">
     $(document).ready(function () {
         $('.show-all').click(function () {
             $(".subpage").show();
+            $('.nav-link').removeClass('active');
+            $(this).addClass('active');
+        });
+
+        $('.nav-link').not('.show-all').click(function() {
+            $('.nav-link').removeClass('active');
+            $(this).addClass('active');
         });
     });
 
     function filterTable(input) {
-        let column = $(input).data("column");
-        let tableId = $(input).data("tableId");
-        let value = input.value;
-        let rows = $('#' + tableId).find("tr");
-        for (let i = 0; i < rows.length; i++) {
-            let columnToFilter = $(rows[i]).find("td")[column];
+        var column = $(input).data("column");
+        var tableId = $(input).data("tableId");
+        var value = input.value;
+        var rows = $('#' + tableId).find("tr");
+        for (var i = 0; i < rows.length; i++) {
+            var columnToFilter = $(rows[i]).find("td")[column];
             if (columnToFilter !== undefined) {
                 if (columnToFilter.innerHTML.indexOf(value) > -1) {
                     $(rows[i]).show();

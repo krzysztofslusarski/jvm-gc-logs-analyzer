@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Artur Owczarek
+ * Copyright 2020 Krzysztof Slusarski
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,15 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package pl.ks.profiling.safepoint.analyzer.web;
+package pl.ks.profiling.safepoint.analyzer.commons.shared.gc.parser;
 
-import pl.ks.profiling.io.source.LogsSource;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.parser.GCCollectorType;
-
-import java.util.function.Function;
-
-public interface ParsingExecutor {
-    ParsingStatus enqueue(LogsSource logsSource, Function<String, String> resultLocationFactory, GCCollectorType collectorType);
-
-    ParsingStatus getParsingStatus(String parsingId);
+public enum GCCollectorType {
+    G1_AND_PARALLEL,
+    SHENANDOAH,
+    ZGC
 }

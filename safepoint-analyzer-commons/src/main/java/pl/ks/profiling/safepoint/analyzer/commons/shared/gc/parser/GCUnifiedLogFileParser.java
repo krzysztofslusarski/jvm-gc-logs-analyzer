@@ -28,6 +28,12 @@ import java.util.regex.Pattern;
 public class GCUnifiedLogFileParser implements FileParser<GCLogFile> {
     private final GCLogFile gcLogFile = new GCLogFile();
     private String lastRegion;
+    private final GCCollectorType collectorType;
+    private Long currentCycleId = null;
+
+    public GCUnifiedLogFileParser(GCCollectorType collectorType) {
+        this.collectorType = collectorType;
+    }
 
     public interface TriConsumer<A, B, C> {
         void accept(A a, B b, C c);
@@ -74,16 +80,20 @@ public class GCUnifiedLogFileParser implements FileParser<GCLogFile> {
 
     private final List<GcLineParser> parsers = List.of(
             new GcLineParser(includes("gc,start"), excludes(), this::gcStart),
+            new GcLineParser(includes("gc ", "Collection"), excludes("gc,start", "gc,phases", "->"), this::zgcStart),
             new GcLineParser(includes("gc ", "Concurrent Cycle", "ms"), excludes(), this::addConcurrentCycleDataIfPresent),
             new GcLineParser(includes("gc ", "Concurrent Mark Cycle", "ms"), excludes(), this::addConcurrentCycleDataIfPresent),
             new GcLineParser(includes("gc,phases", "ms", ")   "), excludes(")       ", "Queue Fixup", "Table Fixup"), this::addPhaseYoungAndMixed),
             new GcLineParser(includes("gc,phases", "ms"), excludes(")  "), this::addPhaseConcurrentSTW),
             new GcLineParser(includes("gc ", "->"), excludes(), this::addSizesAndTime),
+            new GcLineParser(includes("gc ", "ms"), excludes("gc,start", "gc,phases", "->", "gc,heap", "gc,humongous",
+                    "gc,age", "Concurrent Cycle", "Concurrent Mark Cycle", "- age", "To-space exhausted"),
+                    this::addShenandoahPhaseTime),
             new GcLineParser(includes("regions", "gc,heap", "info"), excludes(), this::addRegionsCounts),
             new GcLineParser(includes("gc,heap", "trace"), excludes(), this::addRegionsSizes),
             new GcLineParser(includes("gc,humongous", "debug"), excludes(), this::addHumongous),
             new GcLineParser(includes("- age"), excludes(), this::addAgeCount),
-            new GcLineParser(includes("gc,age", "debug"), excludes(), this::addSurvivorStats),
+            new GcLineParser(includes("gc,age", "debug", "Desired survivor size"), excludes(), this::addSurvivorStats),
             new GcLineParser(includes("To-space exhausted"), excludes(), this::toSpaceExhausted)
     );
 
@@ -96,6 +106,7 @@ public class GCUnifiedLogFileParser implements FileParser<GCLogFile> {
     }
 
     public GCUnifiedLogFileParser() {
+        this(GCCollectorType.G1_AND_PARALLEL);
     }
 
     @Override
@@ -119,7 +130,30 @@ public class GCUnifiedLogFileParser implements FileParser<GCLogFile> {
     }
 
     private void gcStart(GCLogFile gcLogFile, Long sequenceId, String line) {
+        if (collectorType == GCCollectorType.SHENANDOAH) {
+            if (currentCycleId != null && !currentCycleId.equals(sequenceId)) {
+                gcLogFile.finishCycle(currentCycleId);
+            }
+            if (currentCycleId == null || !currentCycleId.equals(sequenceId)) {
+                gcLogFile.newPhase(sequenceId, getPhase(line), ParserUtils.getTimeStamp(line));
+                currentCycleId = sequenceId;
+            }
+            return;
+        }
         gcLogFile.newPhase(sequenceId, getPhase(line), ParserUtils.getTimeStamp(line));
+    }
+
+    private void zgcStart(GCLogFile gcLogFile, Long sequenceId, String line) {
+        if (collectorType != GCCollectorType.ZGC) {
+            return;
+        }
+        if (currentCycleId != null && !currentCycleId.equals(sequenceId)) {
+            gcLogFile.finishCycle(currentCycleId);
+        }
+        if (currentCycleId == null || !currentCycleId.equals(sequenceId)) {
+            gcLogFile.newPhase(sequenceId, getPhase(line), ParserUtils.getTimeStamp(line));
+            currentCycleId = sequenceId;
+        }
     }
 
     private void addConcurrentCycleDataIfPresent(GCLogFile gcLogFile, Long sequenceId, String line) {
@@ -131,6 +165,17 @@ public class GCUnifiedLogFileParser implements FileParser<GCLogFile> {
     public GCLogFile fetchData() {
         gcLogFile.parsingCompleted();
         return gcLogFile;
+    }
+
+    private void addShenandoahPhaseTime(GCLogFile gcLogFile, Long sequenceId, String line) {
+        if (collectorType != GCCollectorType.SHENANDOAH) {
+            return;
+        }
+        String phaseWithTime = line.replaceFirst(".*GC\\(\\d+\\)", "").trim();
+        String time = getTime(phaseWithTime);
+        int timeIndex = phaseWithTime.indexOf(time);
+        String phase = phaseWithTime.substring(0, timeIndex).trim();
+        gcLogFile.addSubPhaseTime(sequenceId, phase, new BigDecimal(time));
     }
 
     private void addPhaseConcurrentSTW(GCLogFile gcLogFile, Long sequenceId, String line) {
@@ -184,7 +229,14 @@ public class GCUnifiedLogFileParser implements FileParser<GCLogFile> {
                 line.contains("%") ? "-1" : matcher.group().replace("M", "");
         String time = getTime(line);
 
-        gcLogFile.addSizesAndTime(sequenceId, Integer.parseInt(before), Integer.parseInt(after), Integer.parseInt(heapSize), new BigDecimal(time));
+        if (collectorType == GCCollectorType.SHENANDOAH || collectorType == GCCollectorType.ZGC) {
+            gcLogFile.addSizes(sequenceId, Integer.parseInt(before), Integer.parseInt(after), Integer.parseInt(heapSize));
+            String phaseName = line.replaceFirst(".*GC\\(\\d+\\)", "").trim()
+                    .replaceFirst("\\s*\\d+M.*->.*", "").trim();
+            gcLogFile.addSubPhaseTime(sequenceId, phaseName, new BigDecimal(time));
+        } else {
+            gcLogFile.addSizesAndTime(sequenceId, Integer.parseInt(before), Integer.parseInt(after), Integer.parseInt(heapSize), new BigDecimal(time));
+        }
     }
 
     private void addSurvivorStats(GCLogFile gcLogFile, Long sequenceId, String line) {
@@ -255,7 +307,7 @@ public class GCUnifiedLogFileParser implements FileParser<GCLogFile> {
     private String getPhase(String line) {
         String phase = line
                 .replaceFirst(".* GC\\(", "")
-                .replaceFirst(".*\\) Pause", "Pause")
+                .replaceFirst("\\d+\\)\\s*", "")
                 .trim();
         return phase;
     }
@@ -265,10 +317,20 @@ public class GCUnifiedLogFileParser implements FileParser<GCLogFile> {
                 .replaceFirst(".* - age", "")
                 .replaceFirst(":.*", "")
                 .trim();
-        String sizeStr = line
-                .replaceFirst(".*:", "")
-                .replaceFirst("bytes.*", "")
-                .trim();
+
+        String sizeStr;
+        if (line.contains("curr")) {
+            // Shenandoah format: "- age 1: prev 44147560 bytes, curr 38675848 bytes, mortality 0.12"
+            sizeStr = line
+                    .replaceFirst(".*curr\\s+", "")
+                    .replaceFirst("\\s*bytes.*", "")
+                    .trim();
+        } else {
+            sizeStr = line
+                    .replaceFirst(".*:", "")
+                    .replaceFirst("bytes.*", "")
+                    .trim();
+        }
 
         int age = Integer.parseInt(ageStr);
         long size = Long.parseLong(sizeStr);

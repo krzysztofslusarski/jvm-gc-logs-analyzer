@@ -45,6 +45,7 @@ import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.page.GCRegionSizeAft
 import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.page.GCSubphaseStats;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.page.GCSurvivorAndTenuring;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.page.GCTableStats;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.parser.GCCollectorType;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.parser.GCJdk8LogFileParser;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.parser.GCUnifiedLogFileParser;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.jit.page.JitCodeCacheStats;
@@ -140,10 +141,22 @@ public class StatsService {
                 linesPerSecond);
     }
 
+    public JvmLogFile createAllStatsShenandoah(LogsSource ls, Consumer<ParsingProgress> notificationConsumer, Consumer<JvmLogFile> onComplete) {
+        return createAllStatsUnifiedLogger(ls, notificationConsumer, onComplete, GCCollectorType.SHENANDOAH);
+    }
+
+    public JvmLogFile createAllStatsZgc(LogsSource ls, Consumer<ParsingProgress> notificationConsumer, Consumer<JvmLogFile> onComplete) {
+        return createAllStatsUnifiedLogger(ls, notificationConsumer, onComplete, GCCollectorType.ZGC);
+    }
+
     public JvmLogFile createAllStatsUnifiedLogger(LogsSource ls, Consumer<ParsingProgress> notificationConsumer, Consumer<JvmLogFile> onComplete) {
+        return createAllStatsUnifiedLogger(ls, notificationConsumer, onComplete, GCCollectorType.G1_AND_PARALLEL);
+    }
+
+    private JvmLogFile createAllStatsUnifiedLogger(LogsSource ls, Consumer<ParsingProgress> notificationConsumer, Consumer<JvmLogFile> onComplete, GCCollectorType collectorType) {
         try (LogsSource logsSource = ls) {
             SafepointUnifiedLogFileParser safepointUnifiedLogFileParser = new SafepointUnifiedLogFileParser();
-            GCUnifiedLogFileParser gcUnifiedLogFileParser = new GCUnifiedLogFileParser();
+            GCUnifiedLogFileParser gcUnifiedLogFileParser = new GCUnifiedLogFileParser(collectorType);
             ThreadLogFileParser threadLogFileParser = new ThreadLogFileParser();
             ClassLoaderLogFileParser classLoaderLogFileParser = new ClassLoaderLogFileParser();
             JitLogFileParser jitLogFileParser = new JitLogFileParser();

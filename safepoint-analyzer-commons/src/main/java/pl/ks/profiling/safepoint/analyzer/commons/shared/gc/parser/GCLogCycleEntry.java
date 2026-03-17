@@ -28,6 +28,9 @@ public class GCLogCycleEntry {
     public static final String MIXED_COLLECTION = "Mixed collection";
     public static final String FULL_COLLECTION = "Full collection";
     public static final String YOUNG_COLLECTION = "Young collection";
+    public static final String SHENANDOAH_CYCLE = "Shenandoah GC Cycle";
+    public static final String ZGC_MAJOR_CYCLE = "ZGC Major Collection";
+    public static final String ZGC_MINOR_CYCLE = "ZGC Minor Collection";
 
     public static final String REMARK_COLLECTION = "remark";
 
@@ -135,6 +138,16 @@ public class GCLogCycleEntry {
             }
         } else if (phase.contains("Full")) {
             aggregatedPhase = FULL_COLLECTION;
+            genuineCollection = true;
+        } else if (phase.contains("Concurrent reset") || phase.contains("Pause Init Mark")
+                || phase.contains("Coalescing and filling")) {
+            aggregatedPhase = SHENANDOAH_CYCLE;
+            genuineCollection = true;
+        } else if (phase.contains("Major Collection")) {
+            aggregatedPhase = ZGC_MAJOR_CYCLE;
+            genuineCollection = true;
+        } else if (phase.contains("Minor Collection")) {
+            aggregatedPhase = ZGC_MINOR_CYCLE;
             genuineCollection = true;
         } else {
             aggregatedPhase = phase;

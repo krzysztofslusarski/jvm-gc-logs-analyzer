@@ -2,63 +2,64 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <link rel="stylesheet" th:href="@{/webjars/bootstrap/4.2.1/css/bootstrap.min.css}"/>
-    <link href="/css/welcome.css" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Parsing in progress - GC Log Analyzer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="/css/app.css" rel="stylesheet">
     <script type="text/javascript" th:src="@{/webjars/jquery/2.2.4/jquery.min.js}"></script>
-    <script type="text/javascript" th:src="@{/webjars/bootstrap/4.2.1/js/bootstrap.min.js}"></script>
     <script type="text/javascript" th:src="@{/webjars/axios/0.21.1/dist/axios.min.js}"></script>
 </head>
 <body>
-<div class="jumbotron d-flex align-items-center min-vh-100">
-    <div class="container">
-        <div class="card mx-auto">
-            <div class="card-body">
-                <h5 class="card-title">
-                    <div class="spinner-border text-primary" role="status">
-                        <span class="sr-only">Loading...</span>
-                    </div>
-                    Parsing in progress...
-                </h5>
-                <h6 class="card-subtitle mb-2 text-muted">Parsing id:
-                    <!--/*@thymesVar id="initialStatus" type="pl.ks.profiling.safepoint.analyzer.web.ParsingStatus"*/-->
-                    <span th:utext="${initialStatus.parsingId}"></span></h6>
-                <p class="card-text">You will be redirected automatically upon completion. You can also copy address of
-                    this page and visit it later.</p>
-                <p class="card-text" id="currentStatus">Waiting for worker...</p>
-            </div>
+<div class="centered-page">
+    <div class="card">
+        <div class="card-body">
+            <h3 style="display: flex; align-items: center; margin-bottom: 0.75rem;">
+                <span class="spinner"></span>
+                Parsing in progress...
+            </h3>
+            <p class="text-secondary" style="font-size: 0.875rem; margin-bottom: 0.5rem;">
+                Parsing id:
+                <!--/*@thymesVar id="initialStatus" type="pl.ks.profiling.safepoint.analyzer.web.ParsingStatus"*/-->
+                <span class="text-mono" th:utext="${initialStatus.parsingId}"></span>
+            </p>
+            <p class="text-secondary" style="font-size: 0.875rem;">
+                You will be redirected automatically upon completion. You can also copy the address of this page and visit it later.
+            </p>
+            <p id="currentStatus" style="margin-top: 1rem; font-size: 0.875rem;">Waiting for worker...</p>
         </div>
     </div>
 </div>
 <script type="text/javascript">
     $(document).ready(function () {
-        const parsingId = "[[${initialStatus.parsingId}]]";
+        var parsingId = "[[${initialStatus.parsingId}]]";
         askForStatus();
-        const keepQuerying = setInterval(askForStatus, 1000);
+        var keepQuerying = setInterval(askForStatus, 1000);
 
         function setCurrentStatus(innerHtml) {
             document.getElementById("currentStatus").innerHTML = innerHtml;
         }
 
         function setErrorStatus() {
-            setCurrentStatus(`<div class="alert alert-danger" role="alert">Something really bad happened. Mail us at <a href="mailto:ks@gclogs.com">ks@gclogs.com</a> to help us make this tool better.</div>`);
+            setCurrentStatus('<div class="alert alert-danger" style="margin: 0;">Something went wrong. Contact <a href="mailto:ks@gclogs.com">ks@gclogs.com</a> to help us improve this tool.</div>');
         }
 
         function askForStatus() {
-            axios.get(`/parsings/${parsingId}/status`, {})
+            axios.get('/parsings/' + parsingId + '/status', {})
                 .then(function (response) {
-                    const responseData = response.data;
+                    var responseData = response.data;
                     if (responseData.finished) {
                         clearInterval(keepQuerying);
-                        window.location.href = `/parsings/${parsingId}`;
+                        window.location.href = '/parsings/' + parsingId;
                     } else {
-                        const failed = responseData.failed;
+                        var failed = responseData.failed;
                         if (!failed) {
-                            const processedFormatted = responseData.processedLines.toLocaleString();
-                            const currentFileNumber = responseData.currentFileNumber;
-                            const totalNumberOfFiles = responseData.totalNumberOfFiles;
-                            const linesPerSecond = responseData.linesPerSecond.toLocaleString();
-                            setCurrentStatus(`Reading file ${currentFileNumber} of ${totalNumberOfFiles}. Already processed ${processedFormatted} lines (average speed: ${linesPerSecond} lines per second)`);
+                            var processedFormatted = responseData.processedLines.toLocaleString();
+                            var currentFileNumber = responseData.currentFileNumber;
+                            var totalNumberOfFiles = responseData.totalNumberOfFiles;
+                            var linesPerSecond = responseData.linesPerSecond.toLocaleString();
+                            setCurrentStatus('Reading file ' + currentFileNumber + ' of ' + totalNumberOfFiles + '. Already processed ' + processedFormatted + ' lines (average speed: ' + linesPerSecond + ' lines per second)');
                         } else {
                             clearInterval(keepQuerying);
                             setErrorStatus();
@@ -71,7 +72,6 @@
                 });
         }
     });
-
 </script>
 </body>
 </html>

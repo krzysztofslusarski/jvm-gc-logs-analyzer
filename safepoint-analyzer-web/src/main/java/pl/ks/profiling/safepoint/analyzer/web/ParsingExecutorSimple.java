@@ -23,6 +23,7 @@ import org.springframework.stereotype.Component;
 import pl.ks.profiling.io.source.LogsSource;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.ParsingProgress;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.StatsService;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.parser.GCCollectorType;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.report.JvmLogFile;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
@@ -46,15 +47,28 @@ public class ParsingExecutorSimple implements ParsingExecutor {
         this.executor = Executors.newFixedThreadPool(parsingProperties.workerThreads, new CustomizableThreadFactory("parsing-"));
     }
 
-    public ParsingStatus enqueue(LogsSource logsSource, Function<String, String> resultLocationFactory) {
+    public ParsingStatus enqueue(LogsSource logsSource, Function<String, String> resultLocationFactory, GCCollectorType collectorType) {
         String parsingId = UUID.randomUUID().toString();
         executor.submit(() -> {
-            log.info("Submitting parsing {} to parser", parsingId);
+            log.info("Submitting parsing {} to parser (collector: {})", parsingId, collectorType);
             try {
-                statsService.createAllStatsUnifiedLogger(
-                        logsSource,
-                        (ParsingProgress p) -> updateParsingProgress(parsingId, p),
-                        (JvmLogFile f) -> storeInRepo(parsingId, f));
+                switch (collectorType) {
+                    case SHENANDOAH:
+                        statsService.createAllStatsShenandoah(logsSource,
+                                (ParsingProgress p) -> updateParsingProgress(parsingId, p),
+                                (JvmLogFile f) -> storeInRepo(parsingId, f));
+                        break;
+                    case ZGC:
+                        statsService.createAllStatsZgc(logsSource,
+                                (ParsingProgress p) -> updateParsingProgress(parsingId, p),
+                                (JvmLogFile f) -> storeInRepo(parsingId, f));
+                        break;
+                    default:
+                        statsService.createAllStatsUnifiedLogger(logsSource,
+                                (ParsingProgress p) -> updateParsingProgress(parsingId, p),
+                                (JvmLogFile f) -> storeInRepo(parsingId, f));
+                        break;
+                }
             } catch (Throwable t) {
                 log.error("Error while processing parsing " + parsingId, t);
                 markAsFailed(parsingId);

@@ -27,6 +27,7 @@ import org.springframework.web.server.ResponseStatusException;
 import pl.ks.profiling.io.InputUtils;
 import pl.ks.profiling.io.StorageUtils;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.ParserUtils;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.parser.GCCollectorType;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.report.JvmLogFile;
 import pl.ks.profiling.web.commons.WelcomePage;
 
@@ -75,29 +76,35 @@ class StatsController {
 
     @PostMapping("/enqueue")
     @ResponseBody
-    ParsingStatus enqueue(@RequestParam("file") MultipartFile file, HttpServletRequest request) throws Exception {
+    ParsingStatus enqueue(@RequestParam("file") MultipartFile file,
+                          @RequestParam(value = "gcCollector", required = false, defaultValue = "G1_AND_PARALLEL") GCCollectorType collectorType,
+                          HttpServletRequest request) throws Exception {
         String originalFilename = file.getOriginalFilename();
-        log.info("New request to enqueue file {}. Copying to persistent storage", originalFilename);
+        log.info("New request to enqueue file {}. Collector: {}. Copying to persistent storage", originalFilename, collectorType);
         log.debug("Copying file {} to persistent storage.", originalFilename);
         String savedLocation = StorageUtils.createCopy(INPUTS_PATH, originalFilename, file.getInputStream());
         log.debug("File {} has been copied. Enqueuing.", originalFilename);
         ParsingStatus initialStatus = parsingExecutor.enqueue(
                 InputUtils.getLogsSource(savedLocation, originalFilename, ParserUtils::getTimeStamp),
-                (String parsingId) -> createParsingProgressUrl(request, parsingId));
+                (String parsingId) -> createParsingProgressUrl(request, parsingId),
+                collectorType);
         log.debug("File {} has received status {}", originalFilename, initialStatus);
         return initialStatus;
     }
 
     @PostMapping("/enqueue-plain-text")
     @ResponseBody
-    ParsingStatus enqueue(String text, HttpServletRequest request) throws Exception {
-        log.info("New request to enqueue logs of length {} characters.", text.length());
+    ParsingStatus enqueue(String text,
+                          @RequestParam(value = "gcCollector", required = false, defaultValue = "G1_AND_PARALLEL") GCCollectorType collectorType,
+                          HttpServletRequest request) throws Exception {
+        log.info("New request to enqueue logs of length {} characters. Collector: {}", text.length(), collectorType);
         log.debug("Saving text to persistent storage");
         String savedLocation = StorageUtils.savePlainText(INPUTS_PATH, text);
         log.debug("Enqueuing logs for parsing.");
         ParsingStatus initialStatus = parsingExecutor.enqueue(
                 InputUtils.getLogsSource(savedLocation, "plain-text.log", ParserUtils::getTimeStamp),
-                (String parsingId) -> createParsingProgressUrl(request, parsingId));
+                (String parsingId) -> createParsingProgressUrl(request, parsingId),
+                collectorType);
         log.debug("Logs have received status {}", initialStatus);
         return initialStatus;
     }

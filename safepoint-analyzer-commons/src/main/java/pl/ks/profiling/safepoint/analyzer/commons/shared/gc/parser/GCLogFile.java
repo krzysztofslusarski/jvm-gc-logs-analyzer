@@ -72,6 +72,11 @@ public class GCLogFile {
         if (gcLogCycleEntry == null) {
             return;
         }
+        if (gcLogCycleEntry.getTimeMs() == null) {
+            BigDecimal total = gcLogCycleEntry.getSubPhasesTime().values().stream()
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            gcLogCycleEntry.addTime(total);
+        }
         cycleEntries.add(gcLogCycleEntry);
     }
 
@@ -157,6 +162,10 @@ public class GCLogFile {
     }
 
     void parsingCompleted() {
+        for (Long sequenceId : new ArrayList<>(unprocessedCycles.keySet())) {
+            finishCycle(sequenceId);
+        }
+
         if (stats != null) {
             return;
         }

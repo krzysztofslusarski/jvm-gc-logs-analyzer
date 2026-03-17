@@ -2,84 +2,85 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <link rel="stylesheet" th:href="@{/webjars/bootstrap/4.2.1/css/bootstrap.min.css}"/>
-    <link href="/css/upload.css" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>GC Log Analyzer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="/css/app.css" rel="stylesheet">
 </head>
-
 <body>
-<main role="main" class="container pb-3">
-    <h1 class="display-3 text-center">Online Safepoint/GC log analyzer</h1>
-    <div class="card mb-3">
-        <div class="card-body">
-            <h5 class="card-title">Online analysis</h5>
-            <p>If you need quick analysis of <= 10Mb file (after compression).</p>
-            <a class="btn btn-outline-primary" href="/upload" role="button">Try online</a>
-        </div>
+<div class="container">
+    <div class="hero">
+        <h1>Safepoint/GC Log Analyzer</h1>
+        <p>Analyze JVM garbage collection and safepoint logs with interactive charts and statistics.</p>
     </div>
-    <div class="card mb-3">
-        <div class="card-body">
-            <h5 class="card-title">Run on your computer in docker</h5>
-            <p>Quickly run application on your computer</p>
-            <p>
-                <kbd>docker run -it -p 8080:8080 -v /var/uploads:/uploads
-                    [[${dockerImage}]]</kbd><br/>
-                <small class="text-muted">Create directory where your logs will be uploaded (/var/uploads) before running this
-                    command</small>
-            </p>
-            <p>Application will be available on <a class="btn btn-outline-primary btn-sm"
-                                                   href="http://localhost:8080" role="button" target="_blank">http://localhost:8080</a>
-            </p>
 
-            <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapse1"
-                    aria-expanded="false" aria-controls="collapse1">
-                Show configuration options
-            </button>
-            <div class="collapse" id="collapse1">
-                <p>You can specify the following options with multiple <kbd>-e PROPERTY=value</kbd></p>
-                <dl class="row">
-                    <dt class="col-sm-4"><kbd>SERVER_PORT=8080</kbd></dt>
-                    <dd class="col-sm-8">Port used by container to run http server.</dd>
-                    <dt class="col-sm-4"><kbd>UPLOAD_DIR=/uploads</kbd></dt>
-                    <dd class="col-sm-8">Location within container for uploaded logs.</dd>
-                    <dt class="col-sm-4"><kbd>MAX_REQUEST_SIZE=310MB</kbd></dt>
-                    <dd class="col-sm-8">Maximum size of uploaded file and request</dd>
-                    <dt class="col-sm-4"><kbd>NUMBER_OF_WORKER_THREADS=2</kbd></dt>
-                    <dd class="col-sm-8">Number of threads parsing uploaded logs. More incoming requests will be
-                        queued
-                    </dd>
-                    <dt class="col-sm-4"><kbd>REPORT_REMOVE_AFTER_READ=false</kbd></dt>
-                    <dd class="col-sm-8">Report is removed from memory after read.</dd>
-                    <dt class="col-sm-4"><kbd>REPORT_EXPIRATION=10m</kbd></dt>
-                    <dd class="col-sm-8">Time duration after report is removed from memory.</dd>
-                </dl>
+    <div class="feature-grid">
+        <a href="/upload" class="feature-card">
+            <div class="icon icon-upload">
+                <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
             </div>
+            <h3>Online Analysis</h3>
+            <p>Quick analysis of log files. Upload compressed logs and get instant results with charts and statistics.</p>
+        </a>
+        <a href="https://github.com/krzysztofslusarski/jvm-gc-logs-analyzer" class="feature-card" target="_blank">
+            <div class="icon icon-github">
+                <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
+            </div>
+            <h3>Standalone Analyzer</h3>
+            <p>Build from source for analysis of large files on your own machine without size restrictions.</p>
+        </a>
+        <a href="https://krzysztofslusarski.github.io/" class="feature-card" target="_blank">
+            <div class="icon icon-blog">
+                <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+            </div>
+            <h3>Blog</h3>
+            <p>Interesting cases and tips regarding garbage collection and JVM performance.</p>
+        </a>
+    </div>
+
+    <div class="card mt-3">
+        <div class="card-header" id="dockerToggle">
+            Run in Docker
+            <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="card-body collapse" id="dockerDetails">
+            <p>Quickly run the application on your computer:</p>
+            <pre><code>docker run -it -p 8080:8080 -v /var/uploads:/uploads [[${dockerImage}]]</code></pre>
+            <p class="form-hint">Create directory where your logs will be uploaded (/var/uploads) before running this command.</p>
+            <p class="mt-2">Application will be available on <a href="http://localhost:8080" target="_blank">http://localhost:8080</a></p>
+
+            <h5 class="section-subtitle">Configuration Options</h5>
+            <p class="form-hint">Specify with multiple <kbd>-e PROPERTY=value</kbd></p>
+            <dl>
+                <dt><kbd>SERVER_PORT=8080</kbd></dt>
+                <dd>Port used by container to run http server.</dd>
+                <dt><kbd>UPLOAD_DIR=/uploads</kbd></dt>
+                <dd>Location within container for uploaded logs.</dd>
+                <dt><kbd>MAX_REQUEST_SIZE=310MB</kbd></dt>
+                <dd>Maximum size of uploaded file and request.</dd>
+                <dt><kbd>NUMBER_OF_WORKER_THREADS=2</kbd></dt>
+                <dd>Number of threads parsing uploaded logs. More incoming requests will be queued.</dd>
+                <dt><kbd>REPORT_REMOVE_AFTER_READ=false</kbd></dt>
+                <dd>Report is removed from memory after read.</dd>
+                <dt><kbd>REPORT_EXPIRATION=10m</kbd></dt>
+                <dd>Time duration after report is removed from memory.</dd>
+            </dl>
         </div>
     </div>
-    <div class="card mb-3">
-        <div class="card-body">
-            <h5 class="card-title">Standalone JVM log analyzer:</h5>
-            <p>For analysis of big files build standalone version from source.</p>
-            <a class="btn btn-outline-primary" href="https://github.com/krzysztofslusarski/jvm-gc-logs-analyzer"
-               role="button" target="_blank">GitHub repository</a>
-        </div>
+
+    <div class="footer">
+        This tool is provided to you by <a href="mailto:ks@gclogs.com">Krzysztof Slusarski</a>
     </div>
-    <div class="card">
-        <div class="card-body">
-            <h5 class="card-title">Other stuff</h5>
-            <p>If you are looking for interesting cases and tips regarding garbage collection and JVM performance.</p>
-            <a class="btn btn-outline-primary" href="https://krzysztofslusarski.github.io/" role="button"
-               target="_blank">Blog</a>
-        </div>
-    </div>
-</main>
-<footer class="footer mt-auto py-3">
-    <div class="container text-center">
-        <span class="text-muted">
-        This tool is provided to you by <a href="mailto:ks@gclogs.com" class="text-muted">Krzysztof Ślusarski</a></span>
-    </div>
-</footer>
-<script type="text/javascript" th:src="@{/webjars/jquery/2.2.4/jquery.min.js}"></script>
-<script type="text/javascript" th:src="@{/webjars/bootstrap/4.2.1/js/bootstrap.min.js}"></script>
+</div>
+<script>
+    document.getElementById('dockerToggle').addEventListener('click', function() {
+        var details = document.getElementById('dockerDetails');
+        details.classList.toggle('show');
+        this.classList.toggle('collapsed');
+    });
+    document.getElementById('dockerToggle').classList.add('collapsed');
+</script>
 </body>
 </html>

@@ -57,11 +57,15 @@ public class AnalyzerStandaloneApplication extends JFrame {
     private PresentationFontProviderStandalone presentationFontProvider;
 
     private final String LOAD_BUTTON_LABEL = "Load file (JDK >= 9)";
+    private final String LOAD_SHENANDOAH_BUTTON_LABEL = "Load file (Shenandoah GC)";
+    private final String LOAD_ZGC_BUTTON_LABEL = "Load file (ZGC)";
     private final String LOAD_OLD_BUTTON_LABEL = "Load file (JDK 8)";
     private final String CONCAT_LOGS_BUTTON_LABEL = "Concatenate rotated logs";
     private JButton concatLogsButton;
     private JButton quitButton;
     private JButton loadButton;
+    private JButton loadShenandoahButton;
+    private JButton loadZgcButton;
     private JButton loadOldButton;
     private JLabel parsingProgressLabel;
     private final DecimalFormat TWO_DECIMAL_DIGITS_FORMAT = new DecimalFormat("##.#");
@@ -82,12 +86,16 @@ public class AnalyzerStandaloneApplication extends JFrame {
 
         quitButton = new JButton("Quit");
         loadButton = new JButton(LOAD_BUTTON_LABEL);
+        loadShenandoahButton = new JButton(LOAD_SHENANDOAH_BUTTON_LABEL);
+        loadZgcButton = new JButton(LOAD_ZGC_BUTTON_LABEL);
         loadOldButton = new JButton(LOAD_OLD_BUTTON_LABEL);
         parsingProgressLabel = new JLabel("Parsing in progress. Processed xxx lines");
         parsingProgressLabel.setVisible(false);
         concatLogsButton = new JButton(CONCAT_LOGS_BUTTON_LABEL);
 
         loadButton.addActionListener(this::onLoadButtonClicked);
+        loadShenandoahButton.addActionListener(this::onLoadShenandoahButtonClicked);
+        loadZgcButton.addActionListener(this::onLoadZgcButtonClicked);
         loadOldButton.addActionListener(this::onLoadOldButtonClicked);
         concatLogsButton.addActionListener(this::onConcatLogsButtonClick);
 
@@ -127,12 +135,18 @@ public class AnalyzerStandaloneApplication extends JFrame {
 
         Dimension buttonSize = new Dimension(300, 36);
         styleButton(loadButton, buttonSize);
+        styleButton(loadShenandoahButton, buttonSize);
+        styleButton(loadZgcButton, buttonSize);
         styleButton(loadOldButton, buttonSize);
         styleButton(concatLogsButton, buttonSize);
 
         parsingProgressLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         mainPanel.add(loadButton);
+        mainPanel.add(Box.createRigidArea(new Dimension(0, 8)));
+        mainPanel.add(loadShenandoahButton);
+        mainPanel.add(Box.createRigidArea(new Dimension(0, 8)));
+        mainPanel.add(loadZgcButton);
         mainPanel.add(Box.createRigidArea(new Dimension(0, 8)));
         mainPanel.add(loadOldButton);
         mainPanel.add(Box.createRigidArea(new Dimension(0, 6)));
@@ -162,6 +176,14 @@ public class AnalyzerStandaloneApplication extends JFrame {
 
     private void onLoadButtonClicked(ActionEvent event) {
         startLogsProcessing(statsService::createAllStatsUnifiedLogger);
+    }
+
+    private void onLoadShenandoahButtonClicked(ActionEvent event) {
+        startLogsProcessing(statsService::createAllStatsShenandoah);
+    }
+
+    private void onLoadZgcButtonClicked(ActionEvent event) {
+        startLogsProcessing(statsService::createAllStatsZgc);
     }
 
     private void onLoadOldButtonClicked(ActionEvent event) {
@@ -218,6 +240,8 @@ public class AnalyzerStandaloneApplication extends JFrame {
 
     private void parsingStarted(LogsSource logsSource) {
         loadButton.setEnabled(false);
+        loadShenandoahButton.setEnabled(false);
+        loadZgcButton.setEnabled(false);
         loadOldButton.setEnabled(false);
         notifyParsingChange(new ParsingProgress(0, false, logsSource.getTotalNumberOfFiles(), logsSource.getNumberOfFile(), 0));
         parsingProgressLabel.setVisible(true);
@@ -225,8 +249,12 @@ public class AnalyzerStandaloneApplication extends JFrame {
 
     private void successParsing(JvmLogFile stats) {
         loadButton.setText(LOAD_BUTTON_LABEL);
+        loadShenandoahButton.setText(LOAD_SHENANDOAH_BUTTON_LABEL);
+        loadZgcButton.setText(LOAD_ZGC_BUTTON_LABEL);
         loadOldButton.setText(LOAD_OLD_BUTTON_LABEL);
         loadButton.setEnabled(true);
+        loadShenandoahButton.setEnabled(true);
+        loadZgcButton.setEnabled(true);
         loadOldButton.setEnabled(true);
         parsingProgressLabel.setVisible(false);
         if (stats != null) {
@@ -238,8 +266,12 @@ public class AnalyzerStandaloneApplication extends JFrame {
 
     private void parsingFailed() {
         loadButton.setText(LOAD_BUTTON_LABEL);
+        loadShenandoahButton.setText(LOAD_SHENANDOAH_BUTTON_LABEL);
+        loadZgcButton.setText(LOAD_ZGC_BUTTON_LABEL);
         loadOldButton.setText(LOAD_OLD_BUTTON_LABEL);
         loadButton.setEnabled(true);
+        loadShenandoahButton.setEnabled(true);
+        loadZgcButton.setEnabled(true);
         loadOldButton.setEnabled(true);
         JOptionPane.showMessageDialog(null, "Error while concatenating files", "Error", JOptionPane.ERROR_MESSAGE);
     }
