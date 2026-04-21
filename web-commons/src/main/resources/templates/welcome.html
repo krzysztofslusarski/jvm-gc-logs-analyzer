@@ -9,6 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="/css/app.css" rel="stylesheet">
     <link href="/css/welcome.css" rel="stylesheet">
+    <script src="/js/theme.js"></script>
     <script type="text/javascript" th:src="@{/webjars/jquery/2.2.4/jquery.min.js}"></script>
     <script src="/js/highcharts/highcharts.src.js"></script>
     <script src="/js/highcharts/boost.js"></script>
@@ -60,6 +61,12 @@
                 </a>
             </li>
         </ul>
+        <div class="sidebar-section">
+            <button class="theme-toggle" data-theme-toggle aria-label="Toggle dark mode">
+                <span data-theme-toggle-icon></span>
+                <span>Toggle theme</span>
+            </button>
+        </div>
     </nav>
 
     <script type="text/javascript">
@@ -67,10 +74,58 @@
             return Math.max(document.querySelector('.viewer-content').offsetWidth - 80, 400);
         };
 
+        function highchartsThemeOptions() {
+            var s = getComputedStyle(document.documentElement);
+            var text = (s.getPropertyValue('--text') || '#0f172a').trim();
+            var textSecondary = (s.getPropertyValue('--text-secondary') || '#64748b').trim();
+            var border = (s.getPropertyValue('--border') || '#e2e8f0').trim();
+            var bgCard = (s.getPropertyValue('--bg-card') || '#ffffff').trim();
+            return {
+                chart: {
+                    backgroundColor: 'transparent',
+                    style: { fontFamily: 'Inter, system-ui, sans-serif' }
+                },
+                title: { style: { color: text } },
+                subtitle: { style: { color: textSecondary } },
+                xAxis: {
+                    lineColor: border,
+                    tickColor: border,
+                    gridLineColor: border,
+                    labels: { style: { color: textSecondary } },
+                    title: { style: { color: textSecondary } }
+                },
+                yAxis: {
+                    lineColor: border,
+                    tickColor: border,
+                    gridLineColor: border,
+                    labels: { style: { color: textSecondary } },
+                    title: { style: { color: textSecondary } }
+                },
+                legend: {
+                    itemStyle: { color: text },
+                    itemHoverStyle: { color: text },
+                    itemHiddenStyle: { color: textSecondary }
+                },
+                tooltip: {
+                    backgroundColor: bgCard,
+                    borderColor: border,
+                    style: { color: text }
+                },
+                plotOptions: {
+                    pie: {
+                        dataLabels: { style: { color: text } }
+                    }
+                }
+            };
+        }
+
+        Highcharts.setOptions(highchartsThemeOptions());
+
         var commonHighChartsPieChartsOptions = {
             title: { text: '' },
             chart: {
                 height: $(window).height() * 0.9,
+                backgroundColor: 'transparent',
                 plotBackgroundColor: null,
                 plotBorderWidth: null,
                 plotShadow: false,
@@ -101,7 +156,9 @@
                 title: { text: '' },
                 chart: {
                     height: $(window).height() * 0.9,
-                    zoomType: 'x'
+                    zoomType: 'x',
+                    backgroundColor: 'transparent',
+                    plotBackgroundColor: null
                 },
                 tooltip: {
                     pointFormat: '{series.name}: <b>{point.y}</b><br/>',
@@ -282,6 +339,21 @@
             $('.nav-link').removeClass('active');
             $(this).addClass('active');
         });
+
+        if (window.ThemeManager) {
+            window.ThemeManager.onChange(function () {
+                var opts = highchartsThemeOptions();
+                Highcharts.setOptions(opts);
+                for (var i = 0; i < Highcharts.charts.length; i++) {
+                    var c = Highcharts.charts[i];
+                    if (c) c.update(opts, false);
+                }
+                for (var j = 0; j < Highcharts.charts.length; j++) {
+                    var ch = Highcharts.charts[j];
+                    if (ch) ch.redraw();
+                }
+            });
+        }
     });
 
     function filterTable(input) {

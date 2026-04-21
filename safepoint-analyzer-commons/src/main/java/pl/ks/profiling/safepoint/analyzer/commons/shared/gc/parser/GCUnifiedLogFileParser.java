@@ -229,7 +229,7 @@ public class GCUnifiedLogFileParser implements FileParser<GCLogFile> {
                 line.contains("%") ? "-1" : matcher.group().replace("M", "");
         String time = getTime(line);
 
-        if (collectorType == GCCollectorType.SHENANDOAH || collectorType == GCCollectorType.ZGC) {
+            if (collectorType == GCCollectorType.SHENANDOAH || collectorType == GCCollectorType.ZGC) {
             gcLogFile.addSizes(sequenceId, Integer.parseInt(before), Integer.parseInt(after), Integer.parseInt(heapSize));
             String phaseName = line.replaceFirst(".*GC\\(\\d+\\)", "").trim()
                     .replaceFirst("\\s*\\d+M.*->.*", "").trim();

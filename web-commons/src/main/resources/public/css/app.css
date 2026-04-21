@@ -28,6 +28,76 @@
     --radius-lg: 12px;
     --font: 'Inter', system-ui, -apple-system, sans-serif;
     --mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+    --focus-ring: rgba(79, 70, 229, 0.1);
+    --mark-bg: #fef3cd;
+    --mark-fg: inherit;
+    --icon-upload-bg: #eef2ff;
+    --icon-upload-fg: #4f46e5;
+    --icon-docker-bg: #eff6ff;
+    --icon-docker-fg: #2563eb;
+    --icon-github-bg: #f0fdf4;
+    --icon-github-fg: #059669;
+    --icon-blog-bg: #fef3c7;
+    --icon-blog-fg: #d97706;
+    --alert-warning-bg: #fffbeb;
+    --alert-warning-border: #fcd34d;
+    --alert-warning-fg: #92400e;
+    --alert-success-bg: #f0fdf4;
+    --alert-success-border: #86efac;
+    --alert-success-fg: #166534;
+    --alert-danger-bg: #fef2f2;
+    --alert-danger-border: #fca5a5;
+    --alert-danger-fg: #991b1b;
+    --link-green: #059669;
+    --link-red: #dc2626;
+}
+
+:root.dark {
+    --bg: #0f172a;
+    --bg-card: #1e293b;
+    --bg-input: #0b1220;
+    --bg-hover: #273548;
+    --bg-accent: #6366f1;
+    --bg-accent-hover: #818cf8;
+    --bg-accent-subtle: #312e81;
+    --bg-danger: #450a0a;
+    --bg-danger-btn: #f87171;
+    --bg-sidebar: #020617;
+    --bg-sidebar-section: #0f172a;
+    --text: #f1f5f9;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+    --text-on-accent: #ffffff;
+    --text-sidebar: #cbd5e1;
+    --text-sidebar-heading: #94a3b8;
+    --text-sidebar-active: #ffffff;
+    --border: #334155;
+    --border-focus: #818cf8;
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
+    --shadow: 0 1px 3px rgba(0,0,0,0.4), 0 1px 2px rgba(0,0,0,0.3);
+    --shadow-md: 0 4px 6px rgba(0,0,0,0.4), 0 2px 4px rgba(0,0,0,0.3);
+    --focus-ring: rgba(129, 140, 248, 0.2);
+    --mark-bg: #713f12;
+    --mark-fg: #fef3c7;
+    --icon-upload-bg: #1e1b4b;
+    --icon-upload-fg: #a5b4fc;
+    --icon-docker-bg: #172554;
+    --icon-docker-fg: #93c5fd;
+    --icon-github-bg: #022c22;
+    --icon-github-fg: #6ee7b7;
+    --icon-blog-bg: #422006;
+    --icon-blog-fg: #fcd34d;
+    --alert-warning-bg: #2a1f05;
+    --alert-warning-border: #78350f;
+    --alert-warning-fg: #fde68a;
+    --alert-success-bg: #022c22;
+    --alert-success-border: #065f46;
+    --alert-success-fg: #6ee7b7;
+    --alert-danger-bg: #2a0a0a;
+    --alert-danger-border: #7f1d1d;
+    --alert-danger-fg: #fca5a5;
+    --link-green: #6ee7b7;
+    --link-red: #fca5a5;
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -155,7 +225,7 @@ p:last-child { margin-bottom: 0; }
 }
 .form-input:focus, select.form-input:focus {
     border-color: var(--border-focus);
-    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+    box-shadow: 0 0 0 3px var(--focus-ring);
 }
 .form-input::placeholder { color: var(--text-muted); }
 
@@ -234,8 +304,8 @@ table.data-table thead.sticky-header {
     z-index: 10;
 }
 
-.table-with-link-green { color: #059669; font-weight: 600; }
-.table-with-link-red { color: #dc2626; font-weight: 600; }
+.table-with-link-green { color: var(--link-green); font-weight: 600; }
+.table-with-link-red { color: var(--link-red); font-weight: 600; }
 
 /* ---- Search ---- */
 .search-box {
@@ -264,7 +334,7 @@ table.data-table thead.sticky-header {
 }
 .search-box input:focus {
     border-color: var(--border-focus);
-    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+    box-shadow: 0 0 0 3px var(--focus-ring);
 }
 
 .search-input {
@@ -282,7 +352,7 @@ table.data-table thead.sticky-header {
 }
 .search-input:focus {
     border-color: var(--border-focus);
-    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+    box-shadow: 0 0 0 3px var(--focus-ring);
 }
 
 /* ---- Hero Section ---- */
@@ -325,10 +395,10 @@ table.data-table thead.sticky-header {
     margin-bottom: 1rem;
     font-size: 1.5rem;
 }
-.feature-card .icon-upload { background: #eef2ff; color: #4f46e5; }
-.feature-card .icon-docker { background: #eff6ff; color: #2563eb; }
-.feature-card .icon-github { background: #f0fdf4; color: #059669; }
-.feature-card .icon-blog { background: #fef3c7; color: #d97706; }
+.feature-card .icon-upload { background: var(--icon-upload-bg); color: var(--icon-upload-fg); }
+.feature-card .icon-docker { background: var(--icon-docker-bg); color: var(--icon-docker-fg); }
+.feature-card .icon-github { background: var(--icon-github-bg); color: var(--icon-github-fg); }
+.feature-card .icon-blog { background: var(--icon-blog-bg); color: var(--icon-blog-fg); }
 .feature-card h3 { margin-bottom: 0.5rem; }
 .feature-card p { color: var(--text-secondary); font-size: 0.875rem; margin: 0; }
 
@@ -442,23 +512,23 @@ table.data-table thead.sticky-header {
 }
 .alert a { text-decoration: underline; }
 .alert-warning {
-    background: #fffbeb;
-    border: 1px solid #fcd34d;
-    color: #92400e;
+    background: var(--alert-warning-bg);
+    border: 1px solid var(--alert-warning-border);
+    color: var(--alert-warning-fg);
 }
-.alert-warning a { color: #92400e; }
+.alert-warning a { color: var(--alert-warning-fg); }
 .alert-success {
-    background: #f0fdf4;
-    border: 1px solid #86efac;
-    color: #166534;
+    background: var(--alert-success-bg);
+    border: 1px solid var(--alert-success-border);
+    color: var(--alert-success-fg);
 }
-.alert-success a { color: #166534; }
+.alert-success a { color: var(--alert-success-fg); }
 .alert-danger {
-    background: #fef2f2;
-    border: 1px solid #fca5a5;
-    color: #991b1b;
+    background: var(--alert-danger-bg);
+    border: 1px solid var(--alert-danger-border);
+    color: var(--alert-danger-fg);
 }
-.alert-danger a { color: #991b1b; }
+.alert-danger a { color: var(--alert-danger-fg); }
 .alert h4 {
     margin-bottom: 0.5rem;
     font-size: 1rem;
@@ -510,7 +580,8 @@ kbd {
 }
 
 mark {
-    background: #fef3cd;
+    background: var(--mark-bg);
+    color: var(--mark-fg);
     padding: 0.1em 0.3em;
     border-radius: 3px;
 }
@@ -613,3 +684,77 @@ dd { margin: 0; color: var(--text-secondary); }
 .highcharts-figure {
     margin: 0;
 }
+
+/* ---- Theme toggle ---- */
+.theme-toggle {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px;
+    width: 32px;
+    height: 32px;
+    cursor: pointer;
+    color: var(--text-secondary);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.theme-toggle:hover {
+    background: var(--bg-hover);
+    color: var(--text);
+    border-color: var(--border);
+}
+.theme-toggle svg { display: block; }
+
+.theme-toggle-fixed {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 1000;
+    box-shadow: var(--shadow-sm);
+}
+
+.viewer-sidebar .theme-toggle {
+    background: rgba(255,255,255,0.08);
+    border-color: rgba(255,255,255,0.1);
+    color: var(--text-sidebar);
+    width: 100%;
+    height: auto;
+    padding: 0.5rem 1rem;
+    gap: 0.5rem;
+    font-family: var(--font);
+    font-size: 0.8125rem;
+}
+.viewer-sidebar .theme-toggle:hover {
+    background: rgba(255,255,255,0.12);
+    color: var(--text-sidebar-active);
+    border-color: rgba(255,255,255,0.15);
+}
+
+.viewer-sidebar .sidebar-section {
+    padding: 0.75rem 1.25rem;
+    border-top: 1px solid rgba(255,255,255,0.06);
+}
+
+/* ---- Highcharts dark-mode overrides (CSS beats inline SVG attrs with !important) ---- */
+:root.dark .highcharts-background { fill: transparent !important; }
+:root.dark .highcharts-plot-background { fill: transparent !important; }
+:root.dark .highcharts-grid-line { stroke: var(--border) !important; }
+:root.dark .highcharts-minor-grid-line { stroke: var(--border) !important; opacity: 0.5; }
+:root.dark .highcharts-axis-line { stroke: var(--border) !important; }
+:root.dark .highcharts-tick { stroke: var(--border) !important; }
+:root.dark .highcharts-minor-tick { stroke: var(--border) !important; opacity: 0.5; }
+:root.dark .highcharts-axis text,
+:root.dark .highcharts-axis-labels text { fill: var(--text-secondary) !important; }
+:root.dark .highcharts-axis-title { fill: var(--text-secondary) !important; }
+:root.dark .highcharts-title,
+:root.dark .highcharts-subtitle { fill: var(--text) !important; }
+:root.dark .highcharts-legend-item text { fill: var(--text) !important; }
+:root.dark .highcharts-data-label text,
+:root.dark .highcharts-data-label tspan { fill: var(--text) !important; }
+:root.dark .highcharts-tooltip-box { fill: var(--bg-card) !important; stroke: var(--border) !important; }
+:root.dark .highcharts-tooltip text { fill: var(--text) !important; }
+:root.dark .highcharts-crosshair { stroke: var(--text-secondary) !important; }
+:root.dark .highcharts-range-selector-buttons text { fill: var(--text) !important; }
+:root.dark .highcharts-scrollbar-rifles { stroke: var(--text-secondary) !important; }
