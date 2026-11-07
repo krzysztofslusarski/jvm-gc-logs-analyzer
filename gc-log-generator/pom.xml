@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>jvm-gc-logs-analyzer</artifactId>
+        <groupId>pl.ks.profiling</groupId>
+        <version>1.2-SNAPSHOT</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>gc-log-generator</artifactId>
+    <description>
+        Synthetic workload that makes the JVM emit GC, safepoint, class loading, thread, JIT, TLAB and
+        string deduplication log events covering the statistics presented by the analyzer.
+        It is compiled for Java 8, so the same jar runs on every JDK from 8 up to the newest one.
+    </description>
+
+    <properties>
+        <!-- The workload has to run on JDK 8, so it must not use any newer API. -->
+        <generator.java.release>8</generator.java.release>
+    </properties>
+
+    <build>
+        <finalName>gc-log-generator</finalName>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <release>${generator.java.release}</release>
+                    <source>${generator.java.release}</source>
+                    <target>${generator.java.release}</target>
+                    <!-- No annotation processing (Lombok is inherited from the parent but not used here). -->
+                    <proc>none</proc>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <mainClass>pl.ks.profiling.gc.generator.GcLogGenerator</mainClass>
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

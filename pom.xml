@@ -16,6 +16,7 @@
         <module>web-commons</module>
         <module>safepoint-analyzer-cli</module>
         <module>xchart-commons</module>
+        <module>gc-log-generator</module>
     </modules>
 
     <parent>
