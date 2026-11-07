@@ -15,16 +15,17 @@
  */
 package pl.ks.profiling.safepoint.analyzer.commons.shared.gc.page;
 
-import java.text.DecimalFormat;
-import java.util.List;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 import pl.ks.profiling.gui.commons.Chart;
 import pl.ks.profiling.gui.commons.Page;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.PageCreator;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.PageUtils;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.parser.GCLogCycleEntry;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.report.JvmLogFile;
+
+import java.text.DecimalFormat;
+import java.util.List;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class GCHeapBeforeAfter implements PageCreator {
     @Override
@@ -74,7 +75,7 @@ public class GCHeapBeforeAfter implements PageCreator {
     }
 
     private static List<GCLogCycleEntry> getEntries(JvmLogFile jvmLogFile) {
-        return jvmLogFile.getGcLogFile().getCycleEntries()
+        return jvmLogFile.getGcLogFile().getCycleEntriesWithHeapSizes()
                 .stream()
                 .filter(GCLogCycleEntry::isGenuineCollection)
                 .collect(Collectors.toList());

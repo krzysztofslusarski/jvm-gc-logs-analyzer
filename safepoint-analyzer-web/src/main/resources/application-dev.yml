@@ -6,4 +6,4 @@ server:
   tomcat:
     max-http-form-post-size: 100MB
 
-safepoint.files.dir: /home/pasq/SafepointsInputs/
+safepoint.files.dir: /tmp/

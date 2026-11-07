@@ -15,11 +15,24 @@
  */
 package pl.ks.profiling.safepoint.analyzer.commons.shared.jit.parser;
 
-import java.math.BigDecimal;
 import pl.ks.profiling.safepoint.analyzer.commons.FileParser;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.ParserUtils;
 
+import java.math.BigDecimal;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 public class JitLogFileParser implements FileParser<JitLogFile> {
+    /**
+     * Compilation lines are printed as "%4d %c%c%c%c%c %d " (compile id, five flags, tier), e.g.
+     * "  192     n 0       jdk.internal.misc.Unsafe::putObjectVolatile (native)".
+     */
+    private static final Pattern COMPILATION_PATTERN = Pattern.compile("^\\s*(\\d+) .{5} (\\d) ");
+
+    private final Set<String> activeCompilations = new HashSet<>();
+
     private final JitLogFile jitLogFile = new JitLogFile();
 
     @Override
@@ -28,7 +41,8 @@ public class JitLogFileParser implements FileParser<JitLogFile> {
             jitLogFile.newCodeCacheSweeperActivity(ParserUtils.getTimeStamp(line));
         } else if (line.contains("codecache,sweep") && line.contains("size=")) {
             parseCodeCacheStats(line);
-        } else if (line.contains("jit,compilation") && line.contains("debug")) {
+        } else if (line.contains("jit,compilation")) {
+            // Logged at debug level up to JDK 24 and at info level since JDK 25
             parseJitCompilation(line);
         }
     }
@@ -62,42 +76,29 @@ public class JitLogFileParser implements FileParser<JitLogFile> {
 
     private void parseJitCompilation(String line) {
         BigDecimal timeStamp = ParserUtils.getTimeStamp(line);
-        int tier = getTier(line);
-        if (line.lastIndexOf(')') == line.length() - 1) {
+        String withoutDecorators = line.substring(line.indexOf(']', line.indexOf("jit,compilation")) + 1);
+        Matcher matcher = COMPILATION_PATTERN.matcher(withoutDecorators);
+        if (!matcher.find()) {
+            return;
+        }
+        String compileId = matcher.group(1);
+        int tier = matcher.group(2).charAt(0) - '0';
+        if (tier < 1 || tier > 4) {
+            tier = 0;
+        }
+        // Native wrappers end with spaces: "... java.lang.Thread::sleep (native)   "
+        String trimmed = withoutDecorators.trim();
+        if (trimmed.contains("made not entrant")) {
+            // "... (9 bytes)   made not entrant" (JDK 25+: "made not entrant: not used"). The same compilation can be
+            // reported twice (e.g. deoptimization and class unloading), it is counted once.
+            if (activeCompilations.remove(compileId)) {
+                jitLogFile.compilationMadeNodEntrant(timeStamp, tier);
+            }
+        } else if (trimmed.lastIndexOf(')') == trimmed.length() - 1) {
+            activeCompilations.add(compileId);
             jitLogFile.newCompilation(timeStamp, tier);
-        } else if (line.contains("made not entrant")) {
-            jitLogFile.compilationMadeNodEntrant(timeStamp, tier);
         }
-    }
-
-    private int getTier(String line) {
-        String withoutDecorators = line.substring(line.lastIndexOf(']') + 2);
-        boolean flagsStarted = false;
-        int countDown = 8;
-
-        for (byte character : withoutDecorators.getBytes()) {
-            if (character == ' ') {
-                flagsStarted = true;
-            }
-            if (flagsStarted) {
-                countDown--;
-            }
-            if (countDown == 0) {
-                switch (character) {
-                    case '1':
-                        return 1;
-                    case '2':
-                        return 2;
-                    case '3':
-                        return 3;
-                    case '4':
-                        return 4;
-                    default:
-                        return 0;
-                }
-            }
-        }
-        return 0;
+        // Other lines, e.g. "made zombie" (JDK 19 and older), do not change the number of compiled methods
     }
 
     @Override

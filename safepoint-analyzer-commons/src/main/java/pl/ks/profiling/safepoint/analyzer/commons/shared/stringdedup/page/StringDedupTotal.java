@@ -15,15 +15,16 @@
  */
 package pl.ks.profiling.safepoint.analyzer.commons.shared.stringdedup.page;
 
+import pl.ks.profiling.gui.commons.Chart;
+import pl.ks.profiling.gui.commons.Page;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.PageCreator;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.PageUtils;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.report.JvmLogFile;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.stringdedup.parser.StringDedupLogEntry;
+
 import java.text.DecimalFormat;
 import java.util.List;
 import java.util.function.Function;
-import pl.ks.profiling.gui.commons.Chart;
-import pl.ks.profiling.gui.commons.Page;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.report.JvmLogFile;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.PageCreator;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.PageUtils;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.stringdedup.parser.StringDedupLogEntry;
 
 public class StringDedupTotal implements PageCreator {
     @Override
@@ -68,21 +69,20 @@ public class StringDedupTotal implements PageCreator {
                 .build();
     }
 
+    private static final List<String> sizeChartColumns = List.of(
+            "Time",
+            "Total size",
+            "Young size",
+            "Old size");
+    private static final List<Function<StringDedupLogEntry, Object>> sizeChartExtractors = List.of(
+            StringDedupLogEntry::getTimeStamp,
+            StringDedupLogEntry::getTotalSize,
+            StringDedupLogEntry::getTotalSizeYoung,
+            StringDedupLogEntry::getTotalSizeOld);
+
     private static Object[][] getSizeChart(List<StringDedupLogEntry> entries) {
-        Object[][] stats = new Object[entries.size() + 1][4];
-        stats[0][0] = "Time";
-        stats[0][1] = "Total size";
-        stats[0][2] = "Young size";
-        stats[0][3] = "Old size";
-        int i = 1;
-        for (StringDedupLogEntry status : entries) {
-            stats[i][0] = status.getTimeStamp();
-            stats[i][1] = status.getTotalSize();
-            stats[i][2] = status.getTotalSizeYoung();
-            stats[i][3] = status.getTotalSizeOld();
-            i++;
-        }
-        return stats;
+        int columns = columns(entries, sizeChartColumns);
+        return PageUtils.toMatrix(entries, sizeChartColumns.subList(0, columns), sizeChartExtractors.subList(0, columns));
     }
 
     private static final List<String> countChartColumns = List.of(
@@ -97,7 +97,8 @@ public class StringDedupTotal implements PageCreator {
             StringDedupLogEntry::getTotalCountOld);
 
     private static Object[][] getCountChart(List<StringDedupLogEntry> entries) {
-        return PageUtils.toMatrix(entries, countChartColumns, countChartExtractors);
+        int columns = columns(entries, countChartColumns);
+        return PageUtils.toMatrix(entries, countChartColumns.subList(0, columns), countChartExtractors.subList(0, columns));
     }
 
     private static final List<String> newCountChartColumns = List.of(
@@ -120,5 +121,12 @@ public class StringDedupTotal implements PageCreator {
 
     private static Object[][] getNewSizeChart(List<StringDedupLogEntry> entries) {
         return PageUtils.toMatrix(entries, newSizeChartColumns, newSizeChartExtractors);
+    }
+
+    /**
+     * Number of chart columns: without the young/old breakdown only time and total are shown.
+     */
+    private static int columns(List<StringDedupLogEntry> entries, List<String> allColumns) {
+        return entries.stream().anyMatch(StringDedupLogEntry::hasGenerationBreakdown) ? allColumns.size() : 2;
     }
 }

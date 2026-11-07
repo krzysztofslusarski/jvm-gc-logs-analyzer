@@ -15,15 +15,16 @@
  */
 package pl.ks.profiling.safepoint.analyzer.commons.shared.gc.page;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.text.DecimalFormat;
-import java.util.List;
 import pl.ks.profiling.gui.commons.Chart;
 import pl.ks.profiling.gui.commons.Page;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.report.JvmLogFile;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.PageCreator;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.parser.GCLogCycleEntry;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.report.JvmLogFile;
+
+import java.math.BigDecimal;
+import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.List;
 
 public class GCAllocationRate implements PageCreator {
     @Override
@@ -48,40 +49,29 @@ public class GCAllocationRate implements PageCreator {
     }
 
     private static Object[][] getChart(JvmLogFile jvmLogFile) {
-        List<GCLogCycleEntry> cycles = jvmLogFile.getGcLogFile().getCycleEntries();
-
+        List<GCLogCycleEntry> cycles = jvmLogFile.getGcLogFile().getCycleEntriesWithHeapSizes();
         if (cycles.size() <= 1) {
             return null;
         }
 
-        BigDecimal[] allocationRate = new BigDecimal[cycles.size() -1];
+        // The rate between two collections is shown at the time of the first one
+        List<Object[]> rows = new ArrayList<>();
         GCLogCycleEntry prev = null;
-        GCLogCycleEntry current = null;
-        int i = 0;
         for (GCLogCycleEntry cycle : cycles) {
-            prev = current;
-            current = cycle;
-            if (prev == null) {
-                continue;
+            if (prev != null) {
+                BigDecimal rate = GCLogCycleEntry.allocationRate(prev, cycle);
+                if (rate != null) {
+                    rows.add(new Object[]{prev.getTimeStamp(), rate});
+                }
             }
-
-            allocationRate[i++] = new BigDecimal(current.getHeapBeforeGCMb() - prev.getHeapAfterGCMb()).divide(current.getTimeStamp().subtract(prev.getTimeStamp()), 2, RoundingMode.HALF_EVEN);
+            prev = cycle;
         }
 
-        Object[][] stats = new Object[cycles.size()][2];
-        stats[0][0] = "GC sequence";
-        stats[0][1] = "Allocation rate";
-
-        int j = 1;
-        for (GCLogCycleEntry cycle : cycles) {
-            if (j - 1 >= allocationRate.length) {
-                break;
-            }
-            stats[j][0] = cycle.getTimeStamp();
-            stats[j][1] = allocationRate[j - 1];
-            j++;
+        Object[][] stats = new Object[rows.size() + 1][];
+        stats[0] = new Object[]{"GC sequence", "Allocation rate"};
+        for (int i = 0; i < rows.size(); i++) {
+            stats[i + 1] = rows.get(i);
         }
-
         return stats;
     }
 }

@@ -15,12 +15,11 @@
  */
 package pl.ks.profiling.safepoint.analyzer.commons.shared.gc.parser;
 
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import lombok.Getter;
+
+import java.math.BigDecimal;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class GCLogFile {
     @Getter
@@ -45,6 +44,33 @@ public class GCLogFile {
         unprocessedCycles.put(sequenceId, cycle);
         if (cycle.isMixed() && lastConcurrentCycle != null) {
             lastConcurrentCycle.nextMixedCollection();
+        }
+    }
+
+    /**
+     * Collections that logged heap sizes; the others would show up as an empty heap in charts.
+     */
+    public List<GCLogCycleEntry> getCycleEntriesWithHeapSizes() {
+        return cycleEntries.stream()
+                .filter(GCLogCycleEntry::hasHeapSizes)
+                .collect(Collectors.toList());
+    }
+
+    boolean isCycleInProgress(Long sequenceId) {
+        return unprocessedCycles.containsKey(sequenceId);
+    }
+
+    /**
+     * Keeps the longest time of a phase logged several times (once per worker).
+     */
+    void addSubPhaseTimeMax(Long sequenceId, String phase, BigDecimal time) {
+        GCLogCycleEntry gcLogCycleEntry = unprocessedCycles.get(sequenceId);
+        if (gcLogCycleEntry == null) {
+            return;
+        }
+        BigDecimal current = gcLogCycleEntry.getSubPhasesTime().get(phase);
+        if (current == null || current.compareTo(time) < 0) {
+            gcLogCycleEntry.addSubPhaseTime(phase, time);
         }
     }
 
@@ -148,9 +174,32 @@ public class GCLogFile {
         gcLogCycleEntry.toSpaceExhausted();
     }
 
-    void newConcurrentCycle(Long sequenceId, BigDecimal time) {
-        lastConcurrentCycle = new GCLogConcurrentCycleEntry(sequenceId, time, 0, 0);
-        concurrentCycleEntries.add(lastConcurrentCycle);
+    /**
+     * Called for the line that starts a concurrent cycle. The remark pause and the mixed collections logged after
+     * it belong to this cycle.
+     */
+    void concurrentCycleStarted(Long sequenceId, String phase) {
+        GCLogConcurrentCycleEntry cycle = new GCLogConcurrentCycleEntry(sequenceId, phase);
+        concurrentCycleEntries.add(cycle);
+        if (cycle.isMark()) {
+            lastConcurrentCycle = cycle;
+        }
+    }
+
+    /**
+     * Called for the line that ends a concurrent cycle (the one with its duration).
+     */
+    void concurrentCycleFinished(Long sequenceId, String phase, BigDecimal time) {
+        for (int i = concurrentCycleEntries.size() - 1; i >= 0; i--) {
+            GCLogConcurrentCycleEntry cycle = concurrentCycleEntries.get(i);
+            if (cycle.getSequenceId() == sequenceId && cycle.getPhase().equals(phase) && cycle.getTime() == null) {
+                cycle.setTime(time);
+                return;
+            }
+        }
+        // The log starts in the middle of the cycle
+        concurrentCycleStarted(sequenceId, phase);
+        concurrentCycleEntries.get(concurrentCycleEntries.size() - 1).setTime(time);
     }
 
     void addSurvivorStats(Long sequenceId, long desiredSize, long newThreshold, long maxThreshold) {
@@ -165,6 +214,11 @@ public class GCLogFile {
         for (Long sequenceId : new ArrayList<>(unprocessedCycles.keySet())) {
             finishCycle(sequenceId);
         }
+        // A concurrent cycle still running when the log ends has no duration
+        concurrentCycleEntries.removeIf(cycle -> cycle.getTime() == null);
+        // Cycles are finished in the order of their ends; overlapping ZGC cycles end in a different order than
+        // they start, and charts expect the order of starts
+        cycleEntries.sort(Comparator.comparing(GCLogCycleEntry::getTimeStamp).thenComparing(GCLogCycleEntry::getSequenceId));
 
         if (stats != null) {
             return;

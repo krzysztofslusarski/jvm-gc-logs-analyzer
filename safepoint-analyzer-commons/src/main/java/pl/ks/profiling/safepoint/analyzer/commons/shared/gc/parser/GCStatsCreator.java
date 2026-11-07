@@ -21,16 +21,7 @@ import pl.ks.profiling.safepoint.analyzer.commons.shared.OneFiledAllStatsUtil;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.OptionalDouble;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -84,7 +75,7 @@ public class GCStatsCreator {
         GCLogCycleEntry prev = null;
         GCLogCycleEntry current = null;
         BigDecimal allocation = BigDecimal.ZERO;
-        for (GCLogCycleEntry cycle : gcLogFile.getCycleEntries()) {
+        for (GCLogCycleEntry cycle : gcLogFile.getCycleEntriesWithHeapSizes()) {
             prev = current;
             current = cycle;
             if (prev == null) {
@@ -292,7 +283,13 @@ public class GCStatsCreator {
                     if (agingEntry.getKey() == 1) {
                         continue;
                     }
-                    BigDecimal rate = BigDecimal.valueOf(agingEntry.getValue()).divide(BigDecimal.valueOf(prev.getBytesInAges().get(agingEntry.getKey() - 1)), 3, RoundingMode.HALF_EVEN);
+                    // The age tables of consecutive collections do not have to contain the same ages
+                    // (e.g. the Shenandoah generational census skips empty ages)
+                    Long previousAgeBytes = prev.getBytesInAges().get(agingEntry.getKey() - 1);
+                    if (previousAgeBytes == null || previousAgeBytes == 0) {
+                        continue;
+                    }
+                    BigDecimal rate = BigDecimal.valueOf(agingEntry.getValue()).divide(BigDecimal.valueOf(previousAgeBytes), 3, RoundingMode.HALF_EVEN);
                     gcAgingStats.getSurvivedRatio().put(agingEntry.getKey() - 1, rate);
                 }
                 gcAgingStats.setSequenceId(gcLogCycleEntry.getSequenceId());

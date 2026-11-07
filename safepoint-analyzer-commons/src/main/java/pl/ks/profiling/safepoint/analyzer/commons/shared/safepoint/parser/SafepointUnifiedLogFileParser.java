@@ -15,10 +15,11 @@
  */
 package pl.ks.profiling.safepoint.analyzer.commons.shared.safepoint.parser;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import pl.ks.profiling.safepoint.analyzer.commons.FileParser;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.ParserUtils;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 public class SafepointUnifiedLogFileParser implements FileParser<SafepointLogFile> {
     private static final BigDecimal NS_TO_MS_DIVISIOR = new BigDecimal(1_000_000);
@@ -33,7 +34,12 @@ public class SafepointUnifiedLogFileParser implements FileParser<SafepointLogFil
         if (line.contains("Application time")) {
             safepointLogFile.newSafepoint(ParserUtils.getTimeStamp(line), parseApplicationTime(line));
             waitForNext = false;
-        } else if (!waitForNext && line.contains("Entering safepoint region")) {
+        } else if (line.contains("Entering safepoint region")) {
+            if (waitForNext) {
+                // JDK 9-12: the first safepoint is not preceded by "Application time"
+                safepointLogFile.newSafepoint(ParserUtils.getTimeStamp(line), BigDecimal.ZERO);
+                waitForNext = false;
+            }
             addOperationName(line, safepointLogFile);
         } else if (!waitForNext && line.contains("Total time for which application threads were stopped")) {
             addTtsAndStoppedTime(line, safepointLogFile);

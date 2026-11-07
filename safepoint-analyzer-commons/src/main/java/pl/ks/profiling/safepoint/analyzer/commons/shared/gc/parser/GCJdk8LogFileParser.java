@@ -15,12 +15,13 @@
  */
 package pl.ks.profiling.safepoint.analyzer.commons.shared.gc.parser;
 
+import pl.ks.profiling.safepoint.analyzer.commons.FileParser;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.ParserUtils;
+
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import pl.ks.profiling.safepoint.analyzer.commons.FileParser;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.ParserUtils;
 
 public class GCJdk8LogFileParser implements FileParser<GCLogFile> {
     public static final BigDecimal D1024 = new BigDecimal(1024L);
@@ -30,8 +31,24 @@ public class GCJdk8LogFileParser implements FileParser<GCLogFile> {
     public static final BigDecimal JAVA_8_B_MULTIPLIER = JAVA_8_KB_MULTIPLIER.divide(D1024, 12, RoundingMode.HALF_EVEN);
     public static final BigDecimal TO_MS_MULTIPLIER = new BigDecimal(1000);
 
+    // Uptime printed by -XX:+PrintGCTimeStamps: "12.345: " (or "12,345: " depending on the locale)
+    private static final Pattern UPTIME_PATTERN = Pattern.compile("(\\d+[.,]\\d+): ");
+    private static final Pattern SECONDS_PATTERN = Pattern.compile("\\d+[.,]\\d+ secs");
+    // Generation details inside a Parallel/Serial/CMS record: "[PSYoungGen: 130101K->16976K(153088K)]"
+    private static final Pattern GENERATION_SECTION_PATTERN = Pattern.compile("\\[[A-Za-z ]+: [^\\]]*\\]");
+    private static final String SIZE = "\\d+(?:[.,]\\d+)?[BKMG]";
+    // Whole heap: "130101K->16984K(502784K)"
+    private static final Pattern HEAP_TRANSITION_PATTERN = Pattern.compile("(" + SIZE + ")->(" + SIZE + ")\\((" + SIZE + ")\\)");
+    // G1 details: "Heap: 25600.0K(512.0M)->4404.5K(512.0M)"
+    private static final Pattern G1_HEAP_PATTERN = Pattern.compile("Heap: (" + SIZE + ")\\(" + SIZE + "\\)->(" + SIZE + ")\\((" + SIZE + ")\\)");
+
     private GCLogFile gcLogFile = new GCLogFile();
     private long java8SequenceId;
+    private BigDecimal lastTimeStamp = BigDecimal.ZERO;
+    private BigDecimal concurrentCycleStart;
+    private long concurrentCycleId;
+    // Between the first line of a pause record and its "[Times: ...]" part
+    private boolean recordOpen;
 
     @Override
     public void parseLine(String line) {
@@ -44,52 +61,114 @@ public class GCJdk8LogFileParser implements FileParser<GCLogFile> {
         return gcLogFile;
     }
 
+    /**
+     * JDK 8 GC records span several lines when -XX:+PrintTenuringDistribution or G1 details are enabled, e.g.
+     * <pre>
+     * 3.110: [GC (Allocation Failure)
+     * Desired survivor size 22020096 bytes, new threshold 7 (max 15)
+     * [PSYoungGen: 130101K->16976K(153088K)] 130101K->16984K(502784K), 0.0118661 secs] [Times: ...]
+     * </pre>
+     * A record starts with its first line and ends with the "[Times: ...]" part.
+     */
     private void parseJava8File(String line) {
-        if (line.contains("GC pause")) {
-            gcLogFile.newPhase(++java8SequenceId, getJava8Phase(line), getJava8TimeStamp(line));
-            if (line.contains("secs")) {
-                addJava8Time(java8SequenceId, line);
-            }
-        } else if (line.contains("Full GC") && line.contains("->")) {
-            gcLogFile.newPhase(++java8SequenceId, "Pause Full", getJava8TimeStamp(line));
-            addJava8Time(java8SequenceId, line);
-            addJava8Sizes(java8SequenceId, line, "Full GC", false, false);
-            if (line.contains("Times")) {
-                gcLogFile.finishCycle(java8SequenceId);
-            }
-        } else if (line.contains("[GC (") && line.contains("->")) {
-            gcLogFile.newPhase(++java8SequenceId, "Minor GC", getJava8TimeStamp(line));
-            addJava8Time(java8SequenceId, line);
-            addJava8Sizes(java8SequenceId, line, "[GC (", false, false);
-            if (line.contains("Times")) {
-                gcLogFile.finishCycle(java8SequenceId);
-            }
+        if (line.contains("[GC concurrent-")) {
+            // Concurrent G1 phases may be printed in the middle of another record
+            parseConcurrentPhase(line);
+        } else if (line.contains("GC pause")) {
+            String phase = getJava8Phase(line);
+            newRecord(phase.replace(" (to-space exhausted)", ""), getJava8TimeStamp(line));
+            continueRecord(line);
+        } else if (line.contains("[Full GC")) {
+            // Named like in unified logging, e.g. "Pause Full (Ergonomics)"
+            newRecord("Pause Full" + causeAfter(line, "[Full GC"), getJava8TimeStamp(line));
+            continueRecord(line);
+        } else if (line.contains("[GC (")) {
+            // Parallel/Serial/CMS young collection, e.g. "Pause Young (Allocation Failure)"
+            newRecord("Pause Young" + causeAfter(line, "[GC"), getJava8TimeStamp(line));
+            continueRecord(line);
         } else if (line.contains("GC cleanup")) {
-            gcLogFile.newPhase(++java8SequenceId, "Pause Cleanup", getJava8TimeStamp(line));
-            addJava8Time(java8SequenceId, line);
-            addJava8Sizes(java8SequenceId, line, "GC cleanup", false, false);
+            BigDecimal timeStamp = getJava8TimeStamp(line);
+            newRecord("Pause Cleanup", timeStamp);
+            BigDecimal time = continueRecord(line);
+            // The cleanup pause ends the concurrent cycle
+            finishConcurrentCycle(time == null ? timeStamp : timeStamp.add(time.divide(TO_MS_MULTIPLIER, 6, RoundingMode.HALF_EVEN)));
         } else if (line.contains("GC remark")) {
-            gcLogFile.newPhase(++java8SequenceId, "Pause Remark", getJava8TimeStamp(line));
-            addJava8Time(java8SequenceId, line);
-        } else if (line.contains("secs") && !line.contains("Times")) {
-            addJava8Time(java8SequenceId, line);
+            newRecord("Pause Remark", getJava8TimeStamp(line));
+            continueRecord(line);
+        } else if (!recordOpen) {
+            // Outside of pause records only concurrent output is printed (e.g. string deduplication statistics,
+            // whose "   [Last Exec: ...]" lines look like G1 phases)
+            return;
         } else if (line.contains("Heap: ") && line.contains("->")) {
-            addJava8Sizes(java8SequenceId, line, "Heap", true, true);
+            addJava8G1HeapSizes(java8SequenceId, line);
         } else if (line.startsWith("Desired survivor size")) {
             addJava8SurvivorStats(java8SequenceId, line);
         } else if (line.startsWith("- age")) {
             addJava8AgeCount(java8SequenceId, line);
-        } else if (line.contains("Times")) {
-            gcLogFile.finishCycle(java8SequenceId);
         } else if (line.startsWith("   [") && !line.contains("->")) {
             addJava8PhaseYoungAndMixed(java8SequenceId, line, gcLogFile, false);
         } else if (line.startsWith("      [") && !line.contains("GC Worker Start") && !line.contains("GC Worker End")) {
             addJava8PhaseYoungAndMixed(java8SequenceId, line, gcLogFile, true);
+        } else if (line.contains("secs") || line.contains("Times")) {
+            // Continuation of the current record: ", 0.0024560 secs]" or "[PSYoungGen: ...] ... secs] [Times: ...]"
+            continueRecord(line);
         }
     }
 
+    /**
+     * Adds what the line contains to the current record: heap sizes, duration, to-space exhaustion, and finishes the
+     * record when its "[Times: ...]" part is present.
+     *
+     * @return the duration in ms if the line contains it
+     */
+    private BigDecimal continueRecord(String line) {
+        if (line.contains("(to-space exhausted)")) {
+            gcLogFile.toSpaceExhausted(java8SequenceId);
+        }
+        BigDecimal time = addJava8Time(java8SequenceId, line);
+        if (line.contains("->") && !line.contains("Heap: ")) {
+            addJava8HeapSizes(java8SequenceId, line);
+        }
+        if (line.contains("[Times")) {
+            gcLogFile.finishCycle(java8SequenceId);
+            recordOpen = false;
+        }
+        return time;
+    }
+
+    private void newRecord(String phase, BigDecimal timeStamp) {
+        gcLogFile.newPhase(++java8SequenceId, phase, timeStamp);
+        recordOpen = true;
+    }
+
+    /**
+     * G1 concurrent cycle: it starts with the root region scan after an initial-mark pause and ends with the
+     * cleanup pause, or when marking is aborted by a full collection.
+     */
+    private void parseConcurrentPhase(String line) {
+        if (line.contains("concurrent-root-region-scan-start")) {
+            concurrentCycleId = java8SequenceId;
+            concurrentCycleStart = getJava8TimeStamp(line);
+            gcLogFile.concurrentCycleStarted(concurrentCycleId, GCLogConcurrentCycleEntry.CONCURRENT_MARK);
+        } else if (line.contains("concurrent-mark-abort")) {
+            finishConcurrentCycle(getJava8TimeStamp(line));
+        }
+    }
+
+    private void finishConcurrentCycle(BigDecimal endTimeStamp) {
+        if (concurrentCycleStart == null) {
+            return;
+        }
+        BigDecimal duration = endTimeStamp.subtract(concurrentCycleStart).multiply(TO_MS_MULTIPLIER);
+        gcLogFile.concurrentCycleFinished(concurrentCycleId, GCLogConcurrentCycleEntry.CONCURRENT_MARK, duration);
+        concurrentCycleStart = null;
+    }
 
     private void addJava8PhaseYoungAndMixed(Long sequenceId, String line, GCLogFile gcLogFile, boolean subSubPhase) {
+        if (line.contains("Max:") && !line.contains("(ms)")) {
+            // Counters such as "Processed Buffers" or "Termination Attempts", not times
+            return;
+        }
         String phase = line.replaceFirst(".*\\[", "").replaceFirst(":.*", "");
         if (subSubPhase) {
             phase = "|______" + phase;
@@ -131,38 +210,52 @@ public class GCJdk8LogFileParser implements FileParser<GCLogFile> {
         gcLogFile.addSurvivorStats(sequenceId, desiredSize, newThreshold, maxThreshold);
     }
 
-    private void addJava8Time(long sequenceId, String line) {
-        line = line.replaceFirst("\\[Times.*", "");
-        Pattern pattern = Pattern.compile("\\d+,\\d+ secs");
-        Matcher matcher = pattern.matcher(line);
+    /**
+     * Adds the last "N secs" of the line (the duration of the whole record; nested phases come earlier).
+     *
+     * @return the duration in ms or {@code null} if the line does not contain it
+     */
+    private BigDecimal addJava8Time(long sequenceId, String line) {
+        Matcher matcher = SECONDS_PATTERN.matcher(line.replaceFirst("\\[Times.*", ""));
         String timeStr = null;
-        while ((matcher.find())) {
+        while (matcher.find()) {
             timeStr = matcher.group();
         }
-        BigDecimal time = ParserUtils.parseFirstBigDecimal(timeStr, 0).multiply(TO_MS_MULTIPLIER);
+        if (timeStr == null) {
+            return null;
+        }
+        // Full precision: "0.0118661 secs" is 11.8661 ms (ParserUtils.parseFirstBigDecimal rounds to 0.01)
+        BigDecimal time = new BigDecimal(timeStr.replace(" secs", "").replace(',', '.')).multiply(TO_MS_MULTIPLIER);
         gcLogFile.addTime(sequenceId, time);
+        return time;
     }
 
-    private void addJava8Sizes(long sequenceId, String line, String startingString, boolean containsComma, boolean containsMaxHeapSizeBeforeGC) {
-        Pattern pattern = containsComma ? Pattern.compile("\\d+,\\d+[BMKG]") : Pattern.compile("\\d+[BMKG]");
-        String stringToSearch = line.substring(line.indexOf(startingString));
-        Matcher matcher = pattern.matcher(stringToSearch);
-        matcher.find();
-        String before = matcher.group().replace(",", ".");
-        if (containsMaxHeapSizeBeforeGC) {
-            matcher.find();
+    /**
+     * Whole heap transition of a record, e.g. "[GC (Allocation Failure) [PSYoungGen: 130101K->16976K(153088K)]
+     * 130101K->16984K(502784K), 0.0118661 secs]". Generation sections are skipped.
+     */
+    private void addJava8HeapSizes(long sequenceId, String line) {
+        Matcher matcher = HEAP_TRANSITION_PATTERN.matcher(GENERATION_SECTION_PATTERN.matcher(line).replaceAll(""));
+        if (matcher.find()) {
+            gcLogFile.addSizes(sequenceId, getSizeWithUnit(matcher.group(1)).intValue(),
+                    getSizeWithUnit(matcher.group(2)).intValue(), getSizeWithUnit(matcher.group(3)).intValue());
         }
-        matcher.find();
-        String after = matcher.group().replace(",", ".");
-        matcher.find();
-        String heapSize = matcher.group().replace(",", ".");
+    }
 
-        gcLogFile.addSizes(sequenceId, getSizeWithUnit(before).intValue(), getSizeWithUnit(after).intValue(), getSizeWithUnit(heapSize).intValue());
+    /**
+     * G1 details line: "[Eden: ... Survivors: ... Heap: 25600.0K(512.0M)->4404.5K(512.0M)]".
+     */
+    private void addJava8G1HeapSizes(long sequenceId, String line) {
+        Matcher matcher = G1_HEAP_PATTERN.matcher(line);
+        if (matcher.find()) {
+            gcLogFile.addSizes(sequenceId, getSizeWithUnit(matcher.group(1)).intValue(),
+                    getSizeWithUnit(matcher.group(2)).intValue(), getSizeWithUnit(matcher.group(3)).intValue());
+        }
     }
 
     private BigDecimal getSizeWithUnit(String size) {
         BigDecimal multiplier = getMultiplier(size);
-        return multiplier.multiply(new BigDecimal(size.substring(0, size.length() - 1))).setScale(2, RoundingMode.HALF_EVEN);
+        return multiplier.multiply(new BigDecimal(size.substring(0, size.length() - 1).replace(',', '.'))).setScale(2, RoundingMode.HALF_EVEN);
     }
 
     private BigDecimal getMultiplier(String size) {
@@ -178,11 +271,37 @@ public class GCJdk8LogFileParser implements FileParser<GCLogFile> {
         return JAVA_8_B_MULTIPLIER;
     }
 
+    /**
+     * Uptime of the line. With -XX:+PrintGCDateStamps it follows the date ("2026-11-07T10:37:02.012+0100: 3.110: ");
+     * the date itself never matches, because its fraction is followed by the time zone. Lines without the uptime
+     * (-XX:+PrintGCTimeStamps disabled) get the previous one.
+     */
     private BigDecimal getJava8TimeStamp(String line) {
-        Pattern pattern = Pattern.compile("\\d+,\\d+: ");
-        Matcher matcher = pattern.matcher(line);
-        matcher.find();
-        return new BigDecimal(matcher.group().replace(',', '.').replace(": ", "").trim());
+        Matcher matcher = UPTIME_PATTERN.matcher(line);
+        if (matcher.find()) {
+            lastTimeStamp = new BigDecimal(matcher.group(1).replace(',', '.'));
+        }
+        return lastTimeStamp;
+    }
+
+    /**
+     * The parenthesized cause following the marker, e.g. " (System.gc())" for "[Full GC (System.gc()) [PSYoungGen:",
+     * or an empty string.
+     */
+    private static String causeAfter(String line, String marker) {
+        int start = line.indexOf('(', line.indexOf(marker));
+        if (start < 0) {
+            return "";
+        }
+        int depth = 0;
+        for (int i = start; i < line.length(); i++) {
+            if (line.charAt(i) == '(') {
+                depth++;
+            } else if (line.charAt(i) == ')' && --depth == 0) {
+                return " " + line.substring(start, i + 1);
+            }
+        }
+        return "";
     }
 
     private String getJava8Phase(String line) {

@@ -26,6 +26,13 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class GCUnifiedLogFileParser implements FileParser<GCLogFile> {
+    private static final BigDecimal MS_IN_SECOND = new BigDecimal(1000);
+    private static final Pattern DURATION_PATTERN = Pattern.compile("(\\d+[.,]\\d+)\\s*(ms|s)\\b");
+    private static final Pattern MAX_PATTERN = Pattern.compile("Max:\\s*(\\d+(?:[.,]\\d+)?)");
+    private static final Pattern WORKER_PHASE_PATTERN = Pattern.compile("(.*) \\(ZWorker[A-Za-z]*#\\d+\\)");
+    private static final Pattern CONCURRENT_CYCLE_PATTERN =
+            Pattern.compile("GC\\(\\d+\\) Concurrent (Mark |Undo )?Cycle(?:\\s+(\\d+[.,]\\d+)ms)?\\s*$");
+
     private final GCLogFile gcLogFile = new GCLogFile();
     private String lastRegion;
     private final GCCollectorType collectorType;
@@ -81,8 +88,7 @@ public class GCUnifiedLogFileParser implements FileParser<GCLogFile> {
     private final List<GcLineParser> parsers = List.of(
             new GcLineParser(includes("gc,start"), excludes(), this::gcStart),
             new GcLineParser(includes("gc ", "Collection"), excludes("gc,start", "gc,phases", "->"), this::zgcStart),
-            new GcLineParser(includes("gc ", "Concurrent Cycle", "ms"), excludes(), this::addConcurrentCycleDataIfPresent),
-            new GcLineParser(includes("gc ", "Concurrent Mark Cycle", "ms"), excludes(), this::addConcurrentCycleDataIfPresent),
+            new GcLineParser(includes("gc ", "Concurrent", "Cycle"), excludes("->"), this::addConcurrentCycle),
             new GcLineParser(includes("gc,phases", "ms", ")   "), excludes(")       ", "Queue Fixup", "Table Fixup"), this::addPhaseYoungAndMixed),
             new GcLineParser(includes("gc,phases", "ms"), excludes(")  "), this::addPhaseConcurrentSTW),
             new GcLineParser(includes("gc ", "->"), excludes(), this::addSizesAndTime),
@@ -143,22 +149,36 @@ public class GCUnifiedLogFileParser implements FileParser<GCLogFile> {
         gcLogFile.newPhase(sequenceId, getPhase(line), ParserUtils.getTimeStamp(line));
     }
 
+    /**
+     * ZGC cycle start: "GC(3) Major Collection (Warmup)". Generational ZGC runs minor collections while a major one
+     * is in progress, so a cycle is finished by its own summary line, not by the start of the next one.
+     */
     private void zgcStart(GCLogFile gcLogFile, Long sequenceId, String line) {
         if (collectorType != GCCollectorType.ZGC) {
             return;
         }
-        if (currentCycleId != null && !currentCycleId.equals(sequenceId)) {
-            gcLogFile.finishCycle(currentCycleId);
-        }
-        if (currentCycleId == null || !currentCycleId.equals(sequenceId)) {
+        if (!gcLogFile.isCycleInProgress(sequenceId)) {
             gcLogFile.newPhase(sequenceId, getPhase(line), ParserUtils.getTimeStamp(line));
-            currentCycleId = sequenceId;
         }
     }
 
-    private void addConcurrentCycleDataIfPresent(GCLogFile gcLogFile, Long sequenceId, String line) {
-        String time = getTime(line);
-        gcLogFile.newConcurrentCycle(sequenceId, new BigDecimal(time));
+    /**
+     * G1 concurrent cycle: "GC(5) Concurrent Mark Cycle" when it starts and "GC(5) Concurrent Mark Cycle 9.082ms"
+     * when it ends. JDK 9-16 log "Concurrent Cycle", JDK 17+ "Concurrent Mark Cycle" or "Concurrent Undo Cycle".
+     */
+    private void addConcurrentCycle(GCLogFile gcLogFile, Long sequenceId, String line) {
+        Matcher matcher = CONCURRENT_CYCLE_PATTERN.matcher(line);
+        if (!matcher.find()) {
+            return;
+        }
+        String phase = matcher.group(1) != null && matcher.group(1).startsWith("Undo")
+                ? GCLogConcurrentCycleEntry.CONCURRENT_UNDO
+                : GCLogConcurrentCycleEntry.CONCURRENT_MARK;
+        if (matcher.group(2) == null) {
+            gcLogFile.concurrentCycleStarted(sequenceId, phase);
+        } else {
+            gcLogFile.concurrentCycleFinished(sequenceId, phase, toMs(matcher.group(2), "ms"));
+        }
     }
 
     @Override
@@ -171,49 +191,83 @@ public class GCUnifiedLogFileParser implements FileParser<GCLogFile> {
         if (collectorType != GCCollectorType.SHENANDOAH) {
             return;
         }
-        String phaseWithTime = line.replaceFirst(".*GC\\(\\d+\\)", "").trim();
-        String time = getTime(phaseWithTime);
-        int timeIndex = phaseWithTime.indexOf(time);
-        String phase = phaseWithTime.substring(0, timeIndex).trim();
-        gcLogFile.addSubPhaseTime(sequenceId, phase, new BigDecimal(time));
+        addPhaseWithTime(gcLogFile, sequenceId, line);
     }
 
     private void addPhaseConcurrentSTW(GCLogFile gcLogFile, Long sequenceId, String line) {
-        String phaseWithTime = line.replaceFirst(".*GC\\(\\d+\\)", "").trim();
-        String time = getTime(phaseWithTime);
-        int timeIndex = phaseWithTime.indexOf(time);
-        String phase = phaseWithTime.substring(0, timeIndex).trim();
-        gcLogFile.addSubPhaseTime(sequenceId, phase, new BigDecimal(time));
+        addPhaseWithTime(gcLogFile, sequenceId, line);
     }
 
-    private String getTime(String line) {
-        if (line.contains("ms")) {
-            Pattern timeExtractorPatter = Pattern.compile("\\d+.\\d+(\\s*)?ms");
-            Matcher matcher = timeExtractorPatter.matcher(line);
-            matcher.find();
-            String timePart = matcher.group();
-            return timePart.replaceAll("ms", "").replaceAll(",", ".").trim();
+    /**
+     * Phase lines look like "GC(3) Pause Init Mark (unload classes) 0.123ms"; the phase is everything between
+     * the GC id and the duration.
+     */
+    private static void addPhaseWithTime(GCLogFile gcLogFile, Long sequenceId, String line) {
+        String phaseWithTime = line.replaceFirst(".*GC\\(\\d+\\)", "").trim();
+        Duration duration = Duration.last(phaseWithTime);
+        if (duration == null) {
+            return;
         }
-        Pattern timeExtractorPatter = Pattern.compile("\\d+.\\d+(\\s*)?s");
-        Matcher matcher = timeExtractorPatter.matcher(line);
-        String timePart = null;
-        while (matcher.find()) {
-            timePart = matcher.group();
+        String phase = phaseWithTime.substring(0, duration.start).trim();
+        Matcher workerMatcher = WORKER_PHASE_PATTERN.matcher(phase);
+        if (workerMatcher.matches()) {
+            // ZGC logs some phases per worker: "Y: Concurrent Roots CodeCache (ZWorkerYoung#3)"; like the "Max" of
+            // G1 parallel phases, the slowest worker is taken
+            gcLogFile.addSubPhaseTimeMax(sequenceId, workerMatcher.group(1), duration.millis);
+        } else {
+            gcLogFile.addSubPhaseTime(sequenceId, phase, duration.millis);
         }
-
-        return timePart.replaceAll("s", "").replaceAll(",", ".").replaceAll("\\.","").trim();
     }
 
     private void addPhaseYoungAndMixed(GCLogFile gcLogFile, Long sequenceId, String line) {
         String phase = line.replaceFirst(".*GC\\(\\d+\\)", "").replaceFirst(":.*", "").replace("   ", "").replaceAll("  ", "|______").replace(" (ms)", "");
         if (line.contains("Max:")) {
-            String time = line.replaceFirst(".*Max:", "").replaceFirst(",.*", "").trim().replace(',', '.');
-            gcLogFile.addSubPhaseTime(sequenceId, phase, new BigDecimal(time));
+            // "Ext Root Scanning (ms): Min: 0.1, Avg: 0.2, Max: 0.3, Diff: ..." - the decimal separator can be a comma
+            Matcher matcher = MAX_PATTERN.matcher(line);
+            if (matcher.find()) {
+                gcLogFile.addSubPhaseTime(sequenceId, phase, toDecimal(matcher.group(1)));
+            }
         } else if (line.contains("skipped")) {
             gcLogFile.addSubPhaseTime(sequenceId, phase, BigDecimal.ZERO);
         } else {
-            String time = line.replaceFirst(".*:", "").replaceFirst("ms", "").trim().replace(',', '.');
-            gcLogFile.addSubPhaseTime(sequenceId, phase, new BigDecimal(time));
+            Duration duration = Duration.last(line.replaceFirst(".*GC\\(\\d+\\)", ""));
+            if (duration != null) {
+                gcLogFile.addSubPhaseTime(sequenceId, phase, duration.millis);
+            }
+        }
+    }
+
+    private static BigDecimal toDecimal(String number) {
+        return new BigDecimal(number.replace(',', '.'));
+    }
+
+    private static BigDecimal toMs(String number, String unit) {
+        BigDecimal value = toDecimal(number);
+        return "s".equals(unit) ? value.multiply(MS_IN_SECOND) : value;
+    }
+
+    /**
+     * Duration printed by HotSpot: "12.345ms", "0.024s", with a dot or a comma (depends on the locale).
+     */
+    private static final class Duration {
+        private final BigDecimal millis;
+        private final int start;
+
+        private Duration(BigDecimal millis, int start) {
+            this.millis = millis;
+            this.start = start;
+        }
+
+        /**
+         * The last duration in the text: phase lines end with it, e.g. "... 100M->20M(512M) 5.123ms".
+         */
+        static Duration last(String text) {
+            Matcher matcher = DURATION_PATTERN.matcher(text);
+            Duration duration = null;
+            while (matcher.find()) {
+                duration = new Duration(toMs(matcher.group(1), matcher.group(2)), matcher.start());
+            }
+            return duration;
         }
     }
 
@@ -227,15 +281,30 @@ public class GCUnifiedLogFileParser implements FileParser<GCLogFile> {
         matcher.find();
         String heapSize =
                 line.contains("%") ? "-1" : matcher.group().replace("M", "");
-        String time = getTime(line);
+        // The duration is the last token after "GC(n)"; the uptime decorator must not be taken for it
+        Duration duration = Duration.last(line.replaceFirst(".*GC\\(\\d+\\)", ""));
 
-        if (collectorType == GCCollectorType.SHENANDOAH || collectorType == GCCollectorType.ZGC) {
+        if (collectorType == GCCollectorType.ZGC) {
+            // Cycle summary: "Major Collection (Warmup) 52M(10%)->14M(3%) 0.024s" (JDK 21+), without the
+            // duration in JDK 17. The duration covers the whole cycle, its phases are logged separately.
             gcLogFile.addSizes(sequenceId, Integer.parseInt(before), Integer.parseInt(after), Integer.parseInt(heapSize));
-            String phaseName = line.replaceFirst(".*GC\\(\\d+\\)", "").trim()
-                    .replaceFirst("\\s*\\d+M.*->.*", "").trim();
-            gcLogFile.addSubPhaseTime(sequenceId, phaseName, new BigDecimal(time));
-        } else {
-            gcLogFile.addSizesAndTime(sequenceId, Integer.parseInt(before), Integer.parseInt(after), Integer.parseInt(heapSize), new BigDecimal(time));
+            if (duration != null) {
+                gcLogFile.addTime(sequenceId, duration.millis);
+            }
+            gcLogFile.finishCycle(sequenceId);
+        } else if (collectorType == GCCollectorType.SHENANDOAH) {
+            gcLogFile.addSizes(sequenceId, Integer.parseInt(before), Integer.parseInt(after), Integer.parseInt(heapSize));
+            if (duration != null) {
+                String phaseName = line.replaceFirst(".*GC\\(\\d+\\)", "").trim()
+                        .replaceFirst("\\s*\\d+M.*->.*", "").trim();
+                gcLogFile.addSubPhaseTime(sequenceId, phaseName, duration.millis);
+            }
+        } else if (duration != null) {
+            if (line.contains("(Evacuation Failure")) {
+                // JDK 20+ replaced the "To-space exhausted" line with a suffix of the pause line
+                gcLogFile.toSpaceExhausted(sequenceId);
+            }
+            gcLogFile.addSizesAndTime(sequenceId, Integer.parseInt(before), Integer.parseInt(after), Integer.parseInt(heapSize), duration.millis);
         }
     }
 

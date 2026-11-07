@@ -15,6 +15,13 @@
  */
 package pl.ks.profiling.safepoint.analyzer.commons.shared.gc.page;
 
+import lombok.RequiredArgsConstructor;
+import pl.ks.profiling.gui.commons.Chart;
+import pl.ks.profiling.gui.commons.Page;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.PageCreator;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.parser.GCLogCycleEntry;
+import pl.ks.profiling.safepoint.analyzer.commons.shared.report.JvmLogFile;
+
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
@@ -22,12 +29,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import lombok.RequiredArgsConstructor;
-import pl.ks.profiling.gui.commons.Chart;
-import pl.ks.profiling.gui.commons.Page;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.report.JvmLogFile;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.PageCreator;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.parser.GCLogCycleEntry;
 
 @RequiredArgsConstructor
 public class GCAllocationRateInTime implements PageCreator {
@@ -107,7 +108,7 @@ public class GCAllocationRateInTime implements PageCreator {
     }
 
     private Map<Long, List<BigDecimal>> createByTimeMap(JvmLogFile jvmLogFile) {
-        List<GCLogCycleEntry> cycles = jvmLogFile.getGcLogFile().getCycleEntries();
+        List<GCLogCycleEntry> cycles = jvmLogFile.getGcLogFile().getCycleEntriesWithHeapSizes();
         BigDecimal fromSecondsToMinute = minuteCount.multiply(new BigDecimal(60));
 
         if (cycles.size() <= 1) {
@@ -127,7 +128,10 @@ public class GCAllocationRateInTime implements PageCreator {
                 continue;
             }
 
-            BigDecimal rate = new BigDecimal(current.getHeapBeforeGCMb() - prev.getHeapAfterGCMb()).divide(current.getTimeStamp().subtract(prev.getTimeStamp()), 2, RoundingMode.HALF_EVEN);
+            BigDecimal rate = GCLogCycleEntry.allocationRate(prev, current);
+            if (rate == null) {
+                continue;
+            }
 
             long prevCycleMinute = prev.getTimeStamp().divide(fromSecondsToMinute, 2, RoundingMode.HALF_EVEN).longValue();
             long currentCycleMinute = current.getTimeStamp().divide(fromSecondsToMinute, 2, RoundingMode.HALF_EVEN).longValue();

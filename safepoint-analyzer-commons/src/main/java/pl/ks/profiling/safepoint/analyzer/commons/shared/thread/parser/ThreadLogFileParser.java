@@ -17,8 +17,11 @@ package pl.ks.profiling.safepoint.analyzer.commons.shared.thread.parser;
 
 import pl.ks.profiling.safepoint.analyzer.commons.FileParser;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.ParserUtils;
+import java.util.regex.Pattern;
 
 public class ThreadLogFileParser implements FileParser<ThreadLogFile> {
+    private static final Pattern THREAD_STARTED_PATTERN = Pattern.compile("Thread \".*\" started");
+
     private final ThreadLogFile threadLogFile = new ThreadLogFile();
 
     public ThreadLogFileParser() {
@@ -30,7 +33,10 @@ public class ThreadLogFileParser implements FileParser<ThreadLogFile> {
             return;
         }
 
-        if (line.contains("Thread started")) {
+        // A new thread is logged by its creator: 'Thread "name" started (pthread id: ...)' (older JDKs:
+        // "Thread started"); threads created outside of the JVM (e.g. main) log "Thread attached".
+        // "Thread is alive" is logged by the new thread itself, so it is not counted again.
+        if (line.contains("Thread started") || THREAD_STARTED_PATTERN.matcher(line).find() || line.contains("Thread attached")) {
             threadLogFile.newThreadAdded(ParserUtils.getTimeStamp(line));
         } else if (line.contains("Thread finished")) {
             threadLogFile.threadDestroyed(ParserUtils.getTimeStamp(line));

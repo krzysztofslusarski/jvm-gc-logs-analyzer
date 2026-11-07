@@ -15,11 +15,6 @@
  */
 package pl.ks.profiling.safepoint.analyzer.commons.shared.gc.page;
 
-import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 import pl.ks.profiling.gui.commons.Chart;
 import pl.ks.profiling.gui.commons.Page;
 import pl.ks.profiling.gui.commons.PageContent;
@@ -28,10 +23,16 @@ import pl.ks.profiling.safepoint.analyzer.commons.shared.PageUtils;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.parser.GCLogCycleEntry;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.report.JvmLogFile;
 
+import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
 public class GCHeapBefore implements PageCreator {
     @Override
     public Page create(JvmLogFile jvmLogFile, DecimalFormat decimalFormat) {
-        boolean hasNotGenuine = jvmLogFile.getGcLogFile().getCycleEntries()
+        boolean hasNotGenuine = jvmLogFile.getGcLogFile().getCycleEntriesWithHeapSizes()
                 .stream()
                 .anyMatch(gcLogCycleEntry -> !gcLogCycleEntry.isGenuineCollection());
         List<PageContent> charts = new ArrayList<>(3);
@@ -87,7 +88,7 @@ public class GCHeapBefore implements PageCreator {
             GCLogCycleEntry::getHeapSizeMb);
 
     private static Object[][] getHeapBeforeGCSizeChart(JvmLogFile jvmLogFile) {
-        List<GCLogCycleEntry> cyclesToShow = jvmLogFile.getGcLogFile().getCycleEntries()
+        List<GCLogCycleEntry> cyclesToShow = jvmLogFile.getGcLogFile().getCycleEntriesWithHeapSizes()
                 .stream()
                 .filter(GCLogCycleEntry::isGenuineCollection)
                 .collect(Collectors.toList());
@@ -96,7 +97,7 @@ public class GCHeapBefore implements PageCreator {
     }
 
     private static Object[][] getHeapBeforeGCAllCollectionsSizeChart(JvmLogFile jvmLogFile) {
-        List<GCLogCycleEntry> cyclesToShow = jvmLogFile.getGcLogFile().getCycleEntries();
+        List<GCLogCycleEntry> cyclesToShow = jvmLogFile.getGcLogFile().getCycleEntriesWithHeapSizes();
         return PageUtils.toMatrix(cyclesToShow, chartColumns, chartExtractors);
     }
 }

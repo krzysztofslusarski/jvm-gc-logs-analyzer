@@ -15,19 +15,31 @@
  */
 package pl.ks.profiling.safepoint.analyzer.commons.shared.safepoint.parser;
 
+import pl.ks.profiling.safepoint.analyzer.commons.FileParser;
+
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.stream.Stream;
-import pl.ks.profiling.safepoint.analyzer.commons.FileParser;
-import pl.ks.profiling.safepoint.analyzer.commons.shared.ParserUtils;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
+/**
+ * Parses the output of -XX:+PrintSafepointStatistics -XX:PrintSafepointStatisticsCount=1 (JDK 8):
+ * <pre>
+ *          vmop                    [threads: total initially_running wait_to_block]    [time: spin block sync cleanup vmop] page_trap_count
+ * 3.109: ParallelGCFailedAllocation       [      20          0              0    ]      [     0     0     0     0    12    ]  0
+ * </pre>
+ * The uptime is in seconds (with a dot or a comma, depending on the locale), times in ms.
+ */
 public class SafepointJdk8LogFileParser implements FileParser<SafepointLogFile> {
     private static final int SCALE = 10;
-    private static final String JDK8_REGEX = ".*: .*\\[.*\\] *.*\\[.*\\].*";
+    private static final BigDecimal MS_IN_SECOND = new BigDecimal(1000);
+    private static final Pattern STATISTICS_LINE_PATTERN = Pattern.compile(
+            "^\\s*(\\d+[.,]\\d+): (.+?)\\s+\\[\\s*\\d+\\s+\\d+\\s+\\d+\\s*\\]" +
+                    "\\s+\\[\\s*(\\d+)\\s+(\\d+)\\s+(\\d+)\\s+(\\d+)\\s+(\\d+)\\s*\\]\\s+\\d+");
 
-    private boolean waitForNext = true;
     private boolean jdk8 = false;
-    private BigDecimal lastAppTime = null;
+    private BigDecimal lastUptimeMs = null;
+    private BigDecimal lastStoppedMs = BigDecimal.ZERO;
 
     private SafepointLogFile safepointLogFile = new SafepointLogFile();
 
@@ -35,10 +47,14 @@ public class SafepointJdk8LogFileParser implements FileParser<SafepointLogFile> 
     public void parseLine(String line) {
         if (line.contains("vmop") && line.contains("initially_running")) {
             jdk8 = true;
-        } else if (jdk8 && line.matches(JDK8_REGEX) && line.split("\\[").length == 3) {
-            safepointLogFile.newSafepoint(ParserUtils.getTimeStamp(line));
-            lastAppTime = addJava8OneLine(line, safepointLogFile, lastAppTime);
-            waitForNext = false;
+            return;
+        }
+        if (!jdk8) {
+            return;
+        }
+        Matcher matcher = STATISTICS_LINE_PATTERN.matcher(line);
+        if (matcher.find()) {
+            addStatistics(matcher);
         }
     }
 
@@ -48,37 +64,34 @@ public class SafepointJdk8LogFileParser implements FileParser<SafepointLogFile> 
         return safepointLogFile;
     }
 
-    //[1,060s][info][safepoint] Safepoint "Cleanup", Time since last: 1000140224 ns, Reaching safepoint: 196482 ns, At safepoint: 16740 ns, Total: 213222 ns
+    private void addStatistics(Matcher matcher) {
+        BigDecimal uptime = new BigDecimal(matcher.group(1).replace(',', '.'));
+        String operationName = matcher.group(2).trim();
+        // "sync" is the whole time to reach the safepoint (it includes spin and block)
+        BigDecimal ttsMs = new BigDecimal(matcher.group(5));
+        BigDecimal cleanupMs = new BigDecimal(matcher.group(6));
+        BigDecimal vmopMs = new BigDecimal(matcher.group(7));
+        BigDecimal stoppedMs = ttsMs.add(cleanupMs).add(vmopMs);
+        BigDecimal uptimeMs = uptime.multiply(MS_IN_SECOND);
 
-    private static BigDecimal addJava8OneLine(String line, SafepointLogFile current, BigDecimal lastAppTime) {
-        String[] splittedLine = line.split(" ");
-        String[] lineNoBlank = Stream.of(splittedLine)
-                .filter(s -> s.length() > 0)
-                .toArray(String[]::new);
-        StringBuilder operationName = new StringBuilder();
-
-        int index = 0;
-        BigDecimal currentAppTime = new BigDecimal(lineNoBlank[index++].replaceAll("\\.", "").replaceAll(",", "").replaceAll(":", ""));
-        while (!"[".equals(lineNoBlank[index])) {
-            operationName.append(lineNoBlank[index]).append(" ");
-            index++;
+        // Application time: from the end of the previous safepoint to the start of this one
+        BigDecimal applicationTimeMs = BigDecimal.ZERO;
+        if (lastUptimeMs != null) {
+            applicationTimeMs = uptimeMs.subtract(lastUptimeMs).subtract(lastStoppedMs).max(BigDecimal.ZERO);
         }
 
-        index++;
-        while (!"[".equals(lineNoBlank[index])) {
-            index++;
-        }
-
-        BigDecimal tts = new BigDecimal(lineNoBlank[index + 3]);
-        BigDecimal stoppedTime = new BigDecimal(lineNoBlank[index + 5]).add(tts);
-        current.addAllData(
-                tts.divide(SafepointStatsCreator.TO_MS_MULTIPLIER, SCALE, RoundingMode.HALF_EVEN),
-                stoppedTime.divide(SafepointStatsCreator.TO_MS_MULTIPLIER, SCALE, RoundingMode.HALF_EVEN),
-                lastAppTime == null ? BigDecimal.ZERO : currentAppTime.subtract(lastAppTime).subtract(stoppedTime)
-                        .divide(SafepointStatsCreator.TO_MS_MULTIPLIER, SCALE, RoundingMode.HALF_EVEN),
-                operationName.toString().trim()
+        safepointLogFile.newSafepoint(uptime);
+        safepointLogFile.addAllData(
+                toSeconds(ttsMs),
+                toSeconds(stoppedMs),
+                toSeconds(applicationTimeMs),
+                operationName
         );
+        lastUptimeMs = uptimeMs;
+        lastStoppedMs = stoppedMs;
+    }
 
-        return currentAppTime;
+    private static BigDecimal toSeconds(BigDecimal ms) {
+        return ms.divide(MS_IN_SECOND, SCALE, RoundingMode.HALF_EVEN);
     }
 }

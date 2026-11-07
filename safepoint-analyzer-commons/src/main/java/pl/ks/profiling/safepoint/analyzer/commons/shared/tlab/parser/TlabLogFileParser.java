@@ -23,9 +23,13 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class TlabLogFileParser implements FileParser<TlabLogFile> {
+    private static final Pattern ZGC_COLLECTION_START_PATTERN =
+            // The start line ends with the cause, which may contain parentheses: "(System.gc())"
+            Pattern.compile("\\[gc *\\] GC\\(\\d+\\) (Major|Minor) Collection \\(.*\\)\\s*$");
     private final TlabLogFile tlabLogFile = new TlabLogFile();
     private final Map<String, String> lastThreadMap = new HashMap<>();
     private final Comparator<ThreadTlabBeforeGC> MostFrequentSlowAllocsFirst = Comparator.comparingLong(ThreadTlabBeforeGC::getSlowAllocs).reversed();
@@ -52,14 +56,20 @@ public class TlabLogFileParser implements FileParser<TlabLogFile> {
         lastThreadMap.clear();
     }
 
+    /**
+     * Start of a collection. Generational ZGC (JDK 21+) does not log "gc,start", its cycles start with
+     * "GC(3) Major Collection (Warmup)" / "GC(4) Minor Collection (Allocation Rate)".
+     */
     private boolean gcStarts(String line) {
-        return line.contains("gc,start");
+        return line.contains("gc,start") || ZGC_COLLECTION_START_PATTERN.matcher(line).find();
     }
 
+    /**
+     * The thread address: "TLAB: fill thread: 0x...", "TLAB: gc thread: 0x..." (JDK 9-26),
+     * "TLAB fill: thread: 0x...", "TLAB GC: thread: 0x..." (JDK 27+).
+     */
     private String parseThreadId(String line) {
-        PositionalParser parser = new PositionalParser(line);
-        parser.moveAfter("TLAB");
-        return parser.readHexadecimalNumber("fill thread");
+        return ParserUtils.parseFirstHexadecimalNumber(line, line.indexOf("thread: 0x"));
     }
 
     private List<ThreadTlabBeforeGC> parseLinesForThreads(Map<String, String> lastThreadMap) {
@@ -71,11 +81,10 @@ public class TlabLogFileParser implements FileParser<TlabLogFile> {
     }
 
     private ThreadTlabBeforeGC parseThreadTlabStats(String threadId, String line) {
-        PositionalParser parser = new PositionalParser(line);
-        parser.moveAfter("TLAB:");
-        long nid = parser.readNumericValue("id:");
-        long size = parser.readNumericValue("desired_size:");
-        long slowAllocs = parser.readNumericValue("slow allocs:");
+        long nid = numberAfter(line, "[id:");
+        // JDK 9-26: "desired_size: 632KB"; JDK 27+: "desired: 96K" (GC line) or "capacity: 96K" (fill line)
+        long size = numberAfter(line, "desired_size:", "desired:", "capacity:");
+        long slowAllocs = numberAfter(line, "slow allocs:");
         return ThreadTlabBeforeGC.builder()
                 .tid(threadId)
                 .nid(nid)
@@ -105,8 +114,22 @@ public class TlabLogFileParser implements FileParser<TlabLogFile> {
     }
 
     private boolean isThreadTlabLine(String line) {
-        // src/hotspot/share/gc/shared/threadLocalAllocBuffer.cpp:283
-        return line.contains("trace") && (line.contains("TLAB: fill thread") || line.contains("TLAB: gc thread"));
+        // src/hotspot/share/gc/shared/threadLocalAllocBuffer.cpp:283 (the format changed in JDK 27)
+        return line.contains("trace") && (line.contains("TLAB: fill thread") || line.contains("TLAB: gc thread")
+                || line.contains("TLAB fill: thread") || line.contains("TLAB GC: thread"));
+    }
+
+    /**
+     * The number after the first of the markers present in the line, 0 if none is present.
+     */
+    private static long numberAfter(String line, String... markers) {
+        for (String marker : markers) {
+            int position = line.indexOf(marker);
+            if (position >= 0) {
+                return ParserUtils.parseFirstNumber(line, position + marker.length());
+            }
+        }
+        return 0;
     }
 
     @Override

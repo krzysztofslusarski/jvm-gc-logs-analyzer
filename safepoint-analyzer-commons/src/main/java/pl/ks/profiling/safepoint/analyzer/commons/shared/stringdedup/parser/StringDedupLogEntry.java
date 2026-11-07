@@ -15,10 +15,11 @@
  */
 package pl.ks.profiling.safepoint.analyzer.commons.shared.stringdedup.parser;
 
-import java.math.BigDecimal;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
+
+import java.math.BigDecimal;
 
 @Getter
 public class StringDedupLogEntry {
@@ -42,6 +43,13 @@ public class StringDedupLogEntry {
     private BigDecimal totalSizeYoung;
     private BigDecimal totalSizeOld;
 
+    /**
+     * Only G1 up to JDK 16 splits deduplicated strings into young and old ones.
+     */
+    public boolean hasGenerationBreakdown() {
+        return totalSizeYoung != null || totalSizeOld != null || lastSizeYoung != null || lastSizeOld != null;
+    }
+
     public void deduplicatedLast(long count, BigDecimal size) {
         lastCount = count;
         lastSize = size;
@@ -50,6 +58,8 @@ public class StringDedupLogEntry {
     public void deduplicatedTotal(long count, BigDecimal size) {
         totalCount = count;
         totalSize = size;
+        // Young/Old breakdown is printed only by G1 up to JDK 16, so the report is usable without it
+        initialized = true;
     }
 
     public void youngLast(long count, BigDecimal size) {
@@ -80,6 +90,5 @@ public class StringDedupLogEntry {
     public void oldTotal(long count, BigDecimal size) {
         totalCountOld = count;
         totalSizeOld = size;
-        initialized = true;
     }
 }

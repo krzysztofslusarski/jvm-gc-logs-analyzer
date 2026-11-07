@@ -15,18 +15,20 @@
  */
 package pl.ks.profiling.safepoint.analyzer.commons.shared.gc.page;
 
-import java.text.DecimalFormat;
-import java.util.List;
 import pl.ks.profiling.gui.commons.Chart;
 import pl.ks.profiling.gui.commons.Page;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.PageCreator;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.gc.parser.GCLogConcurrentCycleEntry;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.report.JvmLogFile;
 
+import java.text.DecimalFormat;
+import java.util.List;
+import java.util.stream.Collectors;
+
 public class GCConcurrentEfficiency implements PageCreator {
     @Override
     public Page create(JvmLogFile jvmLogFile, DecimalFormat decimalFormat) {
-        if (jvmLogFile.getGcLogFile().getConcurrentCycleEntries().isEmpty()) {
+        if (markCycles(jvmLogFile).isEmpty()) {
             return null;
         }
         return Page.builder()
@@ -60,7 +62,7 @@ public class GCConcurrentEfficiency implements PageCreator {
     }
 
     private static Object[][] getWastedCyclesChart(JvmLogFile jvmLogFile) {
-        List<GCLogConcurrentCycleEntry> cycles = jvmLogFile.getGcLogFile().getConcurrentCycleEntries();
+        List<GCLogConcurrentCycleEntry> cycles = markCycles(jvmLogFile);
 
         Object[][] stats = new Object[cycles.size() + 1][2];
         stats[0][0] = "GC sequence";
@@ -81,7 +83,7 @@ public class GCConcurrentEfficiency implements PageCreator {
     }
 
     private static Object[][] getRemarkReclaimedChart(JvmLogFile jvmLogFile) {
-        List<GCLogConcurrentCycleEntry> cycles = jvmLogFile.getGcLogFile().getConcurrentCycleEntries();
+        List<GCLogConcurrentCycleEntry> cycles = markCycles(jvmLogFile);
 
         Object[][] stats = new Object[cycles.size() + 1][2];
         stats[0][0] = "GC sequence";
@@ -98,7 +100,7 @@ public class GCConcurrentEfficiency implements PageCreator {
     }
 
     private static Object[][] getMixedCollectionCountChart(JvmLogFile jvmLogFile) {
-        List<GCLogConcurrentCycleEntry> cycles = jvmLogFile.getGcLogFile().getConcurrentCycleEntries();
+        List<GCLogConcurrentCycleEntry> cycles = markCycles(jvmLogFile);
 
         Object[][] stats = new Object[cycles.size() + 1][2];
         stats[0][0] = "GC sequence";
@@ -112,5 +114,14 @@ public class GCConcurrentEfficiency implements PageCreator {
         }
 
         return stats;
+    }
+
+    /**
+     * Only mark cycles are followed by remark and mixed collections; undo cycles are left out.
+     */
+    private static List<GCLogConcurrentCycleEntry> markCycles(JvmLogFile jvmLogFile) {
+        return jvmLogFile.getGcLogFile().getConcurrentCycleEntries().stream()
+                .filter(GCLogConcurrentCycleEntry::isMark)
+                .collect(Collectors.toList());
     }
 }

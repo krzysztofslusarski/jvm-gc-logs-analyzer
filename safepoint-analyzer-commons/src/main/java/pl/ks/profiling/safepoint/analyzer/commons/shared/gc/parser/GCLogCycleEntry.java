@@ -15,13 +15,11 @@
  */
 package pl.ks.profiling.safepoint.analyzer.commons.shared.gc.parser;
 
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
 import lombok.Getter;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.*;
 
 @Getter
 public class GCLogCycleEntry {
@@ -31,6 +29,10 @@ public class GCLogCycleEntry {
     public static final String SHENANDOAH_CYCLE = "Shenandoah GC Cycle";
     public static final String ZGC_MAJOR_CYCLE = "ZGC Major Collection";
     public static final String ZGC_MINOR_CYCLE = "ZGC Minor Collection";
+    // Non-generational ZGC (JDK 11-23): "Garbage Collection (Warmup)"
+    public static final String ZGC_CYCLE = "ZGC Collection";
+    // Generational Shenandoah degenerates outside of a cycle with its own GC id
+    public static final String SHENANDOAH_DEGENERATED = "Shenandoah Degenerated GC";
 
     public static final String REMARK_COLLECTION = "remark";
 
@@ -149,6 +151,12 @@ public class GCLogCycleEntry {
         } else if (phase.contains("Minor Collection")) {
             aggregatedPhase = ZGC_MINOR_CYCLE;
             genuineCollection = true;
+        } else if (phase.startsWith("Garbage Collection")) {
+            aggregatedPhase = ZGC_CYCLE;
+            genuineCollection = true;
+        } else if (phase.contains("Degenerated GC")) {
+            aggregatedPhase = SHENANDOAH_DEGENERATED;
+            genuineCollection = true;
         } else {
             aggregatedPhase = phase;
         }
@@ -156,12 +164,60 @@ public class GCLogCycleEntry {
         fillCause();
     }
 
+    /**
+     * Unified logging puts the cause last: "Pause Young (Normal) (G1 Evacuation Pause)", "Pause Full (System.gc())".
+     * JDK 8 G1 puts it first: "(G1 Evacuation Pause) (young) (initial-mark)". The first line of a Shenandoah cycle
+     * contains no cause (only the generation in the generational mode: "Concurrent reset (Young)").
+     */
     private void fillCause() {
-        int start = phase.lastIndexOf('(');
-        int end = phase.lastIndexOf(')');
-        if (start >= 0 && end >= 0) {
-            cause = phase.substring(start + 1, end);
+        if (SHENANDOAH_CYCLE.equals(aggregatedPhase) || SHENANDOAH_DEGENERATED.equals(aggregatedPhase)) {
+            // "(Young)" or "(Outside of Cycle)" is the generation or the degeneration point, not the cause
+            return;
         }
+        List<String> groups = parenthesizedGroups(phase);
+        if (!groups.isEmpty()) {
+            cause = phase.startsWith("(") ? groups.get(0) : groups.get(groups.size() - 1);
+        }
+    }
+
+    /**
+     * Contents of the top level parentheses; nested ones are kept: "Pause Full (System.gc())" gives "System.gc()".
+     */
+    private static List<String> parenthesizedGroups(String text) {
+        List<String> groups = new ArrayList<>();
+        int depth = 0;
+        int start = -1;
+        for (int i = 0; i < text.length(); i++) {
+            char character = text.charAt(i);
+            if (character == '(') {
+                if (depth++ == 0) {
+                    start = i + 1;
+                }
+            } else if (character == ')' && depth > 0 && --depth == 0) {
+                groups.add(text.substring(start, i));
+            }
+        }
+        return groups;
+    }
+
+    /**
+     * Some collections log no heap sizes, e.g. JDK 8 G1 remark or the "Coalescing and filling" step of generational
+     * Shenandoah.
+     */
+    public boolean hasHeapSizes() {
+        return heapBeforeGCMb != 0 || heapAfterGCMb != 0 || heapSizeMb != 0;
+    }
+
+    /**
+     * Allocation rate in MB/s between two collections: what was allocated from the end of the previous one to the
+     * start of the current one. {@code null} when the collections are not ordered in time.
+     */
+    public static BigDecimal allocationRate(GCLogCycleEntry previous, GCLogCycleEntry current) {
+        BigDecimal seconds = current.getTimeStamp().subtract(previous.getTimeStamp());
+        if (seconds.signum() <= 0) {
+            return null;
+        }
+        return new BigDecimal(current.getHeapBeforeGCMb() - previous.getHeapAfterGCMb()).divide(seconds, 2, RoundingMode.HALF_EVEN);
     }
 
     void addSubPhaseTime(String phase, BigDecimal time) {

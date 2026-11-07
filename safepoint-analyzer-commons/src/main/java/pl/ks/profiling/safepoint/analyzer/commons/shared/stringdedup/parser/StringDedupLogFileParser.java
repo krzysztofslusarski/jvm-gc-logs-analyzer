@@ -15,19 +15,23 @@
  */
 package pl.ks.profiling.safepoint.analyzer.commons.shared.stringdedup.parser;
 
-import java.math.BigDecimal;
-import java.util.function.BiConsumer;
 import pl.ks.profiling.safepoint.analyzer.commons.FileParser;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.Consumer3;
 import pl.ks.profiling.safepoint.analyzer.commons.shared.ParserUtils;
+
+import java.math.BigDecimal;
+import java.util.function.BiConsumer;
 
 public class StringDedupLogFileParser implements FileParser<StringDedupLogFile> {
     private final StringDedupLogFile logFile = new StringDedupLogFile();
 
     private final TokenParser[] parsers = new TokenParser[]{
             new SimpleTokenParser("Concurrent String Deduplication", StringDedupLogFileParser::markDeduplicationStarted),
+            // JDK 9-16: "Last Exec" / "Total Exec", JDK 17+: "Last Process" / "Total Process"
             new SimpleTokenParser("Last Exec", StringDedupLogFileParser::markLastExecSection),
+            new SimpleTokenParser("Last Process", StringDedupLogFileParser::markLastExecSection),
             new SimpleTokenParser("Total Exec", StringDedupLogFileParser::markTotalExecOccurredSection),
+            new SimpleTokenParser("Total Process", StringDedupLogFileParser::markTotalExecOccurredSection),
             new SizeCountParser("Deduplicated", StringDedupLogFile::deduplicated),
             new SizeCountParser("Young", StringDedupLogFile::young),
             new SizeCountParser("Old", StringDedupLogFile::old),
@@ -69,8 +73,12 @@ public class StringDedupLogFileParser implements FileParser<StringDedupLogFile> 
         }
     }
 
+    /**
+     * JDK 9-16 log with the "gc,stringdedup" tags, JDK 17+ with "stringdedup" (its "stringdedup,phases" lines
+     * are not needed).
+     */
     private boolean isStringDeduplicationLine(String line) {
-        return line.contains("gc,stringdedup");
+        return line.contains("gc,stringdedup") || line.contains("[stringdedup ") || line.contains("[stringdedup]");
     }
 
     static abstract class TokenParser {
